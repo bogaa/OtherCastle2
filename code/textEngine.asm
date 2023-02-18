@@ -540,11 +540,11 @@ asciiLookUpTable:
 {	; NPC Text ------------------------------------------------------------------------
 	npcSpriteIDlist:			; list is based in subID $14																		
 		dw oldMan3Fr1,jungLadyFr1,oldManFr1,jungLadyFr1,oldManFr1,oldMan3Fr1,jungLadyFr1,jungLadyFr1,jungLadyFr1,oldMan3Fr1,$89f0,jungLadyFr1
-		dw $89f0,jungLadyFr1,oldManFr1,oldMan3Fr1,doorSpriteAssembly,oldManFr1
+		dw $89f0,jungLadyFr1,oldManFr1,oldMan3Fr1,doorSpriteAssembly,oldManFr1,oldMan3Fr2
 		; $8f15
 	npcSpriteIDlist2:	
 		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1,oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1,jungLadyFr1,oldMan3Fr2,$968b,jungLadyFr1		; $8f2e
-		dw $968b,jungLadyFr1,oldManFr2,oldMan3Fr2,doorSpriteAssembly,oldManFr2
+		dw $968b,jungLadyFr1,oldManFr2,oldMan3Fr2,doorSpriteAssembly,oldManFr2,$0000
 	; zombie Walk $96a0,$968b 
 
 	mainNPCStateTable: 
@@ -568,6 +568,7 @@ asciiLookUpTable:
 		dw BuilderManDoina
 		dw door
 		dw RedguyLiftingCurse   ; 11
+		dw TipLeady00			; 12
 		
 	actionListMainNPC:
 		dw actionSeller,actionListGivingLady
@@ -587,7 +588,7 @@ asciiLookUpTable:
 		dw actionListBuilderManDoina
 		dw $0000
 		dw actionRedguyLiftingCurse
-	
+		dw actionListTipLeady00
 
 	
 	actionSeller:
@@ -1186,7 +1187,21 @@ asciiLookUpTable:
 		db "NOT VANQUISH    "
 		db "DRACULA AT ALL..",$00	
 		
-
+	actionListTipLeady00:
+		dw oneFrameText00,goNextText
+		dw oneFrameText01,endText		
+	oneFrameText00:
+		db "DID YOU KNOW    "
+		db "HOLDING THE JUMP"
+		db "BUTTON FOR ONLY "
+		db "ONE OR TWO",$00 
+	oneFrameText01:
+		db "FRAMES WILL MAKE"
+		db "YOUR JUMP       "
+		db "SHORTER.",$00 
+		
+		
+	
 }
 	
 	
@@ -1777,6 +1792,9 @@ asciiLookUpTable:
 		jsr NPCwalkAnimation		
 		jsr walkBackAndForward
 		jml NPCTextTrigger
+		
+	TipLeady00:		; IS DRESSED AS A MAN LOL 
+		jml TutorialLeady01
 }   
 
 

@@ -49,7 +49,7 @@ incsrc code/labels.asm
 org $80810D
 ;LDA.W #$0040                         ;subw default 2X
 
-
+; freeSpace at  $81B7BC-81b902 
 ; freeSpace at	$A49000-A4FFFF ??
 ; freeSpace at 	$ff8a00		
 ;				$80C5BF-80C647

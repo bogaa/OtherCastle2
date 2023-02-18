@@ -6,10 +6,11 @@ for feedback you can also use Discord https://discord.gg/PvFgxRg
 
 
 Credits:
-IsoFrieze: Tool used to create dissasembly https://github.com/IsoFrieze/DiztinGUIsh
-asar: Code injection patcher https://github.com/RPGHacker/asar 
-RedGuyyyy: Creator of SC4Ed (here is a copy of his work: https://github.com/bogaa/SC4Ed )
 
+- IsoFrieze: Tool used to create dissasembly https://github.com/IsoFrieze/DiztinGUIsh
+- asar: Code injection patcher https://github.com/RPGHacker/asar 
+- RedGuyyyy: Creator of SC4Ed (here is a copy of his work: https://github.com/bogaa/SC4Ed )
+- Konami for creating Super Castlevania IV for the SNES (October 31, 1991)
 
 
 You like to use this to make your own levels? Here is what you need to do:

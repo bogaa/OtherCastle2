@@ -6,10 +6,10 @@ for feedback you can also use Discord https://discord.gg/PvFgxRg
 
 
 Credits:
-
 - IsoFrieze: Tool used to create dissasembly https://github.com/IsoFrieze/DiztinGUIsh
 - asar: Code injection patcher https://github.com/RPGHacker/asar 
 - RedGuyyyy: Creator of SC4Ed (here is a copy of his work: https://github.com/bogaa/SC4Ed )
+- fastROM by VitorVilela7: https://github.com/VitorVilela7/fastrom/tree/master/super-castlevania-iv
 - Konami for creating Super Castlevania IV for the SNES (October 31, 1991)
 
 

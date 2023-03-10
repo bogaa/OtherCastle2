@@ -64,6 +64,28 @@ endif
 
 ; 138000 exits rom address
 
+; --------small fixes ------------------------------------------
+org $83E3D0
+; draw secret stairst collusion in other direction  
+		LDA.W #$0000                         ;83E3E3|A90100  |      ; make lower floor
+        STA.L $7E4E66                        ;83E3E6|8F664E7E|7E4E66;  
+        STA.L $7E4EA4                        ;83E3EA|8FA44E7E|7E4EA4;  
+        STA.L $7E4EA6                        ;83E3EE|8FA64E7E|7E4EA6;  
+        STA.L $7E4EE2                        ;83E3F2|8FE24E7E|7E4EE2;  
+        STA.L $7E4EE4                        ;83E3F6|8FE44E7E|7E4EE4;  
+        STA.L $7E4EE6                        ;83E3FA|8FE64E7E|7E4EE6;  
+		LDA.W #$8001                         ;83E3D0|A90080  |      ; drawStairs $40 offset 
+        STA.L $7E4E20                        ;83E3D3|8F264E7E|7E4E26;  
+        STA.L $7E4E62                        ;83E3D7|8F644E7E|7E4E64;  
+        STA.L $7E4EA4                        ;83E3DB|8FA24E7E|7E4EA2;  
+        STA.L $7E4EE6                   	 ;83E3DF|8FE04E7E|7E4EE0;  
+org $83E41D
+        LDA.W #$0000                         ;83E41D|A90100  |      ;  make it reappear  
+        STA.W $1602                          ;83E420|8D0216  |811602;  		
+		
+; -------------------------------------------------------------
+
+
 org $808fe1 
 	ldy #$07ff		; orginal $03ff	;clear whole bg3 tilemap in transit. 
 

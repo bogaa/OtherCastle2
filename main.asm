@@ -2,6 +2,8 @@
 ; - cofine turning and shooting crosses. Fight death. Appear as skelleton
 ; - grakul jumps over you
 ; - monster warp fast and throw stuff
+; $b8 disables event collecting items?? 
+; $13c0 simon cant move timer 
 
 ;lorom
 

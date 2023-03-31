@@ -21,6 +21,7 @@
 !freeScrolling = 0					; broken 
 !reUseBrkblBlock = 1
 !simonIdleAnimation = 1
+!subWeaponDropOnPickup = 1
 
 ;NEW RAM ALLOCATION IN FREERAM -----------------------------------------------
 !textEngineState = $1E18	; write 2 to write text and 1 to terminate. 4 lines with 16 Character 

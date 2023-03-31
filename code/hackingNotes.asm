@@ -1,10 +1,10 @@
 ; frank teleport and throw pottle
 ; mummy fast teleport and walk
-; dancer as second form of dracula
 ; gaibon reapearing in castle
 ; koranot new jump
 ; get cursed and fight him as a dead belmont
 ; blue armore health regan
+; NPC sheep talk? too much coffee, NPC telling more tips ,switch whips leather good for platforming  
 
 
 

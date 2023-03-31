@@ -133,6 +133,63 @@ pushPC
 endif 
 
 
+if !subWeaponDropOnPickup == 1
+org $80DE9D
+	jsl subWeaponDropPickupBeahvier
+	nop
+	nop
+	
+
+pullPC
+	subWeaponDropPickupBeahvier:
+		lda RAM_simon_subWeapon
+		beq +++
+		phx 
+		
+		jsl getEmptyEventSlot
+		lda RAM_simon_subWeapon
+		clc
+		adc #$0019						; callculate item drop ID
+		sta $10,x 
+		lda $542						; priority and possition 
+		sta $02,x
+		lda $54a
+		sta $0a,x 
+		lda $54e
+		sbc #$0018						; make it appear above Simon 
+		sta $0e,x 
+		
+		lda #$0009
+		sta RAM_X_event_slot_HitboxID,x 
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+		sta RAM_X_event_slot_HitboxXpos,x
+		sta RAM_X_event_slot_HitboxYpos,x
+		
+		lda #$fffe						; push it up  a bit 
+		sta RAM_X_event_slot_ySpd,x 
+		
+		lda $544						; push it backwared
+		beq +
+		lda #$c000
+		sta RAM_X_event_slot_xSpdSub,x
+		lda #$0000
+		sta RAM_X_event_slot_xSpd,x
+		bra ++
+	+	lda #$4000
+		sta RAM_X_event_slot_xSpdSub,x 
+		lda #$ffff
+		sta RAM_X_event_slot_xSpd,x
+		
+	++	plx 
+	+++	LDA.B RAM_X_event_slot_ID,X      ; hijackFix 
+        SEC                                
+        SBC.W #$0019                     
+		rtl 
+pushPC
+
+endif
+
 
 if !reUseBrkblBlock == 1
 ; ----------------- make breakable wall recolactable in different screens -----------

@@ -68,7 +68,8 @@
                        RAM_BG1_YposScrollSpeed = $0000AA    ;      |        |      ;  
                        RAM_IndexSpecialLevelBehavier = $0000AE;      |        |      ;  
                        RAM_FlagAllowOutOfBounce = $0000B6   ;      |        |      ;  
-                       RAM_simon_invulnerable_counter = $0000BC;      |        |      ;  
+                       ; RAM_FlagBossFight = $0000B8 
+					   RAM_simon_invulnerable_counter = $0000BC;      |        |      ;  
                        RAM_buttonMapJump = $0000BE          ;      |        |      ;  
                        RAM_buttonMapWhip = $0000C0          ;      |        |      ;  
                        RAM_buttonMapSubWep = $0000C2        ;      |        |      ;  
@@ -119,7 +120,8 @@
                        RAM_simonSlot_Collusion_Donno01 = $000576;      |        |      ;  
                        RAM_simonSlot_direction = $000578    ;      |        |      ;  
                        RAM_eventSlot_Base = $000580         ;      |        |      ;  
-                       RAM_OAM_Page = $000F00               ;      |        |      ;  
+                       RAM_OAM_Page = $000F00    
+;						RAM_OAM_PROPERTY_BITS = $1100-$111f					   ;      |        |      ;  
                        RAM_FreeRamPage_E0_byte_not_cleard = $001120;      |        |      ;  
                        RAM_channel_W_0_paletteAnimation = $001200;      |        |      ;  
                        RAM_channel_W_1_paletteAnimation = $001210;      |        |      ;  
@@ -136,7 +138,8 @@
                        RAM_ScrollBG1SyncSpeed = $0013D0     ;      |        |      ;  
                        RAM_ScrollBG3SyncSpeed = $0013D2     ;      |        |      ;  
                        RAM_deathEntrance = $0013D4          ;      |        |      ;  
-                       RAM_currentMusicTrack = $0013E2      ;      |        |      ;  
+;                       RAM_OAM_ForceYposOffset = $0013DE 
+					   RAM_currentMusicTrack = $0013E2      ;      |        |      ;  
                        RAM_simonStat_whipUpgradDropFlag = $0013EC;      |        |      ;  
                        RAM_simonStat_Timer = $0013F0        ;      |        |      ;  
                        RAM_simonStat_Hearts = $0013F2       ;      |        |      ;  

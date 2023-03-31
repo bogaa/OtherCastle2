@@ -162,13 +162,16 @@ org $868C56	; lvl 0
 	enemyGFX11:
 	db $00,$00 
 	db $00,$6a,$7d,$81,$b4 ;gargoyl
-	db $00,$70,$1d,$b3,$b2 ;frog
-	db $00,$72,$fd,$9b,$aa ;skelly
-	db $00,$78,$bd,$8d,$b4 ;hand 
-	db $00,$7a,$7d,$c6,$a8 ;ring, block and bubbles
-	db $00,$7c,$5d,$b0,$b2,$ff,$ff ;platform
+;	db $00,$70,$1d,$b3,$b2 ;frog ,$30
+	db $00,$70,$fd,$9b,$aa ;skelly
+	db $00,$76,$bd,$8d,$b4 ;hand 
+	db $00,$78,$7d,$c6,$a8 ;ring, block and bubbles
+	db $00,$7a,$5d,$b0,$b2 ;platform
+	db $00,$7c,$7d,$e0,$c9 ;NPC 
+;	dl gfxNPC2
+	dw $ffff 
 	enemyAssembly11:
-	db $06,$3e,$30,$12,$6e,$03,$17
+	db $06,$3e,$12,$6e,$03,$17,$0d
 	
 ;org $68DD4 ; lvl b
 ;	enemyGFX12:
@@ -901,3 +904,8 @@ org $FE913d
 org $FE955d
 	gradiusIVGFX:
 		db $04,$08,$80 
+		
+org $FE9D5d	
+	gfxNPC2:
+		dw $0c03			; size 
+		db $80 

@@ -366,7 +366,7 @@ org $83D6A2
 		rtl 
 warnPC $83D6F9 
 
-; ---------------- hijack BolderThrowState
+; ---------------- hijack BolderThrowState stage 8 enemy
 org $83D5C9
         CMP.W #$00f0                         ;83D5C9|C93000  |      ;  
         BPL +                      			;83D5CC|100F    |83D5DD;  
@@ -408,6 +408,17 @@ warnPC $83D666 ; NOT FREE SPACE TILL HERE!!
 org $83D66E                      
 	jml resetBolderThrowStatue
 	; JML.L clearSelectedEventSlotAll      ;83D66E|5C598C80|808C59;  
+
+; ----------------- hijack BoneDragon 
+org $82B5A3
+	JML boneDragonSpawnTweak
+	spawnBoneDragon:
+
+
+; --------------- HIJACK FOR SILLY SPRITE ADDON				; free up 4c0 and have one less subweapon on screen 
+;org $808241
+;	JSL.L extraSpriteAddon 	; UpdateHUDmain                  ;808241|229FC680|80C69F;  
+
 
 
 ; ------------------------- freeSpace ---------------------
@@ -1232,6 +1243,20 @@ pullPC
 
 { ; ---------------------------- allSmallPatches ---------------------
 
+
+	
+	hatOAMdata:
+;		db $F1,$14,$64,$32
+		dw $14f1, $3264
+	boneDragonSpawnTweak:		; make him only spawn on the right yPos to reduce lag 
+		jsl $82B70B			; CODE_82B70B     hijack fix        ;82B5A3|220BB782|82B70B; 
+		lda RAM_X_event_slot_yPos,x
+		clc
+		adc #$00c0														; we only check when coming from bellow..
+		cmp RAM_simonSlot_Ypos
+		bcs +
+		rtl 
+	+	jml spawnBoneDragon
 ;secretBreakabGrState00: LDA.W $1602                          ;83E351|AD0216  |811602;  
 
 	halfHeartCount:
@@ -1399,12 +1424,17 @@ pullPC
 		sta $a4
 		sta $a6 
 		rtl				
-	+++	lda $a6
-		clc 
-		adc #$0008
-		cmp #$0328
-		bpl endCamLockMoveDown
+	+++	; lda $a6						; the slow movement seem not to fix anything anyway.. 
+		; clc 
+		; adc #$0008
+		; cmp #$0328
+		; bpl endCamLockMoveDown
+		lda #$0320						
 		sta $a6 
+		lda #$0BE0
+		sta $a0
+		jsl clearSelectedEventSlotAll	; clear on bothom so we have no issue climbing again 
+		
 		rtl
 	endCamLockMoveDown:
 		rtl
@@ -1494,7 +1524,6 @@ pullPC
 		bpl ++
 		lda #$0400 
 		sta $a4
-	
 			
 	++	rtl 
 		
@@ -3497,3 +3526,37 @@ simonSpriteDMAPointerToo1b00:
 ;		bra +
 ;	whipGFXPointers:	
 ;		dw $B3FE,$B3EB,$FF27
+
+
+
+;	extraSpriteAddon:
+;		jsl $80C69F 		; hijack fix                  ;808241|229FC680|80C69F;   free up 4c0 instead
+;		rtl 
+
+;		ldx #$0020			; find empty oam slot 
+;	-	lda $0f00,x 
+;		and #$00ff
+;		cmp #$0080
+;		beq +
+;		inx
+;		inx
+;		inx
+;		inx
+;		cpx #$10fc
+;		bne -
+;		bra ++
+;	+	txa 
+;		clc
+;		adc #$0f00 
+;		sta $00
+;		
+;		ldx #$0002	
+;		txy
+;	-	lda.l hatOAMdata,x
+;		sta ($00),y  
+;		dex
+;		dex 
+;		dey
+;		dey
+;		bpl -
+;	++	rtl 

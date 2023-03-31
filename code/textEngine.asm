@@ -540,11 +540,11 @@ asciiLookUpTable:
 {	; NPC Text ------------------------------------------------------------------------
 	npcSpriteIDlist:			; list is based in subID $14																		
 		dw oldMan3Fr1,jungLadyFr1,oldManFr1,jungLadyFr1,oldManFr1,oldMan3Fr1,jungLadyFr1,jungLadyFr1,jungLadyFr1,oldMan3Fr1,$89f0,jungLadyFr1
-		dw $89f0,jungLadyFr1,oldManFr1,oldMan3Fr1,doorSpriteAssembly,oldManFr1,oldMan3Fr2
+		dw $89f0,jungLadyFr1,oldManFr1,oldMan3Fr1,doorSpriteAssembly,oldManFr1,oldMan3Fr2,oldManFr1
 		; $8f15
 	npcSpriteIDlist2:	
 		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1,oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1,jungLadyFr1,oldMan3Fr2,$968b,jungLadyFr1		; $8f2e
-		dw $968b,jungLadyFr1,oldManFr2,oldMan3Fr2,doorSpriteAssembly,oldManFr2,$0000
+		dw $968b,jungLadyFr1,oldManFr2,oldMan3Fr2,doorSpriteAssembly,oldManFr2,$0000,oldManFr1
 	; zombie Walk $96a0,$968b 
 
 	mainNPCStateTable: 
@@ -569,6 +569,7 @@ asciiLookUpTable:
 		dw door
 		dw RedguyLiftingCurse   ; 11
 		dw TipLeady00			; 12
+		dw TipLeady01			; 13
 		
 	actionListMainNPC:
 		dw actionSeller,actionListGivingLady
@@ -589,6 +590,7 @@ asciiLookUpTable:
 		dw $0000
 		dw actionRedguyLiftingCurse
 		dw actionListTipLeady00
+		dw actionListTipLeady01
 
 	
 	actionSeller:
@@ -1064,43 +1066,48 @@ asciiLookUpTable:
 		dw BarManDoinaText01,goNextText
 		dw BarManDoinaText02,goNextText
 		dw BarManDoinaText03,initCurser
-		dw BarManDoinaText04,shopRoutineBone
+		dw BarManDoinaText04,shopRoutineKey
 		dw BarManDoinaText05,endText
 		dw BarManDoinaText06,endText
 		dw text06,endText
+		dw BarManDoinaText07,endText
 	
 	BarManDoinaText00:
-		db "HELLO AND WELCOM"
+		db "HELLO WELCOME   "
 		db "DID YOU NOTICE  "
 		db "THE SKELLETON   "
 		db "UNDER THE TABLE?",$00
 	BarManDoinaText01:	
-		db "HE DID DRINK FOR"
-		db "MONTS AND DID   "
-		db "NOT PAY UP.",$00
+		db "HE WENT TO THE  "
+		db "CASTLE BUT DID  "
+		db "NOT SAY A WORD  "
+		db "SINCE HE IS BACK",$00
 	BarManDoinaText02:	
-		db "WELL WE STILL   "
-		db "TRY TO SELL HIM "
-		db "TO MAKE UP FOR  "
-		db "THE DEPTS..",$00
+		db "THEN HIS FLASH  "
+		db "BURNED AWAY FROM"
+		db "THE SUNLIGHT... "
+		db "IN HIS REMAINS",$00
 	BarManDoinaText03:	
-		db "BONES ARE GOOD  "
-		db "TO TAME DRAGONS."
-		db "I SELL TO ANYONE"
-		db "BUT OUR COUNT.",$00
+		db "WE FOUND THIS   "
+		db "KEY. I SELL IT  "
+		db "SO I CAN MAKE UP"
+		db "SOME DEPTS.",$00
 	BarManDoinaText04:
-		db "   NO BONES     "
+		db "   NO KEY       "
 		db "   YES 20K GOLD ",$00
 	BarManDoinaText05:	
-		db "BUT I TELL YOU  "
-		db "HIS DEPTS BEEN  "
-		db "WAY MORE..",$00
+		db "COME BACK IF YOU"
+		db "DECIDE OTHERWISE",00
 	BarManDoinaText06:	
-		db "MANY THANKS     "
-		db "I HAVE MORE IF  "
-		db "YOU RUN LOWE ON "
-		db "BONES AGAIN.",$00
-		
+		db "NO CLUE WHERE IT"
+		db "MIGHT FIT.",00
+	BarManDoinaText07:
+		db "OHH I SOLD IT.. "
+		db "TO SOMEONE THAT "
+		db "JUST LOOKS LIKE "
+		db "YOU..",00
+	
+	
 	actionListBuilderManDoina:	
 		dw BuilderManDoinaText00,goNextText
 		dw BuilderManDoinaText01,goNextText
@@ -1200,7 +1207,33 @@ asciiLookUpTable:
 		db "YOUR JUMP       "
 		db "SHORTER.",$00 
 		
-		
+
+	actionListTipLeady01:
+		dw whipText00,goNextText
+		dw whipText01,goNextText
+		dw whipText02,goNextText
+		dw whipText03,endText	
+	
+	whipText00:
+		db "IT IS GETTING   "
+		db "DARK REALLY     "
+		db "QUICK HERE..    "
+		db "YOU GOT MY",00
+	whipText01:	
+		db "BROTERS WHIP?   "
+		db "REMEMBER THE    "
+		db "LEATHER WHIP IS "
+		db "BETTER SUITED",00 
+	whipText02:		
+		db "FOR PLATFORMING."
+		db "TRY SWITCHING ON"
+		db "DIFFERENT TASKS."
+		db "ALSO I NEVER",00
+	whipText03:		
+		db "SEEN A TREE THIS"
+		db "TALL. I WONDER  "
+		db "WHAT IS ON TOP  "
+		db "OF IT..",00	
 	
 }
 	
@@ -1262,6 +1295,8 @@ asciiLookUpTable:
 	
 	
 	goNextTextWithSound:
+		LDA #$0010
+		STA $13F4		; ALSO REFILL HEALTH
 		lda #$0030		; 8e 
 		JSL.L $8085E3
 		jmp goNextText
@@ -1318,20 +1353,30 @@ asciiLookUpTable:
 		sta $36,x 
 		rtl
 	
-	shopRoutineBone:
+	shopRoutineKey:
 		lda $36,x 
 		stz $36,x 
 		tay 
 		cpy #$0002
 		bne endShopRoutine
 		
+		lda RAM_simon_multiShot		; only get item once 
+		cmp #$0002
+		beq +
 		lda #$2000   			; Cost	; curse remove	
 		jsr checkCash
 		bcs endShopRoutine	
-		jsr giveBone
-		inc $34,x 				; anware for shoping 
+		jsr giveKey
+		inc $34,x 				; answare for shoping 
 		inc $34,x 
 
+		bra endShopRoutine	
+	+	inc $34,x 				; answare for having a key
+		inc $34,x 
+		inc $34,x 
+		inc $34,x 
+		inc $34,x 
+		inc $34,x 
 		bra endShopRoutine
 
 	shopRoutine:
@@ -1531,10 +1576,10 @@ asciiLookUpTable:
 		sta !allSubweapon 
 		rts 
 
-	giveBone:
+	giveKey:
 		LDA.W #$0072      	; SoundID  ;80DFF2 give armore here
 		JSL.L $8085E3 						
-		lda #$0001
+		lda #$0002
 		sta $90
 		rts 
 	
@@ -1675,7 +1720,7 @@ asciiLookUpTable:
 		jsr walkBackAndForward
 		jml NPCTextTrigger	; text trigger has rtl at the end what will end the routine
 
-     NPCStateOldMan03:		
+    NPCStateOldMan03:		
 		jsr NPCwalkAnimation	
 		jsr walkBackAndForward
 		jml NPCTextTrigger
@@ -1793,8 +1838,115 @@ asciiLookUpTable:
 		jsr walkBackAndForward
 		jml NPCTextTrigger
 		
-	TipLeady00:		; IS DRESSED AS A MAN LOL 
+	TipLeady00:		; IS DRESSED AS A MAN LOL dont fix it hehe 
 		jml TutorialLeady01
+	
+	TipLeady01:
+		jsl makePaletteDark
+		jsl faceSimon
+		jsl NPCTextTrigger
+		jsl	resetBG3Scroll
+		rtl 
+
+	resetBG3Scroll:
+		lda.l !textEngineState
+		beq +
+		lda #$0000
+		bra ++
+	+	lda #$000b
+	++	sta $46 		; cheep fix just changing a setting also fixes a issue with restoring this BG since we write to first screen 		; 46 #$0b00
+		rtl 
+	
+	makePaletteDark:
+		lda $22,x 
+		clc 
+		adc #$0001
+		cmp #$0020
+		bne +
+		
+		stz.w $22,x 	; counter reset write palette offset 
+		lda $20,x 
+		clc 
+		adc #$0020
+		sta $20,x 
+		bra ++
+
+	+	sta $22,x 	
+	++	lda $20,x
+		cmp #$0080
+		bne +
+		stz.w $22,x	; lock counter
+		jmp makePaletteBlack
+
+	+	phk
+		phx
+		phy 
+		sep #$20
+		lda #$86	
+		pha
+		plb
+		rep #$20
+		
+		lda #$FE82			;	paletteGetDark:   ;86FE82
+		clc 
+		adc $20,x 
+		sta $00
+	
+		ldx #$0020
+		txy
+	-	lda ($00),y  
+		sta.l $7e2220,x
+		dey
+		dey
+		dex
+		dex
+		bpl -
+		
+		ply 
+		plx 
+		sep #$20
+		plb 
+		rep #$20
+		rtl 
+	makePaletteBlack:
+		phx 
+		ldx #$0020
+		lda #$0000
+	-	sta.l $7e2220,x
+		dex
+		dex 
+		bpl -
+		plx 
+		rtl 
+
+;		lda $22,x 		; a experiment with palettes.. 
+;		bne +
+;		lda #$ffff
+;		sta $22,x 
+;		sta $20,x
+;
+;	+	lda $3a
+;		and #$0001
+;		beq ++
+;		
+;		lda $20,x 
+;		sec 
+;		sbc #$1111
+;		bcc +
+;		sta $20,x 
+;		
+;	+	lda $20,x 
+;		sta $00
+;		phx 
+;		ldx #$0020
+;	-	lda.l $7e2220,x 
+;		and $00 
+;		sta.l $7e2220,x 
+;		dex
+;		dex
+;		bpl -
+;		plx
+;	++	rtl 
 }   
 
 

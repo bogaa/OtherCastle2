@@ -1,3 +1,5 @@
+
+
 ; ------------------------- hijack Simon State -----------
 
 
@@ -22,9 +24,6 @@ org $80A279
 		jsl SimonState00_respawnL
 		nop
 		nop
-
-		
-; ------------------------- hijacks ---------------------
 
 
 ; ------------------ old job.asm 
@@ -169,18 +168,23 @@ org $81A6EC
 	dw $0020,$0008
 	dw $0030,$0010           
     dw $0000,$001c 
-; --------------------------------------------------
+
+
+; ------- the other hijack I know what a mess haha embrase the chaos -------------------------------------------
+; ------------------------- HIJACKS -------
+org $82C0B8		; falling block stage 8 hardcode slot offset 
+		jsl hardcodeSlotOffsetBrige8
+  
+
+org $80DC36		; we can detect here if you murder the hunter 
+		jsl detectMurderOnHunter
+	; JSL.L collectableItemDroper          ;80DC36|2214E080|80E014;  
+
 
 org $808649
 		jsl konamiCode
 	;   JSL.L CODE_8098BE                    ;808649|22BE9880|8098BE;  
 
-org $80DBB3									 ; connecting to ring Sound
-	LDA.W #$0025                        
-	JSL.L ringConnectHijack 		; CODE_8085E3            	; 80DBB6|22E38580|8085E3;  
-
-org $8CFF1A
-		jml newRingSubID					; make new ring events 
          
 org $80EB11
 		jml findSimonBelowInRangeMakeState01 ; snake 32 hijack first state 
@@ -206,6 +210,8 @@ org $80BD25
 org $80DF72
 		jml $80DF99 						; dont check for one up from points 
 
+org $81f2d8
+		dw $0418							; move breakable stairs collusion remove pointer Stage 8 
 
 org $86b7ff		; hijacks
 	JSL.L $86AC59
@@ -213,6 +219,17 @@ org $86b7ff		; hijacks
 ;	nop
 ;	nop
 ;	nop
+org $8297E2
+	LDA.W #$0008	; #$0010   ; hunchback timer after landing                      ;8297E2|A91000  |   
+org $8297ea			; hunchback event 57 hijack
+	jml newHunchbackSript
+org $81BB8B
+hunchBackJumpLongSpeeXposSub: 
+	dw $2000                                                                     
+hunchBackJumpLongSpeeXpos: 
+	dw $0002,$E000,$FFFD               
+
+
 org $81A551 
     dl eventNewPlatform					; event_ID_67_emptyEvent            ;81A551|        |83D3EF;
 org $81A461
@@ -415,12 +432,21 @@ org $82B5A3
 	spawnBoneDragon:
 
 
-; --------------- HIJACK FOR SILLY SPRITE ADDON				; free up 4c0 and have one less subweapon on screen 
-;org $808241
-;	JSL.L extraSpriteAddon 	; UpdateHUDmain                  ;808241|229FC680|80C69F;  
-
-
-
+; only render score in pause
+org $80C729
+		LDY.W #$5848			; move score where simons health is 
+		jml renderScoreWhilePause
+org $80C73E						; dont render health while pause to show score 
+		jml newHealthUpdate				
+		nop 
+		nop
+org $85FC92						; make secret reusable 
+;   STY.W $1604                          ;85FC92|8C0416  |811604;  		
+		nop
+		nop
+		nop
+		
+		
 ; ------------------------- freeSpace ---------------------
 
 
@@ -587,147 +613,6 @@ pullPC
 		dw $0800,$0800,$0400,$0400,$0200,$0100,$0200,$0100,$0080,$8000
 }	
 	
-{	; ------------------------ new Ring Events
-	ringConnectHijack: 		
-		jsl $8085E3				; hijack fix play sound 
-		stz.w RAM_X_event_slot_event_slot_health,x 	; mark the current ring hit with 00 health 
-		rtl
-	newRingSubID:		
-		LDA.B RAM_X_event_slot_subId,X       ;8CFF1A|B514    |000014;  
-        bit #$0080
-		bne ++
-		cmp #$0000
-		BNE +
-		rtl 
-	+ 	jml $8CFF1F		
-	
-	++	LDA.B $14,X                  		                                                  
-		and #$007f							; mask bit 80 out 
-		PHX                                 
-        ASL A                               
-        TAX                                 
-        LDA.L newRingEventSubID,X    
-        PLX                                 
-        STA.B $00                   
-        JMP.W ($00) 
-		
-	newRingEventSubID:
-		dw ringSubID80,ringSubID81,ringSubID82
-	
-	ringSubID80:						; rising and wrapping rings 				
-		lda RAM_simonSlot_State 
-		cmp #$0008
-		beq +
-		
-		lda #$0001								; set it to a value so we can detect hits
-		sta RAM_X_event_slot_event_slot_health,x
-		
-	+	lda #$0003
-		sta RAM_X_event_slot_Movement2c,X 
-	+	lda #$ffff 
-		sta RAM_X_event_slot_ySpd,X 
-		lda #$0000
-		sta RAM_X_event_slot_ySpdSub,X 
-		
-		lda RAM_X_event_slot_yPos,x 
-		bne +
-		
-		lda RAM_X_event_slot_event_slot_health,x
-		bne +
-;		lda RAM_simonSlot_State 
-;		cmp #$0008
-;		bne +
-		jsl disslunchSimonFromRing
-		lda #$fffc
-		sta RAM_simonSlot_SpeedYpos
-		
-	+	lda RAM_X_event_slot_yPos,x 
-		and #$00ff		
-		sta RAM_X_event_slot_yPos,x 
-		jsl $8CFF49						; make Simon FollowRing 
-		rtl 
-		
-		
-	ringSubID81:	
-		lda RAM_simonSlot_State 
-		cmp #$0008
-		beq +
-		
-		lda #$0001								; set it to a value so we can detect hits
-		sta RAM_X_event_slot_event_slot_health,x
-		
-	+	lda #$0003
-		sta RAM_X_event_slot_Movement2c,X 
-	+	lda #$0000
-		sta RAM_X_event_slot_ySpd,X 
-		lda #$c000
-		sta RAM_X_event_slot_ySpdSub,X 
-		
-		lda RAM_X_event_slot_yPos,x 
-		cmp #$00ff
-		bne +
-		
-		lda RAM_X_event_slot_event_slot_health,x
-		bne +
-		jsl disslunchSimonFromRing
-		lda #$fffc
-		sta RAM_simonSlot_SpeedYpos
-		
-	+	lda RAM_X_event_slot_yPos,x 
-		and #$00ff		
-		sta RAM_X_event_slot_yPos,x 
-		jsl $8CFF49						; make Simon FollowRing 
-		rtl 
-		 
-		 
-	ringSubID82:
-		lda #$0003
-		sta RAM_X_event_slot_Movement2c,X 
-		jsl $8CFF49						; make Simon FollowRing 
-		
-		lda RAM_X_event_slot_yPos,x		; find turn points ypos top bottom to set flag $20,x 
-		sec 
-		cmp #$0030 
-		bcs +
-		lda #$0001
-		sta $20,x 
-		jsl zeroYSpeed
-		bra +
-	+	clc 
-		lda #$0090
-	    cmp RAM_X_event_slot_yPos,x
-		bcs +
-		stz.w $20,x
-		jsl zeroYSpeed
-
-	+	lda.w $20,x						; add speed depending on this flag 
-		beq ++
-
-		LDA.B RAM_X_event_slot_ySpdSub,X     ;82C242|B51C    |00001C;  
-        CLC                                  ;82C244|18      |      ;  
-        ADC.W #$1000                         ;82C245|690020  |      ;  
-        STA.B RAM_X_event_slot_ySpdSub,X     ;82C248|951C    |00001C;  
-        LDA.B RAM_X_event_slot_ySpd,X        ;82C24A|B51E    |00001E;  
-        ADC.W #$0000                         ;82C24C|690000  |      ;  
-        STA.B RAM_X_event_slot_ySpd,X        ;82C24F|951E    |00001E;  
-        LDA.B RAM_X_event_slot_yPos,X        ;82C251|B50E    |00000E;  
-		bra +++
-		
-	++	LDA.B RAM_X_event_slot_ySpdSub,X     ;82C21C|B51C    |00001C;  
-        SEC                                  ;82C21E|38      |      ;  
-        SBC.W #$1000                         ;82C21F|E90020  |      ;  
-        STA.B RAM_X_event_slot_ySpdSub,X     ;82C222|951C    |00001C;  
-        LDA.B RAM_X_event_slot_ySpd,X        ;82C224|B51E    |00001E;  
-        SBC.W #$0000                         ;82C226|E90000  |      ;  
-        STA.B RAM_X_event_slot_ySpd,X        ;82C229|951E    |00001E;  
-        LDA.B RAM_X_event_slot_yPos,X        ;82C22B|B50E    |00000E;  
-		
-	+++	rtl 
-	zeroYSpeed:
-		stz.w RAM_X_event_slot_ySpdSub,x 
-		stz.w RAM_X_event_slot_ySpd,x 
-		rtl
-}
 
 {	; ----------------------- Simon Gradius Controlls -----------------------------------------	
 
@@ -1242,12 +1127,55 @@ pullPC
 }
 
 { ; ---------------------------- allSmallPatches ---------------------
-
-
 	
-	hatOAMdata:
-;		db $F1,$14,$64,$32
-		dw $14f1, $3264
+	hardcodeSlotOffsetBrige8:
+		lda $14,x 
+		cmp #$0003		; only stage 8 blocks.. 
+		bne +
+		lda #$0120
+		sta $26,x 
+	+	JSL.L $80CF86 ; hijack fix readCollusionTable7e4000       ;82C0B8|2286CF80|80CF86;
+		rtl
+	
+	detectMurderOnHunter:
+		lda $86
+		cmp #$0007		; check that we are in town 
+		bne +
+		lda $13d4		; check current death entrance
+		bne +
+		lda.w $10,y 		; check enemy ID killed 
+		cmp #$0070
+		bne +
+		
+		sed
+		lda !killedHusband	; count how many times you kill him 
+		clc
+		adc #$0001
+		sta !killedHusband
+		cld 	
+		
+	+	JSL.L $80E014	; collectableItemDroper     ; hijack fix      ;80DC36|2214E080|80E014;  
+		rtl 
+		
+	newHealthUpdate:
+		lda $66
+		bne +
+		ldy #$5848			; hijack fix 
+		lda $13f4 
+		jml $80C7C9
+
+	+	lda #$0002			; skip health update 
+		bra ++
+		
+	renderScoreWhilePause:
+		lda $66 		; RAM_PauseFlag
+		beq +
+		JSL.L $808D52  ; hijack fix                     ; 80C72C|22528D80|808D52; 
+		jml $80C730 	
+
+	+	lda #$0001		; skip score update 
+	++	jml $80C70E
+
 	boneDragonSpawnTweak:		; make him only spawn on the right yPos to reduce lag 
 		jsl $82B70B			; CODE_82B70B     hijack fix        ;82B5A3|220BB782|82B70B; 
 		lda RAM_X_event_slot_yPos,x
@@ -1282,7 +1210,30 @@ pullPC
 	crossCatchRoutine:
 		sbc $54e			; give a heart back when u catch cross 
 		cmp #$0020
-		bcs ++
+		bcs hitBoxCheckYposCrossCatchEnd
+		
+		lda !aramusBelmontCross
+		beq giveSimonHeart4CrossCatch
+		
+		lda RAM_81_simonSlot_Xpos			; hit simon when not facing toward the cross to catch 
+		cmp RAM_X_event_slot_xPos,X   
+		bcc +
+		lda RAM_simonSlot_spriteAttributeFlipMirror
+		beq ++
+		bra giveSimonHeart4CrossCatch
+	+	lda RAM_simonSlot_spriteAttributeFlipMirror		
+		beq giveSimonHeart4CrossCatch
+				
+	++	bne +
+		lda #$ffff				; manipulate the direction simon gets boosted 
+		sta RAM_81_simonSlot_empty00
+		
+	+	lda #$000c				; aramus Patch dont trust the cross
+		sta RAM_simonSlot_State
+		LDA.W #$004e			; 3e   95                      
+		jsl lunchSFXfromAccum             
+
+	giveSimonHeart4CrossCatch:	
 		sed
 		lda $13f2
 		adc #$0001
@@ -1291,15 +1242,21 @@ pullPC
 		sta $13f2 
 	+	cld
 		clc 
-	++	rtl 
+	hitBoxCheckYposCrossCatchEnd:
+		rtl 
 	
 	newStarterLevel:
 		lda $1e02
 		bne +
-	if !levelSelect == 0	
+;	if !levelSelect == 0	
 		lda #$0005
 		sta $86
-	endif
+		lda #$0000			; reset on first level start 
+		sta !armorType
+		sta !ownedWhipTypes
+		sta !allSubweapon
+		sta !killedHusband
+;	endif
 	+	rtl
 	newTable:
 		lda #$0001
@@ -1364,7 +1321,7 @@ pullPC
         JMP.W ($00)                 
 	newEventJumpTable: 
 		dw cameraLockDown00,cameraLockDown01,cameraLockDown02,leverBGScroll3,leverBGScroll4,levelBGWrap5,realCurse6
-		dw eventSpawnBossAtXpos
+		dw eventSpawnBossAtXpos,puwexOrb08
 
 	eventKeepUpWithSimon:
 		lda $54e			; keep up with simon
@@ -1488,7 +1445,7 @@ pullPC
 		jsl eventKeepUpWithSimon
 		
 		lda $54e
-		cmp #$0070
+		cmp #$00a4	; 70 
 		bpl +
 		lda #$0100
 		sta $a2
@@ -1731,7 +1688,245 @@ pullPC
 		lda #$0000
 		sta $a4
 	+	rtl 
+
+	puwexOrb08:		
+		LDA.B RAM_X_event_slot_state,X     ; new state   
+		PHX                                  
+        ASL A                                
+        TAX                                  
+        LDA.L puwexORBSateTAble,X        
+        PLX                                  
+        STA.B $00  
+        JMP.W ($00) 
+
+
+	puwexORBSateTAble:
+		dw puwexOrb08State00,puwexOrb08State01,puwexOrb08State02,puwexOrb08State03,puwexOrb08State04,puwexOrb08State05
+
+
+	puwexOrb08State00:	
+		jsl eventKeepUpWithSimon
+		lda $54e
+		cmp #$0180
+		bcc +
+		inc.b RAM_X_event_slot_state,x 
+		lda #$00f0
+		sta RAM_X_event_slot_yPos,x 
+		lda #$0080
+		sta RAM_X_event_slot_xPos,x 
+		lda #$8000
+		sta RAM_X_event_slot_HitboxID,x 		; make it not despawn even when it goes off screen a lot 
+
+	+	rtl 
 	
+	
+	puwexOrb08State01:
+		lda #$81a4
+		sta $00,x 
+		
+		inc.b RAM_X_event_slot_yPos,x 
+		
+		lda RAM_X_event_slot_yPos,x 
+		cmp #$0160
+		bne +
+		jsl removeSubweapon
+		stz.b $22,x 
+		inc.b RAM_X_event_slot_state,x 
+	-
+	+	rtl 
+	removeSubweapon:
+		lda RAM_simon_subWeapon
+		beq -
+		
+		phx 		
+		jsl getEmptyEventSlot
+		lda RAM_simon_subWeapon
+		clc
+		adc #$0019						; callculate item drop ID
+		sta $10,x 
+		lda $542						; priority and possition 
+		sta $02,x
+		lda $54a
+		sta $0a,x 
+		lda $54e
+		sbc #$0018						; make it appear above Simon 
+		sta $0e,x 
+		
+		lda #$0000
+		sta RAM_X_event_slot_HitboxID,x 
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+		sta RAM_X_event_slot_HitboxXpos,x
+		sta RAM_X_event_slot_HitboxYpos,x
+		
+		lda #$fffc						; push it up  a bit 
+		sta RAM_X_event_slot_ySpd,x 
+		
+		lda $544						; push it backwared
+		beq +
+		lda #$c000
+		sta RAM_X_event_slot_xSpdSub,x
+		lda #$0000
+		sta RAM_X_event_slot_xSpd,x
+		bra ++
+	+	lda #$4000
+		sta RAM_X_event_slot_xSpdSub,x 
+		lda #$ffff
+		sta RAM_X_event_slot_xSpd,x
+		
+	++	plx 		
+		stz.b RAM_simon_subWeapon
+		
+		rtl 
+
+
+	puwexOrb08State02:		
+		jsl faceSimon
+		lda $3a 
+		bit #$0003
+		beq puwexOrb08State03 
+		lda #$81a4
+		sta $00,x 
+		rtl 
+	puwexOrb08State03:
+		lda #$0400		; 0006 red 
+		ora $04,x 
+		sta $04,x 
+		LDA.W #$B3C3   
+		sta $00,x 
+		
+		inc.b $22,x 		
+		lda $22,x 
+		cmp #$0020
+		bne +
+		inc.b RAM_X_event_slot_state,x
+		stz.b $22,x 
+		LDA.B RAM_X_event_slot_state,X
+		
+		cmp #$0003
+		bne +		
+		lda #$8047							;  init boss 
+		sta RAM_X_event_slot_HitboxID,x 	; give hitbox	
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 	; make it movable x and y 
+		lda #$000c
+		sta RAM_X_event_slot_HitboxXpos,x 
+		lda #$0014
+		sta RAM_X_event_slot_HitboxYpos,x 
+		lda #$0200							; health 
+		sta $06,x 
+		sta $20,x 							; compare value to detect hits 
+	+	rtl 
+	puwexOrb08State04:
+        jsl bossGeneralHealthRoutine
+		Jsl $80CA9D                    ;80CA52|229DCA80|80CA9D;  
+		jsl $80CAAF
+		
+		jsl faceSimon
+		
+		lda #$0400		; 0006 black 
+		ora $04,x 
+		sta $04,x 
+		
+		lda $06,x 
+		cmp $20,x 
+		bcs +
+		dec
+		dec 
+		sta $20,x 
+		lda #$0600		; 0006 red 
+		ora $04,x 
+		sta $04,x 
+	+	rtl 
+	
+	bossGeneralHealthRoutine:
+		lda $06,x 
+		cmp #$0031
+		bcc +
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr 
+		sta RAM_boss_Health_HUD
+		rtl 
+	+	stz.w RAM_boss_Health_HUD
+		stz.b RAM_X_event_slot_HitboxID,x 	; give hitbox	
+		stz.b $22,x 
+		stz.b $24,x 
+		inc.b RAM_X_event_slot_state,x 
+;		stz.b RAM_X_event_slot_Movement2c,x ; make him stop moving 		
+		rtl 
+	puwexOrb08State05:		
+;		LDA.B RAM_X_event_slot_xPos,X   
+;        STA.W $00
+;        LDA.B RAM_X_event_slot_yPos,X  
+;        STA.W $02
+;		stx.w RAM_XregSlotCurrent 
+;		JSL.L $80CF86		; Check Floor To stop falling readCollusionTable7e4000       ;80D27C|2286CF80|80CF86;  
+;        beq +                      
+;		dec.b RAM_X_event_slot_yPos,x 
+;		dec.b RAM_X_event_slot_yPos,x 
+;	+	ldx.w RAM_XregSlotCurrent	
+		lda RAM_X_event_slot_yPos,x 
+		clc
+		adc #$0001
+		cmp #$01e0 
+		bcs +
+		sta RAM_X_event_slot_yPos,x  
+	+	Jsl $80CA9D     	; X movment              ;80CA52|229DCA80|80CA9D;  
+		
+		lda #$0220							; set bottom screen lock 
+		sta.w $a6 
+		
+		lda $3a					; sprite blink animation 
+		bit #$0008
+		bne +
+		stz.w $04,x 
+		lda #$81a4
+		bra ++ 	
+	+	lda #$0400	
+		sta $04,x 
+		lda #$B3C3
+	++	sta.b $00,x 
+
+		lda $24,x 
+		cmp #$0006
+		beq ++
+		
+		inc.w $22,x 
+		lda $22,x 
+		cmp #$0018
+		bne +
+		
+		inc.b $24,x 
+		stz.b $22,x 
+		lda #$0088
+		jsl lunchSFXfromAccum 
+	+	rtl 
+	++ 	phx 
+		lda $0a,x 
+		pha 
+		lda $0e,x 
+		pha 
+		jsl getEmptyEventSlot
+		
+		lda #$0027
+		sta $10,x 
+
+		pla
+		sta $0e,x 
+		pla
+		sta $0a,x 
+		
+		lda #$0089
+		sta RAM_X_event_slot_HitboxID,x 
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+		sta RAM_X_event_slot_HitboxXpos,x
+		sta RAM_X_event_slot_HitboxYpos,x
+		plx
+		jml clearSelectedEventSlotAll
 }
 
 	
@@ -1761,7 +1956,7 @@ pullPC
 +		rtl 
 
 	newServBordType: 
-		dw standStill,raftBehavier,raftBehavierBounce            		
+		dw standStill,raftBehavier,raftBehavierBounce,raftBehavierGold            		
 		
 ; ---------------------------- RAFT 1 -----------------------------------------		
 	standStill:
@@ -1851,7 +2046,31 @@ pullPC
 	+	jsl frontCollusionUpBounce
 
 		rtl 
-		
+	
+	raftBehavierGold:
+		jsl initPlatform
+		jsl $82C312 	;Platform So you can stand on it
+			
+	raftGainSpeed01:
+		lda $0080
+		beq endRaftGainSpeed01
+		lda #$0400
+		clc
+		adc $18,x
+		sta $18,x 
+		lda $1a,x
+		adc #$0000
+		sta $1a,x
+		cmp #$0002
+		bne endRaftGainSpeed01
+		lda #$8000		; max speed 
+		sta $18,x
+		lda #$0001
+		sta $1a,x
+	endRaftGainSpeed01:		
+		jsl stopRaft
+		jsl myCollusinRaft01		
+		rtl 	 
 
 
 	myCollusinRaftBounce:
@@ -1893,6 +2112,42 @@ pullPC
 ;		stz $1c,x
 	EndCollisionBounce:
 		rtl 
+
+	myCollusinRaft01:
+		lda #$2000		;fall speed acceleration
+		clc 
+		adc $1c,x 
+		sta $1c,x 
+		bcc ++
+		lda $1e,x 
+		clc
+		adc #$0001
+		cmp #$0002
+		bne +
+		stz $1c,x
+	+	sta $1e,x
+	++	
+		
+		phx 
+		LDA.B RAM_X_event_slot_xPos,X        				; check if we can fall again
+        STA.B $00							 
+        LDA.B RAM_X_event_slot_yPos,X        
+        CLC                                  
+        ADC.W #$0008                         
+        STA.B $02						     
+        JSL.L $80CF86 		; readCollusionTable7e4000       ;80BBC9|2286CF80|80CF86;  
+		
+		BEQ +                   
+        BMI +  
+		plx 
+		bra ++ 
+	+	plx 
+		lda #$fffe
+		sta $1e,x 
+	++	stz.w $1e,x 
+		rtl 
+		
+
 
 	bounceOffWalls:
 		lda $1a,x 		; forwared check
@@ -2242,17 +2497,18 @@ pullPC
 		rtl
 	
 	newSmallHeartWhipUpgradeCheck:
-        pha 
-		lda $ac 
-		cmp #$ffff
-		bne +
-		stz $ac					; remove candle cancle whip 
-	+	lda $ae
-		cmp #$ffff
-		bne +
-		stz $ae					; remove candle cancle subw
-		
-	+	pla 
+;        pha 
+;		lda $ac 
+;		cmp #$ffff
+;		bne +
+;		stz $ac					; remove candle cancle whip 
+;	+	lda $ae
+;		cmp #$ffff
+;		bne +
+;		stz $ae					; remove candle cancle subw
+;		
+;	+	pla 
+
 		CMP.W #$0018           ; smallHeartID it is stored at $10,x and we check for possebility
         BNE notSmallHeart 
 ;		lda $92					; only collect when whip type is selected 2
@@ -2384,19 +2640,26 @@ pullPC
 	
 	
 	pauseCheckHijack:
+		lda $70
+		cmp #$0005 						; only run main game 
+		bne +
+		
 		jsl selectSubweaponsWhenUpgraded
 		jsl doBlueSkinL
+		
 		lda $66							; dont run while pause
 		bne +
-		jsl layer2Scrolling
-	+	JSL.L $80978F                    ;hijackFix this will check for pause
-		rtl
 
-	layer2Scrolling:
 		lda !layer2ScrollBehavier
 		beq +
 		jsl runBGScreenScrollGlobal			; this is located along the event that triggers it in the tutorialHackTweak.asm 
-	+	rtl 
+
+
+
+	+	JSL.L $80978F                    ;hijackFix this will check for pause
+		rtl
+
+
 
 	selectSubweaponsWhenUpgraded:
 		ldx $8e							; get current subweapon 
@@ -2452,19 +2715,63 @@ pullPC
 		rtl		
 	
 	doBlueSkinL:
-		lda !armorType			; switcher 1e1a
-		beq endDoBlueSkinL
-			
-		lda #$7b74
-		sta $7e2310 
-		lda #$5dab
-		sta $7e2312
-		lda #$3883
-		sta $7e2314
-		lda #$0800
-		sta $7e2316
+;		lda !armorType			; switcher 1e1a
+;		beq endDoBlueSkinL
+		
+		phb
+		phk
+		plb
+		
+		phx
+		lda !armorType
+		
+		asl 
+		tax
+		lda.l armorColorPointer,x 
+		sta $00
+		
+		ldy #$0000
+		ldx #$0000
+	-	lda ($00),y 
+		sta $7e2310,x 
+		inx
+		inx 
+		iny
+		iny
+		cpx #$0008
+		bne -
+		
+	+	plx 
+		plb		
 	endDoBlueSkinL:	
 		rtl
+
+	armorColorPointer:
+	dw armorVanilla,armorColorsBlue,armorColorsRed,armorColorsGreen,armorColorsGold
+
+	
+	armorVanilla: 
+		dw $77B8  
+		dw $4E70  
+		dw $2528  
+		dw $0462 
+	armorColorsBlue:
+		dw $7b74, $5dab, $3883, $0800
+	armorColorsRed:
+		dw $319F  
+		dw $0013  
+		dw $000C  
+		dw $0006 
+	armorColorsGreen:
+		dw $33E0  
+		dw $1A60  
+		dw $1980  
+		dw $18C0 	
+	armorColorsGold:
+		dw $67E6  
+		dw $4E60  
+		dw $3180  
+		dw $18C0 
 
 
 	whipStateTable:		
@@ -2490,6 +2797,73 @@ pullPC
 		rtl 
 }
 
+
+{; ------------------------------ new Hunchback 57 routijne
+	newHunchbackSript:
+		DEC.B RAM_X_event_slot_3e,X          
+        BNE +++                 
+		
+		ldy #$0007											; high jump as default option 
+		stz.b $04,x											; facing left as default 			
+		lda RAM_81_simonSlot_Xpos
+		cmp RAM_X_event_slot_xPos,X 
+		bcc ++
+				
+		lda RAM_simonSlot_spriteAttributeFlipMirror			; simon is right we check if he is facing away to do short jump 
+		beq +
+		
+		lda #$4000
+		sta $04,x 
+		bra endHunchBackScrip
+	+	lda #$4000
+		sta $04,x 	
+		ldy #$0005		; jump wide
+		
+		bra endHunchBackScrip
+								
+	++	lda #$0004											; does decide to jump left 
+		sta $3e,x 
+		lda RAM_simonSlot_spriteAttributeFlipMirror 		; simon is Left
+		beq endHunchBackScrip
+ 
+		ldy #$0005		; jump wide
+		bra endHunchBackScrip	
+
+
+;		LDY.W #$0007                         
+;        LDA.W #$4000                         
+;        STA.B $04,x 					; RAM_X_event_slot_flip_mirror_attribute,X
+;        LDA.W RAM_81_simonSlot_Xpos          
+;        SEC                                  
+;        SBC.B RAM_X_event_slot_xPos,X        
+;        BPL ++                      
+;        PHA                                  
+;        LDA.B RAM_RNG_2                      
+;        AND.W #$0003                         
+;        BEQ +                      
+;        STZ.B $04,x 					; RAM_X_event_slot_flip_mirror_attribute,X
+;        LDA.W #$0004                         
+;        STA.B RAM_X_event_slot_3e,X          
+;                                             
+;	+	PLA                                  
+;        EOR.W #$FFFF                         
+;        INC A                                
+;                                             
+;	++	CMP.W #$0050                         
+;        BCC endHunchBackScrip                      
+;        LDA.B $E9                            
+;        AND.W #$0003                         
+;        BEQ endHunchBackScrip                      
+;        LDY.W #$0005                                                                     
+	endHunchBackScrip:		
+		STY.B RAM_X_event_slot_state,X       
+        LDA.W #$9387                         
+        STA.B $00,x 					; RAM_X_event_slot_sprite_assembly,X
+                                                           
+	+++	RTL                                 
+
+
+}
 
 pushPC		
 
@@ -2517,9 +2891,55 @@ org $FE90DD
 		db $23,$00,$80 
 
 
-
-
 { ; ---------------------------- SPRITEASSEMBLY    ROM TWEAKS  ------------------------------	
+
+org $8481B8
+	;sprAssFirstPageID_48:
+		db $02                               ;8481B8|        |0000F7;  money Points
+        dd $028BFCF7,$028AFCFC               ;8481B9|        |      ;  
+        dd $028AFC01                         ;8481C1|        |      ;  
+                                                            ;      |        |      ;  
+	;sprAssFirstPageID_49: 
+		db $03                               ;8481C5|        |0000F7;  
+		dd $028CFCF7,$028AFCFC               ;8481C6|        |      ;  
+		dd $028AFC01                         ;8481CE|        |      ;  
+                                                            ;      |        |      ;  
+	;sprAssFirstPageID_4a: 
+		db $02                               ;8481D2|        |0000F7;  
+        dd $028DFCF7,$028AFCFC               ;8481D3|        |      ;  
+        dd $028AFC01                         ;8481DB|        |      ; 
+
+	;sprAssFirstPageID_4b: 
+		db $03                               ;8481DF|        |0000F7;  
+		dd $028EFCF7,$028AFCFC               ;8481E0|        |      ;  
+		dd $028AFC01                         ;8481E8|        |      ;  
+
+	;sprAssFirstPageID_4c: 
+		db $02                               ;8481EC|        |0000F7;  
+		dd $028FFCF7,$028AFCFC               ;8481ED|        |      ;  
+		dd $028AFC01                         ;8481F5|        |      ;  
+                                                            ;      |        |      ;  
+	;sprAssFirstPageID_4d: 
+		db $03                               ;8481F9|        |0000F7;  
+        dd $029AFCF7,$028AFCFC               ;8481FA|        |      ;  
+        dd $028AFC01                         ;848202|        |      ;  
+                                                            ;      |        |      ;  
+	;sprAssFirstPageID_4e: 
+		db $02                               ;848206|        |0000F7;  
+        dd $029BFCF7,$028AFCFC               ;848207|        |      ;  
+        dd $028AFC01                         ;84820F|        |      ;  
+                                                            ;      |        |      ;  
+	;sprAssFirstPageID_4f: 
+		db $03                               ;848213|        |0000F7;  
+        dd $029CFCF7,$028AFCFC               ;848214|        |      ;  
+        dd $028AFC01                         ;84821C|        |      ;  
+                                                            ;      |        |      ;  
+	; sprAssFirstPageID_50: 
+		db $03                               ;848220|        |0000F7;  
+        dd $029DFCF7,$028AFCFC               ;848221|        |      ;  
+        dd $028AFC01                         ;848229|        |      ;  
+
+
 
 org $80e87a							; breakable block assembly sub00 
 	db $00,$B0,$00,$B0,$00,$30,$00,$30,$00,$30,$00,$30,$00,$30,$00,$30,$00,$30,$00,$30,$00,$30,$00,$30
@@ -2628,10 +3048,12 @@ org $84FE7F						; $84FFB5 free Space Orginal
 
 	doorSpriteAssembly:
 		db $04
-		db $FD,$F8,$44,$A2
-		db $FD,$D8,$44,$A2
 		db $FD,$08,$44,$22
+		db $FD,$F8,$44,$A2
 		db $FD,$E8,$44,$22
+		db $FD,$D8,$44,$A2
+		
+		
 	
 	sheepSpriteAssembly:
 		db $08
@@ -2677,6 +3099,18 @@ org $84FE7F						; $84FFB5 free Space Orginal
 		db $e0,$00,$2e,$6E
 	
 org $848246					; more free space for sprite assembly 
+
+	AssPaul:
+		db $08
+		db $10,$e8,$82,$22
+		db $00,$e8,$80,$22
+		db $10,$d8,$62,$22
+		db $00,$d8,$60,$22
+		
+		db $00,$08,$a6,$22
+		db $f0,$08,$a4,$22
+		db $00,$f8,$a2,$22
+		db $f0,$f8,$a0,$22
 
 warnPC $84896E	
 

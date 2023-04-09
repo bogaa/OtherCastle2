@@ -9,10 +9,10 @@ dw enemyGFX19,enemyGFX20,enemyGFX20,enemyGFX2,enemyGFX23,enemyGFX24							;stage
 dw enemyGFX25,enemyGFX26																	;stage 5
 dw enemyGFX27,enemyGFX31,enemyGFX29,enemyGFX30,enemyGFX31,enemyGFX32,enemyGFX34,enemyGFX63,enemyGFX4	;stage 6
 dw enemyGFX36,enemyGFX36,enemyGFX38,enemyGFX41,enemyGFX41,enemyGFX31,enemyGFX42				;stage 7
-dw enemyGFX43,enemyGFX44,enemyGFX45,enemyGFX45												;stage 8
+dw enemyGFX43,enemyGFX45,enemyGFX44,enemyGFX43												;stage 8
 dw enemyGFX49,enemyGFX49,enemyGFX49,enemyGFX50,enemyGFX50,enemyGFX50,enemyGFX53,enemyGFX55	;stage 9
 dw enemyGFX55,enemyGFX58,enemyGFX57,enemyGFX58,enemyGFX59,enemyGFX32						;stage a
-dw enemyGFX62,enemyGFX62,enemyGFX63,enemyGFX64,enemyGFX65,enemyGFX66,enemyGFX67,enemyGFX68 	;stage b
+dw enemyGFX62,enemyGFX62,enemyGFX63,enemyGFX64,enemyGFX65,enemyGFX66,enemyGFX31,enemyGFX68 	;stage b
 
 ;enemiePointerAssembly
 org $868bcd
@@ -23,10 +23,10 @@ dw enemyAssembly19,enemyAssembly20,enemyAssembly20,enemyAssembly2,enemyAssembly2
 dw enemyAssembly25,enemyAssembly26																									;stage 5
 dw enemyAssembly27,enemyAssembly31,enemyAssembly29,enemyAssembly30,enemyAssembly31,enemyAssembly32,enemyAssembly34,enemyAssembly63,enemyAssembly4 ;stage 6
 dw enemyAssembly36,enemyAssembly36,enemyAssembly38,enemyAssembly41,enemyAssembly41,enemyAssembly31,enemyAssembly42					;stage 7
-dw enemyAssembly43,enemyAssembly44,enemyAssembly45,enemyAssembly45																	;stage 8
+dw enemyAssembly43,enemyAssembly45,enemyAssembly44,enemyAssembly43																	;stage 8
 dw enemyAssembly49,enemyAssembly49,enemyAssembly49,enemyAssembly50,enemyAssembly50,enemyAssembly50,enemyAssembly53,enemyAssembly55	;stage 9												
 dw enemyAssembly55,enemyAssembly58,enemyAssembly57,enemyAssembly58,enemyAssembly59,enemyAssembly32 									;stage a
-dw enemyAssembly62,enemyAssembly62,enemyAssembly63,enemyAssembly64,enemyAssembly65,enemyAssembly66,enemyAssembly67,enemyAssembly68 	;stage b
+dw enemyAssembly62,enemyAssembly62,enemyAssembly63,enemyAssembly64,enemyAssembly65,enemyAssembly66,enemyAssembly31,enemyAssembly68 	;stage b
 
 ;formatGFX
 ;00 AA BB CC DE
@@ -117,7 +117,7 @@ org $868C56	; lvl 0
 	enemyGFX8:
 	db $00,$00 
 	db $00,$6a,$9d,$ca,$a8 ;moon
-	db $00,$6c,$dd,$a1,$ae ;snakeBush
+	db $00,$6c,$dd,$a1,$ae ;snakeBush 32
 ;	db $00,$6e,$7d,$a5,$ae ;ghost
 	db $00,$6e,$3d,$e2,$b0 ;zombieEarth
 	db $00,$72,$1d,$b3,$b2 ;frog $30,
@@ -571,42 +571,54 @@ org $868C56	; lvl 0
 	enemyGFX43:
 	db $00,$00
 	db $00,$6a,$5d,$f8,$d3 ;crusher2 Spikes swingSpikes
-	db $00,$6e,$7d,$9b,$b6 ;drip
+;	db $00,$6e,$7d,$9b,$b6 ;drip 3f
+	db $00,$6e,$1d,$b3,$b2 ;frog $30,
 	db $00,$70,$1d,$ea,$b0 ;spider
-	db $00,$72,$3d,$d7,$b9 ;eye
+	db $00,$72,$fd,$f0,$c6 ;ring, block and bubbles 2
+;	db $00,$72,$3d,$d7,$b9 ;eye 72
+
 	db $00,$74,$7d,$c2,$c5 ;axeKnight
 	db $00,$7a,$1d,$ee,$ab ;bonePillar
-	db $00,$7e,$bd,$b6,$b2,$ff,$ff ;plant
+;	db $00,$7e,$bd,$b6,$b2,$ff,$ff ;plant 35
+	db $00,$7e,$dd,$a1,$ae,$ff,$ff ;snakeBush 32
 	enemyAssembly43:
-	db $07,$62,$3f,$43,$72,$52,$0b,$35
+	db $07,$62,$30,$43,$03,$52,$0b,$32
+
 	
 ;org $6919E ; lvl 2b
 	enemyGFX44:
 	db $00,$00
-	db $00,$6a,$5d,$f8,$d3 ;crusher2 Spikes swingSpikes
-	db $00,$6e,$7d,$9b,$b6 ;drip
-	db $00,$70,$fd,$f0,$c6 ;ring, block and bubbles 2
-	db $00,$72,$1d,$cf,$b9 ;boneDragon
-	db $00,$76,$3d,$d7,$b9 ;eye
-	db $00,$78,$9d,$97,$aa ;bat
-	db $00,$7a,$1d,$ee,$ab,$ff,$ff ;bonePillar
+;	db $00,$6a,$5d,$f8,$d3 ;crusher2 Spikes swingSpikes 62
+	db $00,$6a
+	dl $EDCA3D				; puwexil boss 1 
+	db $00,$70,$7d,$9b,$b6 ;drip
+	db $00,$72,$fd,$f0,$c6 ;ring, block and bubbles 2 06
+;	db $00,$72,$1d,$cf,$b9 ;boneDragon 5d
+;	db $00,$76,$3d,$d7,$b9 ;eye 72
+	db $00,$74,$9d,$97,$aa ;bat
+	db $00,$76,$5d,$f8,$d3 ;crusher2 Spikes swingSpikes 62
+;	db $00,$7a,$1d,$ee,$ab,$ff,$ff ;bonePillar 0b
+	dw $ffff
 	enemyAssembly44:
-	db $07,$62,$3f,$06,$5d,$72,$0c,$0b
+	db $05,$31,$3f,$03,$0c,$62	; sword skelly as place holder for boss sprite 3 slots ID31
 	
-;org $691CD ; lvl 2c
+org $691CD ; lvl 2c
 	enemyGFX45:
 	db $00,$00
 	db $00,$6a,$5d,$f8,$d3 ;crusher2 Skikes swingSpikes
 	db $00,$6e,$3d,$fe,$bd ;highFiveSkelly
-	db $00,$72,$bd,$b6,$b2 ;plant
+;	db $00,$72,$bd,$b6,$b2 ;plant 35
+	db $00,$72,$fd,$f0,$c6 ;ring, block and bubbles 2 
 	db $00,$74,$1d,$cf,$b9 ;boneDragon
 	db $00,$78,$3d,$c0,$af ;medusa
-	db $00,$7a,$dd,$a1,$ae ;snakeBush
-	db $00,$7c,$7d,$9b,$b6 ;drip
+;	db $00,$7a,$dd,$a1,$ae ;snakeBush 32
+	db $00,$7a,$7d,$9b,$b6 ;drip 3f	
+	db $00,$7c
+	dl NewPlatform2			; $5d,$b0,$b2 ;platform
 	db $00,$7e,$3d,$d7,$b9,$ff,$ff ;eye
 	
 	enemyAssembly45:
-	db $08,$62,$36,$35,$5d,$07,$32,$3f,$72
+	db $08,$62,$36,$03,$5d,$07,$3f,$17,$72
 	
 ;org $691F6 ; lvl 2d
 ;	enemyGFX46: 
@@ -634,10 +646,11 @@ org $868C56	; lvl 0
 	db $00,$6e,$fd,$f0,$c6 ;ring, block and bubbles 2
 	db $00,$70,$fd,$9b,$aa ;skelly
 	db $00,$76,$1d,$cf,$b9 ;boneDragon
-	db $00,$7a,$1d,$ee,$ab ;bonePillar
-	db $00,$7e,$9d,$97,$aa,$ff,$ff ;bat
+;	db $00,$7a,$1d,$ee,$ab ;bonePillar 0b
+	db $00,$7a,$5d,$b0,$b2 ;platform
+	db $00,$7c,$9d,$97,$aa,$ff,$ff ;bat
 	enemyAssembly49:
-	db $06,$63,$03,$12,$5d,$0b,$0c
+	db $06,$63,$03,$12,$5d,$17,$0c
 	
 ;org $6927C ; lvl 31
 	enemyGFX50:
@@ -682,12 +695,15 @@ org $868C56	; lvl 0
 ;org $69301 ; lvl 36 secret
 	enemyGFX55:
 	db $00,$00
-	db $00,$6a,$9d,$d3,$dc  ;spark,suckHole2
-	db $00,$6e,$5d,$db,$dc  ;ring, block and bubbles 2
-	db $00,$70,$7d,$e0,$c9	;oldMan
-	db $00,$76,$7d,$df,$dc,$ff,$ff  ;skelly3
+;	db $00,$6a,$9d,$d3,$dc  ;spark,suckHole2 $63
+	db $00,$6a,$5d,$db,$dc  ;ring, block and bubbles 2
+	db $00,$6c,$7d,$e0,$c9	;oldMan
+;	db $00,$72,$7d,$df,$dc,$ff,$ff  ;skelly3 ,$56
+	db $00,$72
+	dl gfxNPC2
+	dw $ffff 
 	enemyAssembly55:
-	db $04,$63,$03,$0d,$56
+	db $04,$03,$0d
 
 ;stage A ClockTower	
 ;org $69312 ; lvl 37
@@ -870,10 +886,34 @@ paletteSpriteMain:
 	db $55,$3A,$84,$14,$00,$00,$7D,$57,$BD,$2E,$34,$09,$B0,$00,$48,$00	
 
 ; ----------------------------------------	
-org $a8c2bd
-NewPlatform1:
-	db $44,$02,$80
+org $F3C6FD
+;    fontGFXdata2bpp: 	show one more character
+		dw $0303		; $F3,$02,$80                       ;F3C6FD|        |      ;  
+		db $80
+org $FE913d
+	sheepGFX:	
+		db $04,$04,$80		; 3c4 bytes??	
+		
+org $FE955d
+	gradiusIVGFX:
+		db $04,$08,$80 
+		
+org $FE9D6d	
+	gfxNPC2:
+		dw $0c03			; size 
+		db $80 
 
+org $a8c2bd
+	NewPlatform1:
+		db $44,$02,$80
+
+org $A8C31D
+	NewPlatform2:	
+		db $84,$02,$80
+
+org $BDFE3d
+		dw $07c4			; high five skelly extra space for a fireball 
+		db $80 
 	
 org $86806C				; experiment moving assets 	
 	dw $8206			; blockMabSrcDestPointer19          ;86806C|        |868206;  
@@ -897,15 +937,3 @@ org $868908
     dw $8AA9			; gfxLevel26                        ;868910|        |868AA9;  	
 	
 	
-org $FE913d
-	sheepGFX:	
-		db $04,$04,$80		; 3c4 bytes??	
-		
-org $FE955d
-	gradiusIVGFX:
-		db $04,$08,$80 
-		
-org $FE9D5d	
-	gfxNPC2:
-		dw $0c03			; size 
-		db $80 

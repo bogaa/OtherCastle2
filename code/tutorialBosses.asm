@@ -14,13 +14,16 @@ org $81A49A
 org $829327
 	BossMain:	
 org $8085E3
-	sfxLunch:	
+	sfxLunch:
+	lunchSFXfromAccum:	
 org $8280DD
 	musicLunch:
 org $80859E
 	musicLunchFix:			; wish I would know better what it does and could find a better name 
 org $80D7F1
 	getEmptyEventSlot:      
+org $82B459
+	gravetyFallCalculation4000:      ;839895|2259B482|82B459;  
 
 org $81f93a					; palette animation chandelire BG dest 
 	dw $2200
@@ -687,8 +690,8 @@ pullPC
 	makeMentosDangerous:		; for final form 
 		phx 
 		ldx #$a40 
-	-	lda #$047
-		sta $2e,x 		; make them hitable
+	-	lda #$0047
+		sta $2e,x 		; make them hitable and not despawn
 		lda #$0001
 		sta $06,x 		; give health 
 		lda #$0008		; give hitbox 
@@ -1635,15 +1638,6 @@ pullPC
 		cmp #$0001
 		beq +
 		
-;		pla 		; 800 health
-;		lsr
-;		lsr
-;		lsr
-;		lsr
-;		lsr
-;		lsr
-;		rtl 
-		
 	+	lda $54e
 		adc #$0020
 		eor #$FFFF	; base on simon ypos mosaik effect second face 
@@ -1652,6 +1646,7 @@ pullPC
 		sta $1e8a
 		
 		pla			; 400 health
+	bossPlus1LSRHealthHudCalc:
 		lsr
 		lsr
 		lsr
@@ -1665,6 +1660,26 @@ pullPC
 		lsr
 		lsr		
 		rtl 
+
+	bossPlus3LSRHealthHudCalc:	
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr 
+		rtl 
+
+	bossPlus2LSRHealthHudCalc:	
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr
+		rtl 
+
 
 	newDancerMovementRoutineYpos:
 	    LDA.W RAM_81_RNG_3                   ;85DF91|ADEA00  |8100EA;  
@@ -1899,7 +1914,6 @@ pullPC
 		bra --
 }
 
-
 {	; bossGrakul		used RAM $20,x = flagInAir RAM $14,x currentHealthHUD to check if hit 
 
 	newGrakulbossState00Long:
@@ -1932,7 +1946,7 @@ pullPC
 		STA.B RAM_X_event_slot_ID,X          ;838883|9510    |000010;  
 		LDA.W #$0018                         ;838885|A91800  |      ;  
 		STA.B RAM_X_event_slot_HitboxXpos,X  ;838888|9528    |000028;  
-		LDA.W #$0020                         ;83888A|A92000  |      ;  
+		LDA.W #$0018                         ;83888A|A92000  |      ;  
 		STA.B RAM_X_event_slot_HitboxYpos,X  ;83888D|952A    |00002A;  
 		LDA.W #$0080                         ;83888F|A98000  |      ;  
 		STA.W $0EF0                          ;838892|8DF00E  |810EF0;  
@@ -2202,12 +2216,400 @@ pullPC
 }
 
 
+{	; bossFrank		
+	newFrankInit:
+		LDA.W #$000C                         ;8392A9|A90C00  |      ;  
+        STA.B RAM_transoEffectSprite         ;8392AC|8544    |000044;  
+        LDY.W #$D525                         ;8392AE|A025D5  |      ;  
+        LDX.W #$1240                         ;8392B1|A24012  |      ;  
+        JSL.L bossGetPaletteY2X              ;8392B4|22E99080|8090E9;  
+        LDY.W #$D52B                         ;8392B8|A02BD5  |      ;  
+        LDX.W #$1260                         ;8392BB|A26012  |      ;  
+        JSL.L bossGetPaletteY2X              ;8392BE|22E99080|8090E9;  
+        LDX.W #$0580                         ;8392C2|A28005  |      ;  
+        LDA.W #$0003                         ;8392C5|A90300  |      ;  
+        STA.B RAM_X_event_slot_Movement2c,X  ;8392C8|952C    |00002C;  
+        LDA.W #$08C0                         ;8392CA|A9C008  |      ;  
+        STA.B RAM_X_event_slot_xPos,X        ;8392CD|950A    |00000A;  
+        LDA.W #$008D                         ;8392CF|A98D00  |      ;  
+        STA.B RAM_X_event_slot_yPos,X        ;8392D2|950E    |00000E;  
+        LDA.W #$0800                         ;8392D4|A90004  |      ;  
+        STA.B RAM_X_event_slot_event_slot_health,X;8392D7|9506    |000006;  
+        STA.B RAM_X_event_slot_mask,X        ;8392D9|9530    |000030;  
+        LDA.W #$0010                         ;8392DB|A91000  |      ;  
+        STA.L $8013F6                        ;8392DE|8FF61380|8013F6;  
+        LDA.W #$0087                         ;8392E2|A98700  |      ;  
+        STA.B RAM_X_event_slot_ID,X          ;8392E5|9510    |000010;  
+        LDA.W #$C965                         ;8392E7|A965C9  |      ;  
+        STA.B RAM_X_event_slot_sprite_assembly,X;8392EA|9500    |000000;  
+        LDA.W #$0000                         ;8392EC|A90000  |      ;  
+        STA.B RAM_X_event_slot_flip_mirror_attribute,X;8392EF|9504    |000004;  
+        LDA.W #$0010                         ;8392F1|A91000  |      ;  
+        STA.B RAM_X_event_slot_HitboxXpos,X  ;8392F4|9528    |000028;  
+        LDA.W #$0030                         ;8392F6|A93000  |      ;  
+        STA.B RAM_X_event_slot_HitboxYpos,X  ;8392F9|952A    |00002A;  
+        LDA.W #$0001                         ;8392FB|A90100  |      ;  
+        STA.B RAM_X_event_slot_state,X       ;8392FE|9512    |000012;  
+        RTL                
+
+	newBossFrankRoutine:
+		lda $7c0
+		bne +
+		lda #$0000		; make the fakes monster fart cloud disapear when he is not on screen. 
+		sta $800
+	
+	+	lda $592		; fail save if he wont stop walking for some reason.. we put a timer and state check..  
+		cmp $5b6
+		beq +
+		sta $5b6		; state changed we reset timer and update state to compare again 
+		lda #$0000
+		sta $5b8
+		bra ++
+
+	+	inc $5b8
+		lda $5b8
+		cmp #$01a0
+		bne ++
+		lda #$0000		;reset timer and throw a starup bottle to reset since the monster been walking for too long 
+		sta $5b8
+		lda #$0001
+		sta $592
+	++	
+
+		lda #$064e
+		sta $12c0		; hotfix BG since it does scroll wrong once you walk back.. 
+		jsl $8395F2 	; hijack fix  
+		rtl 
+
+	newBottleThrowScript:
+		inc.b $14,x 	; rotate 1-3
+		lda $14,x 
+		cmp #$0003
+		bne +
+		stz.b $14,x 
+		rtl 
+	+	sta $14,x 
+		rtl
+
+;	newGroundFireInit:				; seemed to be the single spread fire?? 
+;		phx 
+;		ldx #$5c0 
+;		LDA.W #$0001                         ;83966A|A90100  |      ;  
+;		STA.W $12,x   						
+;		lda #$0047							; make the fire hitable 
+;		sta $2e,x 
+;		lda #$0010							; health
+;		sta $06,x 
+;		plx 
+;		rtl 
+
+	newGroundFire4Balls00:
+		lda #$0047							; make the fire hitable 
+		sta $2e,x 
+		lda #$0001							; health
+		sta $06,x 	
+		sta $12,x 							; increase state 
+		
+		rtl 
+		
+	newGroundFire4Balls01:					; add destruction rtouine. Needed??
+		lda $06,x 
+		bne +
+		bra bottleFlameHit
+	+	JSL.L gravetyFallCalculation4000   
+        LDA.B RAM_X_event_slot_yPos,X       
+		CMP.W #$00AA                        
+        BCS +                     			
+        RTL                                 
+
+	+	LDA.W #$000C                        
+        STA.W $0EF0                         
+        STZ.B RAM_X_event_slot_xSpd,X       
+        STZ.B RAM_X_event_slot_xSpdSub,X    
+        STZ.B RAM_X_event_slot_ySpd,X       
+        STZ.B RAM_X_event_slot_ySpdSub,X    
+        LDA.W #$00AA                        
+        STA.B RAM_X_event_slot_yPos,X       
+        LDA.W #$0002						; 0001 orginal                         
+        STA.B RAM_X_event_slot_state,X      
+        LDA.W #$0081                        
+        JSL.L lunchSFXfromAccum             
+        RTL                                 
+
+	newGroundFire4Balls02:
+		lda $06,x 
+		bne ++
+	bottleFlameHit:
+		lda #$0030
+		jsl lunchSFXfromAccum
+		
+		lda $610 
+		clc
+		adc $650
+		adc $690
+		adc $6d0
+		adc $710
+		cmp #$0004			; each ID is 4 on the last flame kill we like to end the routine so the monster can continue the script.. 
+		beq +
+		
+		jml $80E982			; small flame routine 
+	+	jml $839856			; end when all flames are hit 
+	++	rtl 
+
+	makeGroundSpreadBottleHaveCollusionAgain:
+		JSL.L lunchSFXfromAccum   ; hijack fix             ;8396B4|22E38580|8085E3;  
+		lda #$0001
+		sta $5ee
+		
+		rtl 
+
+
+}
 ; --------------------------------------------------------------------------
 pushPC		
 ; --------------------------------------------------------------------------
 ; -------------------------------- hijacks and OG disASM -------------------
 ; --------------------------------------------------------------------------
 
+{	; --------------------- bossFank  -------------------------------------
+org $81D3E1
+SpriteAnimationTable_bossFrank64: 
+		dw $C965 ; sprAssID_834                      ;81D3E1|        |84C965;  
+        dw $0008                             ;81D3E3|        |      ;  
+        dw $C98A ; sprAssID_835                      ;81D3E5|        |84C98A;  
+        dw $0004                             ;81D3E7|        |      ;  
+        dw $C9AB ; sprAssID_836                      ;81D3E9|        |84C9AB;  
+        dw $0008                             ;81D3EB|        |      ;  
+        dw $C9D0 ; sprAssID_837                      ;81D3ED|        |84C9D0;  
+                                                            ;      |        |      ;  
+bossFrankSpeedTable: 
+		dw $0010,$FFFF                       ;81D3EF|        |      ;  
+                                                            ;      |        |      ;  
+bossFrankSubSpeedTable: 
+		dw $0008,$0000,$000A,$0000           ;81D3F3|        |      ;  
+        dw $0008,$0000,$000B,$0000           ;81D3FB|        |      ;  
+        dw $0008,$0000                       ;81D403|        |      ;  
+
+SpriteAnimationTable65: 
+		dw $C9F1 	; sprAssID_838                      ;81D407|        |84C9F1;  
+        dw $0010                             ;81D409|        |      ;  
+        dw $CA22 	; sprAssID_839                      ;81D40B|        |84CA22;  
+        dw $0005                             ;81D40D|        |      ;  
+        dw $CA5F	; sprAssID_840                      ;81D40F|        |84CA5F;  
+        dw $0005                             ;81D411|        |      ;  
+        dw $CA9C	; sprAssID_841                      ;81D413|        |84CA9C;  
+        dw $0005                             ;81D415|        |      ;  
+        dw $CAD9	; sprAssID_842                      ;81D417|        |84CAD9;  
+        dw $0005                             ;81D419|        |      ;  
+        dw $CAD9	; sprAssID_842                      ;81D41B|        |84CAD9;  
+        dw $0005,$FFFF                       ;81D41D|        |      ;  
+                                                            ;      |        |      ;  
+SpriteAnimationTable70: 
+		dw $CB1B	; sprAssID_844                      ;81D421|        |84CB1B;  
+        dw $0004                             ;81D423|        |      ;  
+        dw $CB24	; sprAssID_845                      ;81D425|        |84CB24;  
+        dw $0004,$FFFF                       ;81D427|        |      ;  
+                                                            ;      |        |      ;  
+SpriteAnimationTable66: 
+		dw $CB1B	; sprAssID_844                      ;81D42B|        |84CB1B;  
+        dw $0012                             ;81D42D|        |      ;  
+        dw $CB24	; sprAssID_845                      ;81D42F|        |84CB24;  
+        dw $0006                             ;81D431|        |      ;  
+        dw $CB55	; sprAssID_854                      ;81D433|        |84CB55;  
+        dw $0006                             ;81D435|        |      ;  
+        dw $CB5E	; sprAssID_855                      ;81D437|        |84CB5E;  
+        dw $0006                             ;81D439|        |      ;  
+        dw $CB6F	; sprAssID_856                      ;81D43B|        |84CB6F;  
+        dw $0006                             ;81D43D|        |      ;  
+        dw $CB88	; sprAssID_857                      ;81D43F|        |84CB88;  
+        dw $0006                             ;81D441|        |      ;  
+        dw $CBA1	; sprAssID_858                      ;81D443|        |84CBA1;  
+        dw $0006                             ;81D445|        |      ;  
+        dw $CBBA	; sprAssID_859                      ;81D447|        |84CBBA;  
+        dw $0006                             ;81D449|        |      ;  
+        dw $CBCB	; sprAssID_860                      ;81D44B|        |84CBCB;  
+        dw $0006                             ;81D44D|        |      ;  
+        dw $CBCB	; sprAssID_860                      ;81D44F|        |84CBCB;  
+        dw $0010,$FFFF                       ;81D451| 
+
+org $83948B
+;         LDA.W #$0047                         ;83948B|A94700  |      ;  
+		lda #$0000		; make bottle without any hitbox interaction 5d0 bottle slot number 
+
+org $839281		
+;		JSL.L frankMonsterRoutine00_bossEventRoutine ;839281|22F29583|8395F2;  
+		jsl newBossFrankRoutine
+org $839299
+;frankMonsterStateTable: 
+		dw frankMonsterState00               ;839299|        |8392A9;  
+        dw frankMonsterState01               ;83929B|        |839301;  
+        dw frankMonsterState02_walkLeft      ;83929D|        |83931A;  
+        dw frankMonsterState03_walkRight     ;83929F|        |83935C;  
+        dw frankMonsterState04_bottleThrow   ;8392A1|        |83941C; botleGroundSpread
+        dw frankMonsterState04_bottleThrow   ;8392A3|        |83941C; bottle 4 flames
+        dw frankMonsterState04_bottleThrow   ;8392A5|        |83941C; bottle Copy
+        dw frankMonsterState07_deathRoutine  ;8392A7|        |839502; 
+
+;org $8392A9
+	frankMonsterState00:
+		jml newFrankInit
+org $839301
+	frankMonsterState01:
+org $83931A
+	frankMonsterState02_walkLeft:
+org $83935C
+	frankMonsterState03_walkRight:
+org $83941C
+	frankMonsterState04_bottleThrow:
+org $839502
+	frankMonsterState07_deathRoutine:
+
+org $839A47
+	jsl bossPlus1LSRHealthHudCalc
+
+org $8393B6
+	jsl newBottleThrowScript
+	nop 
+
+;org $83966A
+;	jsl newGroundFireInit
+;	rtl 
+org $8396B4
+	jml makeGroundSpreadBottleHaveCollusionAgain
+
+
+org $839815
+		dw frankSingleGroundFlameState00     
+		dw frankSingleGroundFlameState01
+		dw frankSingleGroundFlameState02   
+	
+	frankSingleGroundFlameState00:
+			jml newGroundFire4Balls00
+	frankSingleGroundFlameState01:
+			jml newGroundFire4Balls01
+	frankSingleGroundFlameState02:
+			jsl newGroundFire4Balls02
+			bra frankSingleGroundFlameState01Continue
+
+org $839845
+		frankSingleGroundFlameState01Continue:
+
+; frankCopy hijack ---------------------------------------------------
+org $839874
+	;frankBottle03_copy_StateTable: 
+		dw frankBottle03_copy_State00        ;839874|        |83987E;  
+        dw frankBottle03_copy_State01        ;839876|        |839889;  
+        dw frankBottle03_copy_State02        ;839878|        |8398D7;  
+        dw frankBottle03_copy_State03        ;83987A|        |839956;  
+        dw frankBottle03_copy_State04        ;83987C|        |8399FE;  
+		dw frankBottle03_copy_State03		; inc case a other event will use it 
+		dw frankBottle03_copy_State03
+		dw frankBottle03_copy_State03
+		dw frankBottle03_copy_State03	
+
+		 ;      |        |      ;  
+	frankBottle03_copy_State00: 
+		JSL.L $839479 			; CODE_839479                    ;83987E|22799483|839479;  
+        LDA.W #$0001                         ;839882|A90100  |      ;  
+        STA.W $05D2                          ;839885|8DD205  |8105D2;  
+        RTL                                  ;839888|6B      |      ;  
+                                                            ;      |        |      ;  
+	frankBottle03_copy_State01: 
+;		 LDA.W $05C6                          ;839889|ADC605  |8105C6;  
+;        DEC A                                ;83988C|3A      |      ;  
+;        BPL CODE_839892                      ;83988D|1003    |839892;  
+;        JMP.W frankBottleGotDestroyed        ;83988F|4C2A96  |83962A;  
+                                                            ;      |        |      ;  
+                                                            ;      |        |      ;  
+    CODE_839892: 
+		LDX.W #$05C0                         ;839892|A2C005  |      ;  
+        JSL.L gravetyFallCalculation4000     ;839895|2259B482|82B459;  
+        LDX.W #$0580                         ;839899|A28005  |      ;  
+;        LDA.W $05CE                          ;83989C|ADCE05  |8105CE;  
+;        CMP.W #$004A     ; #$00aa                    ;83989F|C9AA00  |      ;  
+;        BCS CODE_8398A5                      ;8398A2|B001    |8398A5;  
+;        RTL                                  ;8398A4|6B      |      ;  
+;                                                            ;      |        |      ;  
+;    CODE_8398A5: 
+		LDA.W #$000C		; 000c                         ;8398A5|A90C00  |      ;  
+        STA.W $0EF0                          ;8398A8|8DF00E  |810EF0;  
+        LDA.W #$0000                         ;8398AB|A90000  |      ;  
+        STA.W $05E4                          ;8398AE|8DE405  |8105E4;  
+        STA.W $05E2                          ;8398B1|8DE205  |8105E2;  
+        STA.W $05DA                          ;8398B4|8DDA05  |8105DA;  
+        STA.W $05D8                          ;8398B7|8DD805  |8105D8;  
+        STA.W $05DE                          ;8398BA|8DDE05  |8105DE;  
+        STA.W $05DC                          ;8398BD|8DDC05  |8105DC;  
+        STA.W $05EE                          ;8398C0|8DEE05  |8105EE;  
+        LDA.W #$00AA			; #$00AA                         ;8398C3|A9AA00  |      ;  
+        STA.W $05CE                          ;8398C6|8DCE05  |8105CE;  
+        LDA.W #$0002                         ;8398C9|A90200  |      ;  
+        STA.W $05D2                          ;8398CC|8DD205  |8105D2;  
+        LDA.W #$0081                         ;8398CF|A98100  |      ;  
+        JSL.L lunchSFXfromAccum              ;8398D2|22E38580|8085E3;  
+        RTL  
+
+org $839956	
+	frankBottle03_copy_State03:        ;83987A|        |839956; 
+org $8398D7
+	frankBottle03_copy_State02:        ;839878|        |8398D7; 
+org $839968
+	phx
+	ldx #$7C0
+	jsl $82977D
+
+	stz.b $22,x 
+	lda $3a
+	and #$0030
+	lsr
+	lsr
+	lsr
+	lsr
+	sta.b $24,x 
+	LDA.W #$D3E1                         ;839979|A9E1D3  |      ;  
+    STA.B RAM_X_event_slot_sprite_assembly;83997C|8500    |000000;  
+    JSL.L spriteAnimationRoutine00       ;83997E|2269B082|82B069;  
+
+
+	LDX.W #$0800                         
+    LDA.W #$D4d9                         
+    STA.B RAM_X_event_slot_sprite_assembly
+    JSL.L spriteAnimationRoutine00       
+	
+	
+	lda $7ca
+	sta $80a
+	lda $7ce 
+	adc #$0038
+	sta $80e
+	lda #$8000
+	sta $804
+	
+;	inc.w $7e0
+;	lda $7e0
+;	cmp #$0030
+;	bne +
+;	
+;	lda #$0000
+;	sta $7e0 	; reset timer and respawn event
+;	
+;	lda #$0002
+;	sta $5d2 
+;	
+;	lda $0a,x 
+;	sta $5ca
+;	lda $0e,x 
+;	sta $5ce 
+	
+	
++	plx
+	rtl 
+		
+org $8399FE
+	frankBottle03_copy_State04:        ;83987C|        |8399FE;  
+
+
+}
 
 {	; --------------------- bossGrakul -------------------------------------
 org $838821

@@ -21,8 +21,9 @@ db "EATEN BY A VAMPIRE.",$FE
 db "_",$FE,"_",$FE				;every linebreak needs also a character
 db "THE BAD THING IS",$FE
 db "THAT IT WORKS.",$FE
-db "A WOMAN USED IT IN",$FE
-db "HOPE A TOWNS IDIOT,",$FE
+db "A WOMAN USED IT ON",$FE
+db "HERE SINCE SHE",$FE
+db "HOPED A TOWNS IDIOT,",$FE
 db "WOULD LOSE INTERESST.",$FE
 db "_",$FE,"_",$FE				;every linebreak needs also a character
 db "WELL THAT WORKED TOO.",$FE

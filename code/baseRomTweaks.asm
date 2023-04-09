@@ -88,8 +88,85 @@ org $84A1D8
 	db $E2,$Ea,$02,$60
 	db $F2,$Da,$00,$60
 
-; -------- end fix sprites
 
+if !invertRingGlitchControll == 1 
+org $80A9E2
+	jsl invertRingControllCheck
+org	$81ffe4
+	invertedValuesRingSpeed:
+	dw $0000,$0004,$0002
+pullPC
+	invertRingControllCheck:
+		tay				; hijackFix 		
+		lda !logicRingControlls
+		beq +
+		cmp #$0002			; if simon is above the ring invert Y 2and4 
+		bne +
+		lda.w invertedValuesRingSpeed,y 		; invert when value is 2
+		tay 					
+	+	lda $0574	; hijackFix 
+		rtl 
+		
+	invertControllAboveRingFix:				; if is in if bat.. we need better hijack system!! FIXME	
+		lda !logicRingControlls
+		beq ++
+		
+		lda RAM_simonSlot_State 			; skip not in ring state since we like to detect the first frame we got a hit on the current ring 
+		cmp #$0008
+		beq +
+
+		lda #$0001								; set it to a value so we can detect hits in ring state
+		sta RAM_X_event_slot_event_slot_health,x
+			
+	+	lda RAM_X_event_slot_event_slot_health,x	; once damage done we know we can to our check to invert controlls 
+		bne ++
+		
+		lda RAM_simonSlot_Ypos
+		sec
+		sbc #$0008								; set offset for above ring
+		clc 
+		cmp RAM_X_event_slot_yPos,x 
+		bcc +
+		
+		lda #$0001
+		sta !logicRingControlls		
+		bra ++
+	+	lda #$0002
+		sta !logicRingControlls		
+		
+	++	rtl 
+pushPC 	
+endif 	
+
+
+if !hotFixWhipCancle == 1 
+; -------- whipCancleOnRingFix
+org $80DB1B
+	jml whipCancleRingFix 
+;    BEQ CODE_80DB22                      ;80DB1B|F005    |80DB22;  
+;    BMI CODE_80DB22                      ;80DB1D|3003    |80DB22;  
+;    JMP.W CODE_80DC78                    ;80DB1F|4C78DC  |80DC78;  
+pullPC
+	whipCancleRingFix:
+		BEQ +                     
+		BMI +                     
+		lda RAM_X_event_slot_ID,x
+		cmp #$0003					; add a exeption to always check rings 
+		beq +					
+		cmp #$000e					; exeptions for Candles 
+		beq +
+		jml $80DC78                   
++	jml $80DB22
+pushPC 
+endif
+
+
+if !swordSkellyHitboxFix == 1 
+
+endif  
+
+
+; -------- end fix sprites
 org $80A61D
 		JML.L idleAnimationRoutine 	                 
 
@@ -131,6 +208,63 @@ pullPC
 
 pushPC 
 endif 
+
+if !extraSpritesOnScreen == 1
+org $808DEE
+;  endOAMsetEmptySlots: 
+;	LDX.B RAM_X_event_slot_sprite_assembly;808DEE|A600    |000000;  
+;    LDY.B RAM_X_event_slot_attribute     ;808DF0|A402    |000002;  
+		jsl loadExtraSprites
+
+pullPC
+	loadExtraSprites:		; 
+		ldx #$0008			; size needs to mach table or game crashes since we use stack 
+	-	lda.l newSpriteOAM,x 
+		pha
+		dex
+		dex  
+		bpl -
+
+		LDX.B $00		; hijack Fix 
+		LDY.B $02     	; hijack Fix
+		
+		pla 
+     -  STA.B $00,X
+        INX                                 
+        INX                                 
+		pla 
+		STA.B $00,X
+		inx
+		inx 
+		clc 
+		ROR.B $FE                
+        sec
+		ROR.B $FE    
+		bcc +
+		
+		lda $FE			; attribute bits 
+		sta.w $0000,y 
+		iny
+		iny
+		lda #$8000
+		sta $fe
+		
+	+	pla 
+		cmp #$ffff
+		bne -
+
+
+;		LDX.B $00		; hijack Fix 
+;		LDY.B $02     	; 808DF0|A402    |000002;  
+		rtl
+
+	newSpriteOAM:
+		dw $14f1, $3264, $0080, $0080, $ffff
+
+pushPC 
+endif 
+
+
 
 
 if !subWeaponDropOnPickup == 1
@@ -296,65 +430,319 @@ pushPC
 endif
 
 
-; ----------------- BatRing -------------------------------
-if !BatRing == 1
-org $81A425
-	dl NewRingRoutine
+org $81A425							; mainRingHijack for different patches.. 
+	dl NewRingRoutineHijack
+
+pullPC
+	NewRingRoutineHijack:
 	
+	if !invertRingGlitchControll = 1		
+		jsl invertControllAboveRingFix
+	endif 
+
+		lda $86						; check for levels to not check simon for sprite priority 
+		cmp #$0001
+		beq +
+
+		jml $8CFF07					; RingMain HijackFix 
+	+	jml $8CFF0C					; no priority fix for this stages	
+pushPC 
+
+
+{; ----------------- BatRing -------------------------------
+if !BatRing == 1	
 org $86C656
-	jml NewRingEventInit 
+	jml NewRingEventInit 				; this is where the normal bat dies 
+
+org $8CFF1A
+	jml newRingSubID					; make new ring events 
+
+org $80DBB3									 ; connecting to ring Sound
+	LDA.W #$0025                        
+	JSL.L ringConnectHijack 		; CODE_8085E3            	; 80DBB6|22E38580|8085E3;  
 
 pullPC				; free space
+	ringConnectHijack: 		
+		jsl $8085E3									; hijack fix play sound 
+		stz.w RAM_X_event_slot_event_slot_health,x 	; mark the current ring hit with 00 health as it triggers the sound 
+		rtl
+
 	NewRingEventInit:
 		lda $14,x 		
 		beq ++
-		lda #$0003
+
+		lda #$0003		; get sprite slot offset 
 		sta $10,x
-		sta $1a			; will be used to find sprite OAM offset
+		sta $1a 
+		jsl $80d7cc		; SpriteOffset	
+
 		stz $12,x
-		lda #$0022		; get hurt use 47
-		sta $2e,x
-	
-		lda #$0010		; AddEvent newBat trigger identifyer
-		sta $22,x
-		
-		stz $14,x 		; remove subID to prevent making it a drop. Sicne drop routien gets rid of stats.. 
-		
-		jsl $80d7cc		; SpriteOffset
+		lda #$a4fd		; show ring assembly firstframe 
+		sta $00,x 				
+
+		lda #$0010		; 16 frame delay till it is hitable 
+		sta $22,x 		; 20
+
+		lda #$0084
+		sta $14,x 
+				
 		rtl 
 	
-	++	stz $2e,x		; normal routine bat gets killed
+	++	stz $2e,x		; normal routine bat gets killed hijack fix 
 		stz $26,x 
-		jml $86C65A
+		jml $86C65A	
+		
+		
+	newRingSubID:		
+		LDA.B RAM_X_event_slot_subId,X       ;8CFF1A|B514    |000014;  
+        bit #$0080
+		bne ++
+		cmp #$0000
+		BNE +
+		rtl 								; normal ring without subID 
+	+ 	jml $8CFF1F							; hijack fix normal ring event with subID
 	
-	NewRingRoutine:
-		lda $22,x
-		cmp #$0010 		; Check Bat event
+	++	LDA.B $14,X                  		                                                  
+		and #$007f							; mask bit 80 out 
+		PHX                                 
+        ASL A                               
+        TAX                                 
+        LDA.L newRingEventSubID,X    
+        PLX                                 
+        STA.B $00                   
+        JMP.W ($00) 
+		
+	newRingEventSubID:
+		dw ringSubID80,ringSubID81,ringSubID82,ringSubID83,ringMedusaMovm84
+	
+	ringSubID80:						; rising and wrapping rings 				
+		lda RAM_simonSlot_State 
+		cmp #$0008
+		beq +
+		
+		lda #$0001								; set it to a value so we can detect hits
+		sta RAM_X_event_slot_event_slot_health,x
+		
+	+	lda #$0003
+		sta RAM_X_event_slot_Movement2c,X 
+	+	lda #$ffff 
+		sta RAM_X_event_slot_ySpd,X 
+		lda #$0000
+		sta RAM_X_event_slot_ySpdSub,X 
+		
+		lda RAM_X_event_slot_yPos,x 
 		bne +
 		
-		jsl $82C20B		; Medusa movement
+		lda RAM_X_event_slot_event_slot_health,x
+		bne +
+;		lda RAM_simonSlot_State 
+;		cmp #$0008
+;		bne +
+		jsl disslunchSimonFromRing
+		lda #$fffc
+		sta RAM_simonSlot_SpeedYpos
 		
-		lda $552		; Check RingState
+	+	lda RAM_X_event_slot_yPos,x 
+		and #$00ff		
+		sta RAM_X_event_slot_yPos,x 
+		jsl $8CFF49						; make Simon FollowRing 
+		rtl 
+		
+		
+	ringSubID81:	
+		lda RAM_simonSlot_State 
+		cmp #$0008
+		beq +
+		
+		lda #$0001								; set it to a value so we can detect hits
+		sta RAM_X_event_slot_event_slot_health,x
+		
+	+	lda #$0003
+		sta RAM_X_event_slot_Movement2c,X 
+	+	lda #$0000
+		sta RAM_X_event_slot_ySpd,X 
+		lda #$c000
+		sta RAM_X_event_slot_ySpdSub,X 
+		
+		lda RAM_X_event_slot_yPos,x 
+		cmp #$00ff
+		bne +
+		
+		lda RAM_X_event_slot_event_slot_health,x
+		bne +
+		jsl disslunchSimonFromRing
+		lda #$fffc
+		sta RAM_simonSlot_SpeedYpos
+		
+	+	lda RAM_X_event_slot_yPos,x 
+		and #$00ff		
+		sta RAM_X_event_slot_yPos,x 
+		jsl $8CFF49						; make Simon FollowRing 
+		rtl 
+		 
+		 
+	ringSubID82:
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,X 
+		jsl $8CFF49						; make Simon FollowRing 
+		
+		lda RAM_X_event_slot_yPos,x		; find turn points ypos top bottom to set flag $22,x 
+		sec 
+		cmp #$0030 
+		bcs +
+		lda #$0001
+		sta $22,x 
+		jsl zeroYSpeed
+		bra +
+	+	clc 
+		lda #$0090
+	    cmp RAM_X_event_slot_yPos,x
+		bcs +
+		stz.w $22,x
+		jsl zeroYSpeed
+
+	+	lda.w $22,x						; add speed depending on this flag 
+		beq ++
+
+		LDA.B RAM_X_event_slot_ySpdSub,X     ;82C242|B51C    |00001C;  
+        CLC                                  ;82C244|18      |      ;  
+        ADC.W #$1000                         ;82C245|690020  |      ;  
+        STA.B RAM_X_event_slot_ySpdSub,X     ;82C248|951C    |00001C;  
+        LDA.B RAM_X_event_slot_ySpd,X        ;82C24A|B51E    |00001E;  
+        ADC.W #$0000                         ;82C24C|690000  |      ;  
+        STA.B RAM_X_event_slot_ySpd,X        ;82C24F|951E    |00001E;  
+        LDA.B RAM_X_event_slot_yPos,X        ;82C251|B50E    |00000E;  
+		bra +++
+		
+	++	LDA.B RAM_X_event_slot_ySpdSub,X     ;82C21C|B51C    |00001C;  
+        SEC                                  ;82C21E|38      |      ;  
+        SBC.W #$1000                         ;82C21F|E90020  |      ;  
+        STA.B RAM_X_event_slot_ySpdSub,X     ;82C222|951C    |00001C;  
+        LDA.B RAM_X_event_slot_ySpd,X        ;82C224|B51E    |00001E;  
+        SBC.W #$0000                         ;82C226|E90000  |      ;  
+        STA.B RAM_X_event_slot_ySpd,X        ;82C229|951E    |00001E;  
+        LDA.B RAM_X_event_slot_yPos,X        ;82C22B|B50E    |00000E;  
+		
+	+++	rtl 
+	zeroYSpeed:
+		stz.w RAM_X_event_slot_ySpdSub,x 
+		stz.w RAM_X_event_slot_ySpd,x 
+		rtl
+		
+	ringSubID83:
+		jsr checkIfSimonDislunched2ResetHealth 	; stop reseting health while on ring. This check should detect current ring hit and reset when switching 
+		LDA.B $22,X 							; new subID                  		                                                  
+		PHX                                 
+        ASL A                               
+        TAX                                 
+        LDA.L newRingDisappearState,X    
+        PLX                                 
+        STA.B $00                   
+        JMP.W ($00) 
+		
+	newRingDisappearState:
+		dw ringGetRendomTimer,ringDisApearTimerInit,ringDisApearTimer,ringOnScreen
+		
+	ringGetRendomTimer:	
+		LDA.B RAM_RNG_2                 
+        AND.W #$003F                    
+        CLC                             
+        ADC.W #$0040                    
+        STA.B RAM_X_event_slot_24,X     
+        INC.B $22,X       					
+		rtl 
+	
+	ringDisApearTimerInit:		
+		lda $3a
+		bit #$0002
+		bne +
+		lda #$0000					; make sprite disappear on some frame flicker
+		sta $00,x 
+					
+	+	DEC.B RAM_X_event_slot_24,X     
+        BNE +                     		
+		
+		LDA.W #$0040              	; set timer gone       
+        STA.B RAM_X_event_slot_24,X     
+		INC.B $22,X 
+	+	rtl 
+	
+	ringDisApearTimer: 
+		lda #$0000					; make sprite disappear 
+		sta $00,x 
+		sta $2e,x 					; make it not hitable 
+						
+		lda RAM_simonSlot_State 	; check if simon currently on ring 
 		cmp #$0008
 		bne +
 		
-		lda $0022,x		; Check New Event
-		cmp #$0010
-		bne +
-		jsl $8CFF49	
-	+	lda $86
+		lda RAM_X_event_slot_event_slot_health,x ; check if this ring got hit in this cycle  
 		cmp #$0001
+		beq +
+		
+		jsl disslunchSimonFromRing	; dislunch Simon when ring got hit since it spawned
+		lda #$fffc
+		sta RAM_simonSlot_SpeedYpos	
+		
+	+	DEC.B RAM_X_event_slot_24,X     
+        BNE +                      		
+        
+		LDA.B RAM_RNG_2                 
+        AND.W #$003F                    
+        CLC              
+		adc.W #$0060             	; timer to stay on screen        
+        STA.B RAM_X_event_slot_24,X     
+		INC.B $22,X 
+		
+	+	rtl 
+	ringOnScreen:	
+		lda #$0022
+		sta $2e,X 					; make it hitable 
+		
+		DEC.B RAM_X_event_slot_24,X 
 		bne +
-		jml $8CFF0C		; no priority fix for this stage
-	+	jml $8CFF07		; RingMain
-		;jml $86C529
+		
+		lda #$0000					; repeat cycles 
+		STA $22,X 
+	+	rtl 
+	
+	checkIfSimonDislunched2ResetHealth:
+		lda RAM_simonSlot_State 	
+		cmp #$0008
+		beq +	
+
+		lda #$0001				
+		sta RAM_X_event_slot_event_slot_health,x
+	+	rts 
+
+	ringMedusaMovm84:	
+		lda $22,x 		; 16 frame delay till it is hitable timer is set in initiation face when bat dies 
+		beq +
+		sec
+		sbc #$0001
+		sta $22,x 
+		bne +
+		
+		lda #$0022		; get hurt use 47
+		sta $2e,x
+				
+	+	jsl $82C218		; Medusa movement
+		jsl $8CFF49		; simon follow Ring
+						;jml $86C529 ??
+		rtl		
+				
+}
+		
+		
+		
+		
 pushPC
 		
-org $8cff9e
-	padbyte $ff
-	pad $8cfffe
-	
-warnpc $8cffff	
+;org $8cff9e			; used to clean up old place for the patch in OG ROM 
+;	padbyte $ff
+;	pad $8cfffe
+;	
+;warnpc $8cffff	
 endif
 
 ; ----------------- timer remove -------------------------------
@@ -473,8 +861,35 @@ org $809af9
 	jmp $94c5
 endif 
 
+
+org $83DF55			; bloodTripTimerTo Do Damaga again
+		LDA.W #$0006                         ;83DF55|A94000  |      ;  
+org $83DF5E
+		SBC.W #$0001                         ;83DF5E|E90200  |      ;  
+
+; progression showing map 
 org $81F683
  db $05,$0d,$07,$17,$19,$22,$29,$2D,$35,$3B                               ;81F68C| mapProgression lvl for next scene
+org $80DFEE 
+		jml newOrbPickupBehavior
+pullPC
+	newOrbPickupBehavior:
+		jsl clearSelectedEventSlotAll		; jijack fix 
+		lda $86				
+		cmp #$002c
+		bne +
+		dec 				; harcoded sequentz after puwexorb 
+		sta $86
+		lda #$0006
+		sta $70
+		
+		LDA.W #$0017                         ;80DFF2|A99000  |      ;  
+        JSL.L lunchSFXfromAccum              ;80DFF5|22E38580|8085E3;  		
+		
+	+	rtl 
+	
+PushPC 
+
 
 ; ----------------- whip upgrade -------------------------------
 org $80E014
@@ -515,20 +930,85 @@ org $81A6FA
 	dw $0048,$0030,$0030,$0030,$0000                               
 
 org $80badd					
-	lda #$0010				; default 0008 axe hitbox 
+		lda #$0010				; default 0008 axe hitbox 
 org $80bae2					
-	lda #$0010				; default 0008 axe hitbox
+		lda #$0010				; default 0008 axe hitbox
 org $80bb8a                     
-	lda #$0008				; default 0004 holywater hitbox 	
-org $80bc03                     
-	lda #$0010				; default 0008 holywater hitbox wide ypos
+		lda #$0008				; default 0004 holywater hitbox 	
+;org $80bc03                     
+;		lda #$0010				; default 0008 holywater hitbox wide ypos
+org $80BBFC
+		lda #$0050				; holy water timer
+		jsl newHolyWbehavier
+org $80BC12
+		jsl newHolyWbehavierFlame
 
+pullPC
+	newHolyWbehavier:
+		STA.B RAM_X_event_slot_24,X          ;80BBFF|9524    |000024;  hijack fix
+        STZ.B RAM_X_event_slot_22,X          ;80BC01|7422    |000022;  
+		lda #$0001							; make it slide 
+		sta $2c,x 
+		
+		lda RAM_X_event_slot_xSpd,x
+		bmi +
+		lda #$0000
+		sta RAM_X_event_slot_xSpd,x
+		lda #$c000
+		sta RAM_X_event_slot_xSpdSub,x 
+		bra ++
+	+	
+		lda #$ffff
+		sta RAM_X_event_slot_xSpd,x
+		lda #$4000
+		sta RAM_X_event_slot_xSpdSub,x 
+	++	rtl 
+
+	newHolyWbehavierFlame:
+		JSL.L $80BC1F                    ;80BC12|221FBC80|80BC1F;  	hijack fix
+		lda #$0001
+		sta RAM_X_event_slot_ySpd,x		 ; fall speed for flame 
+		
+		phx 
+		LDA.B RAM_X_event_slot_xPos,X        
+        STA.B $00							 
+        LDA.B RAM_X_event_slot_yPos,X        
+        CLC                                  
+        ADC.W #$0001                         
+        STA.B $02						     
+        JSL.L $80CF86 		; readCollusionTable7e4000       ;80BBC9|2286CF80|80CF86;  
+   
+		BEQ +                   
+        BMI +  
+		plx 
+		stz.b $2c,x 		; also makes it stuck inside a wall. dirty but kinda works lol
+		bra ++ 
+	+	plx 
+
+	++	phx
+		LDA.B RAM_X_event_slot_xPos,X        				; check if we can fall again
+        STA.B $00							 
+        LDA.B RAM_X_event_slot_yPos,X        
+        CLC                                  
+        ADC.W #$0008                         
+        STA.B $02						     
+        JSL.L $80CF86 		; readCollusionTable7e4000       ;80BBC9|2286CF80|80CF86;  
+   
+		BEQ +                   
+        BMI +  
+		plx 
+		bra ++ 
+	+	plx 
+		lda #$0003
+		sta $2c,x 
+	++	rtl 
+	
+pushPC 	
+	
 
 org $828ac4
 	lda #$000c				; #$0008 rotating platform timer till it rotates
 
-	
-	
 	
 	
 	

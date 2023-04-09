@@ -1,4 +1,6 @@
-                       RAM_X_event_slot_event_slot_health = $000006;      |        |      ;  
+                       RAM_X_event_slot_sprite_assembly = $000000
+					   RAM_X_event_slot_flip_mirror_attribute = $000004
+					   RAM_X_event_slot_event_slot_health = $000006;      |        |      ;  
                        RAM_X_event_slot_xPosSub = $000008   ;      |        |      ;  
                        RAM_X_event_slot_xPos = $00000A      ;      |        |      ;  
                        RAM_X_event_slot_yPosSub = $00000C   ;      |        |      ;  
@@ -19,6 +21,15 @@
                        RAM_X_event_slot_HitboxYpos = $00002A;      |        |      ;  
                        RAM_X_event_slot_Movement2c = $00002C;      |        |      ;  
                        RAM_X_event_slot_HitboxID = $00002E  ;      |        |      ;  
+			;47 hitable? a=? b=? c=? d=?   e=9? f=GetHurtSubW g=GetHurtWhip h=GetHit  9 collect? 
+;			h = 01 hurt 
+;			g = 02 subWea hitable 
+;			f = 04 whip hitable 
+;			e = 08 collect able also needs bit 01 set 
+;			d = 10 not despawnable!
+;			c = 20 
+;			b = 40 used often .. rossery??
+;			a = 80 
                        RAM_X_event_slot_mask = $000030      ;      |        |      ;  
                        RAM_X_event_slot_32 = $000032        ;      |        |      ;  
                        RAM_X_event_slot_34 = $000034        ;      |        |      ;  
@@ -67,7 +78,9 @@
                        RAM_BG1_XposScrollSpeed = $0000A8    ;      |        |      ;  
                        RAM_BG1_YposScrollSpeed = $0000AA    ;      |        |      ;  
                        RAM_IndexSpecialLevelBehavier = $0000AE;      |        |      ;  
-                       RAM_FlagAllowOutOfBounce = $0000B6   ;      |        |      ;  
+;						RAM_WhipCancleTimer = $0000ac                      
+;						RAM_SubweaponCancleTimer = $0000ba       
+					   RAM_FlagAllowOutOfBounce = $0000B6   ;      |        |      ;  
                        ; RAM_FlagBossFight = $0000B8 
 					   RAM_simon_invulnerable_counter = $0000BC;      |        |      ;  
                        RAM_buttonMapJump = $0000BE          ;      |        |      ;  
@@ -88,6 +101,8 @@
                        RAM_whipSlot02 = $000280             ;      |        |      ;  
                        RAM_whipSlot03 = $0002C0             ;      |        |      ;  
                        RAM_whipSlot04 = $000300             ;      |        |      ;  
+;						RAM_whipLangthOnRing = $00033c
+
                        RAM_whipSlot05 = $000340             ;      |        |      ;  
                        RAM_whipSlot06 = $000380             ;      |        |      ;  
                        RAM_whipSlot07 = $0003C0             ;      |        |      ;  
@@ -118,7 +133,8 @@
                        RAM_simonSlot_Collusion_Donno00 = $00056C;      |        |      ;  
                        RAM_simonSlot_forceCrouchFrameCounter = $00056E;      |        |      ;  
                        RAM_simonSlot_Collusion_Donno01 = $000576;      |        |      ;  
-                       RAM_simonSlot_direction = $000578    ;      |        |      ;  
+;						RAM_simonSlot_RingSpeed = $000574    
+					   RAM_simonSlot_direction = $000578    ;      |        |      ;  
                        RAM_eventSlot_Base = $000580         ;      |        |      ;  
                        RAM_OAM_Page = $000F00    
 ;						RAM_OAM_PROPERTY_BITS = $1100-$111f					   ;      |        |      ;  
@@ -155,7 +171,8 @@
                        RAM_channel_DMA_6 = $0014E0          ;      |        |      ;  
                        RAM_channel_DMA_7 = $0014F0          ;      |        |      ;  
                        RAM_masktTable_respawnEvents = $001500;      |        |      ;  
-                       RAM_titleScreen_menuSelect = $001E02 ;      |        |      ;  
+                       ; RAM_breakableWallTable = 19C0
+					   RAM_titleScreen_menuSelect = $001E02 ;      |        |      ;  
                        RAM_characterString_Castlevania4 = $001E0A;      |        |      ;  
                        RAM_monoSound_flag = $001E16         ;      |        |      ;  
                        RAM_freeSpaceTill_1e7f_exeptOptionsMenu = $001E18;      |        |      ;  

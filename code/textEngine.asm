@@ -157,15 +157,19 @@ pullPC
 		bne +
 		lda !jobTable00
 		beq +  
-		  
+			
+		lda $66				; dont run while pause
+		bne +
+		
         SEP #$20                             
         REP #$10                
 		
-		LDX.W #$5802       	; line 5                   
+;		LDX.W #$5802       	; line 5                   
+		ldx #$5821
         STX.W $2116                          
         LDA.B #$7F                           
         LDX.W #$FF88                         
-        LDY.W #$001C  		; size of data to transphere                       
+        LDY.W #$001E  		; size of data to transphere     text size is 1c                   
         STX.W $4302                          
         STA.W $4304                          
         STY.W $4305                          
@@ -316,18 +320,32 @@ pullPC
 
 		
 asciiLookUpTable:		
-		dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-		dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-		dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-		dw $0000,$0000,$0000
-		dw $0CFF,$0CFD,$0CFE,$0CFE,$0C0A,$0CFE,$0CFE,$0CFC,$0CFE,$0CFE ;??
-		dw $0CFE,$0CFB,$2026,$0CFA,$0CFE
-		dw $2001,$2002,$2003,$2004,$2005 
-		dw $2006,$2007,$2008,$2009,$200A
-		dw $0CFE,$0CFE,$0CFE,$0CFE,$0CFE
-		dw $0CFE,$0CFE,$200B,$200C,$200D,$200E,$200F,$2010,$2011,$2012
-		dw $2013,$2014,$2015,$2016,$2017,$2018,$2019,$201A,$201B,$201C
-		dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e
+dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000		; replaced character 0CFE with 0C00
+dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+dw $0000,$0000,$0000
+dw $0CFF,$0CFD,$0C00,$0C00,$0C0A,$0C00,$0C00,$0CFC,$0C00,$0C00 
+dw $0C00,$0CFB,$2026,$0CFA,$0C00	
+dw $2001,$2002,$2003,$2004,$2005 
+dw $2006,$2007,$2008,$2009,$200A
+dw $0C00,$0C00,$0C00,$0C00,$0C00
+dw $0C00,$0C00,$200B,$200C,$200D,$200E,$200F,$2010,$2011,$2012
+dw $2013,$2014,$2015,$2016,$2017,$2018,$2019,$201A,$201B,$201C
+dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
+
+
+;		dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000		; made by redguy 
+;		dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+;		dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+;		dw $0000,$0000,$0000
+;		dw $0CFF,$0CFD,$0CFE,$0CFE,$0C0A,$0CFE,$0CFE,$0CFC,$0CFE,$0CFE ;??
+;		dw $0CFE,$0CFB,$2026,$0CFA,$0CFE
+;		dw $2001,$2002,$2003,$2004,$2005 
+;		dw $2006,$2007,$2008,$2009,$200A
+;		dw $0CFE,$0CFE,$0CFE,$0CFE,$0CFE
+;		dw $0CFE,$0CFE,$200B,$200C,$200D,$200E,$200F,$2010,$2011,$2012
+;		dw $2013,$2014,$2015,$2016,$2017,$2018,$2019,$201A,$201B,$201C
+;		dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e
 
 
 
@@ -445,6 +463,7 @@ asciiLookUpTable:
 		PLX
 		
 		jsr curserPos
+		jsr textStateUpdater
 		
 		LDA $28			; check B press to run action/advance 
 		BIT #$8000
@@ -539,13 +558,27 @@ asciiLookUpTable:
 
 {	; NPC Text ------------------------------------------------------------------------
 	npcSpriteIDlist:			; list is based in subID $14																		
-		dw oldMan3Fr1,jungLadyFr1,oldManFr1,jungLadyFr1,oldManFr1,oldMan3Fr1,jungLadyFr1,jungLadyFr1,jungLadyFr1,oldMan3Fr1,$89f0,jungLadyFr1
-		dw $89f0,jungLadyFr1,oldManFr1,oldMan3Fr1,doorSpriteAssembly,oldManFr1,oldMan3Fr2,oldManFr1
-		; $8f15
+		dw oldMan3Fr1,jungLadyFr1,oldManFr1,jungLadyFr1					; $8f15
+		dw oldManFr1,oldMan3Fr1,jungLadyFr1,jungLadyFr1					; 08
+		dw jungLadyFr1,oldMan3Fr1,$89f0,jungLadyFr1						; 0c
+		dw $89f0,jungLadyFr1,oldManFr1,oldMan3Fr1						; 10
+		dw doorSpriteAssembly,oldManFr1,oldMan3Fr2,oldManFr1
+		dw oldMan3Fr1,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 18
+		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly
+		dw oldMan3Fr1
+		
+	
 	npcSpriteIDlist2:	
-		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1,oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1,jungLadyFr1,oldMan3Fr2,$968b,jungLadyFr1		; $8f2e
-		dw $968b,jungLadyFr1,oldManFr2,oldMan3Fr2,doorSpriteAssembly,oldManFr2,$0000,oldManFr1
-	; zombie Walk $96a0,$968b 
+		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1					; zombie Walk $96a0,$968b 
+		dw oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1
+		dw jungLadyFr1,oldMan3Fr2,$968b,jungLadyFr1		; $8f2e
+		dw $968b,jungLadyFr1,oldManFr2,oldMan3Fr2
+		dw doorSpriteAssembly,oldManFr2,$0000,oldManFr1
+		dw oldMan3Fr2,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 18
+		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly
+		dw oldMan3Fr2													; 1d 
+	
+	
 
 	mainNPCStateTable: 
 		dw NPCState00			; init
@@ -570,6 +603,16 @@ asciiLookUpTable:
 		dw RedguyLiftingCurse   ; 11
 		dw TipLeady00			; 12
 		dw TipLeady01			; 13
+		dw ArmorSeller			; 14
+		dw ArmorSeller  		; 15
+		dw Paul					; 16
+		dw door2				; 17
+		dw moonLadyCastle		; 18
+		dw TutorialLadyControls ; 19
+		dw Tinnue 				; 1a
+		dw hooker				; 1b
+		dw door2				; 1c
+		dw aramus				; 1d 
 		
 	actionListMainNPC:
 		dw actionSeller,actionListGivingLady
@@ -591,8 +634,17 @@ asciiLookUpTable:
 		dw actionRedguyLiftingCurse
 		dw actionListTipLeady00
 		dw actionListTipLeady01
-
-	
+		dw actionListArmorSeller
+		dw actionListArmorSeller
+		dw actionListPaul
+		dw $0000			; door2 17 
+		dw actionListmoonLadyCastle
+		dw actionListTutorialLadyControls
+		dw actionListTinnue
+		dw actionListhooker
+		dw $0000			; door2 1c 	
+		dw actionListAramus
+		
 	actionSeller:
 ;		dw text00,goNextText
 ;		dw text01,goNextText
@@ -600,7 +652,7 @@ asciiLookUpTable:
 		dw text03,shopRoutine
 		dw text04,goNextText
 		dw text05,endText
-		dw text06,endText
+		dw textNoMoney,endText
 	
 	text00:
 		db "DO YOU NEED     "
@@ -625,7 +677,7 @@ asciiLookUpTable:
 		db "YOU CAN COME    "
 		db "BACK ANY TIME   "
 		db "YOU LIKE        ",$00				
-	text06:	
+	textNoMoney:	
 		db "YOU NEED MORE   "
 		db "MONEY GO KILL   "
 		db "MONSTERS        "
@@ -643,12 +695,12 @@ asciiLookUpTable:
 	guideMan01:	
 		db "GOOD EVENING    "
 		db "I CAN GIVE YOU  "
-		db "STUFF FOR FREE  ",$00
+		db "STUFF FOR FREE",$00
 		
 	guideMan02:	
 		db "IN CASE YOU ARE "
 		db "NOT UP FOR THE  "
-		db "TRUE CHELLANGE  ",$00
+		db "TRUE CHELLANGE!",$00
 		
 	guideMan03:	
 		db "  1 NOTHING     "
@@ -657,19 +709,19 @@ asciiLookUpTable:
 		db "  4 REMOVE CHEAT",$00
 
 	guideMan04:
-		db "GL ON YOUR RUN  ",$00
+		db "GL ON YOUR RUN!",$00
 
 	guideMan05:	
 		db "THE BIG WHIP    "
 		db "JUST DOES A LOT "
-		db "OF DAMAGE BUT   "
-		db "NEED UPGRADE TOO",$00
+		db "OF DAMAGE..",00
+
 		
 	guideMan06:	
 		db "PRESS L AND     "
 		db "D PAD TO CHOOSE "
-		db "SUBWEAPONS OR   "
-		db "A FOR STOPWATCH ",$00	
+		db "SUBWEAPONS.",00
+;		db "A FOR STOPWATCH ",$00	
 
 	actionListRedguy:
 		dw redguyText00,goNextText
@@ -677,14 +729,15 @@ asciiLookUpTable:
 		dw redguyText02,goNextText
 		dw redguyText03,goNextText
 		dw redguyText04,goNextText
-		dw redguyText05,goNextTextWithSoundGetWhip2
-		dw redguyText06,goNextText
+		dw redguyText05,goNextText
+		dw redguyText06,goNextTextWithSoundGetWhip2
 		dw redguyText07,goNextText
 		dw redguyText08,goNextText
 		dw redguyText09,goNextText
 		dw redguyText10,goNextText
 		dw redguyText11,goNextText
-		dw redguyText12,endText
+		dw redguyText12,goNextText
+		dw redguyText13,endText
 	
 	redguyText00:	
 		db "HELLO           "
@@ -694,61 +747,82 @@ asciiLookUpTable:
 	redguyText01:
 		db "I DID COME TO   "
 		db "FIND THE DRAGON."
-		db "WITH HELP OF MY "
-		db "ALLY. WE PLAN",$00
+		db "AND TAME IT!!",00
 	redguyText02:		
-		db "TO TAME IT.     "
 		db "HOPFULLY NO ONE "
-		db "KILLS THE OLD   "
-		db "BEAST.",$00
+		db "KILLS THAT OLD  "
+		db "BEAST..",$00
 	redguyText03:		
-		db "WHAT IS THAT    "
+		db ".. WHAT IS THAT "
 		db "SHINY ROCK?     "
-		db "OHH.. YOU DID?  "
-		db "WELL I CAN",$00
-	redguyText04:		
-		db "REVIEVE IT WHEN "
+		db "OHH.. YOU DID   "
+		db "KILL IT!!",$00
+	redguyText04:	
+		db "I HAD LIKE TO   "
+		db "REVIEVE THE     "
+		db "DRAGON! BUT I   "
+		db "WILL NEED THE",00
+	redguyText05:		
+		db "DEAMON ORB! IF  "
 		db "YOU GIVE ME     "
 		db "THE ORB. AS A   "
 		db "EXCHANGE",$00 
-	redguyText05:		
+	redguyText06:		
 		db "I GIVE YOU A    "
 		db "MAGIC WHIP.     "
-		db "THAT IS ALREADY "
-		db "FULLY UPGRADET. ",$00
-
-	redguyText06:
+		db "THE WHIP IS.    "
+		db "EMPOWERED.",00
+	redguyText07:
+		db "IT ALSO LOSES   "
+		db "POWER WHEN YOU  "
+		db "DIE.",00
+	redguyText08:
 		db "PRESSING SELECT "
 		db "WILL LET YOU    "
 		db "SWITCH THE WHIP.",$00
-	redguyText07:
-		db "WHEN YOU LOSE   "
-		db "YOU NEED TO     "
-		db "POWER IT UP     "
-		db "AGAIN.",$00
-		
-	redguyText08:	
-		db "MY ALLY HEADED  "
-		db "NORTH TO THE    "
-		db "NEXT TAVERN.    ",$00
-	redguyText09:	
-		db "I WONDER WHAT   "
-		db "HAPPEN TO HIM.  "
-		db "HE IS AWAY FOR  "
-		db "WAY TOO LONG.",$00
-	redguyText10:	
-		db "IF YOU FIND HIM "
-		db "DRUNK THEN MAKE "
-		db "US OF THAT WHIP."
-		db "TELL HIM",$00
+	redguyText09:
+		db "THEN YOU NEED   "
+		db "TO POWER IT UP  "
+		db "AGAIN!",00
+	redguyText10:
+		db "I TOKE THE GUY  "
+		db "FROM THE TOWN TO"
+		db "HELP ME HERE..",00	
 	redguyText11:	
-		db "THAT THE DRAGON "
-		db "IS DEAD AND WE  "
-		db "WILL NEED TO",$00
-	redguyText12:	
-		db "FIND A OTHER    "
-		db "WAY TO FIGHT    "
-		db "DRACULA.",$00
+		db "HE MANAGED TO   "
+		db "SCARE THE DRAGON"
+		db "OUT OF THE CAVE.",00		
+	redguyText12:
+		db "I SEND HIM TO   "
+		db "THE TOWN NORTH  "
+		db "FROM HERE TO    "
+		db "WARN THEM.",00	
+	redguyText13:
+		db "I DO HAVE A BAD "
+		db "FEELING..",00		
+	
+;	redguyText08:	
+;		db "MY ALLY HEADED  "
+;		db "NORTH TO THE    "
+;		db "NEXT TAVERN.",$00
+;	redguyText09:	
+;		db "I WONDER WHAT   "
+;		db "HAPPEN TO HIM.  "
+;		db "HE IS AWAY FOR  "
+;		db "WAY TOO LONG.",$00
+;	redguyText10:	
+;		db "IF YOU FIND HIM "
+;		db "DRUNK THEN MAKE "
+;		db "US OF THAT WHIP."
+;		db "TELL HIM",$00
+;	redguyText11:	
+;		db "THAT THE DRAGON "
+;		db "IS DEAD AND WE  "
+;		db "WILL NEED TO",$00
+;	redguyText12:	
+;		db "FIND A OTHER    "
+;		db "WAY TO FIGHT    "
+;		db "DRACULA.",$00
 
 	actionListMoonLady:	
 		dw MoonLadyText00,goNextText
@@ -774,25 +848,30 @@ asciiLookUpTable:
 		dw RedguysBrotherText00,goNextText
 		dw RedguysBrotherText01,goNextText
 		dw RedguysBrotherText02,goNextText
-		dw RedguysBrotherText03,endText
+		dw RedguysBrotherText03,goNextText
+		dw RedguysBrotherText04,goNextText
+		dw RedguysBrotherText05,endText
 		
 	RedguysBrotherText00:
 		db "OUR WIZARD LEFT "
 		db "TOWN TO GO TO   "
-		db "THE CAVE. THINGS"
-		db "ARE BAD HERE",$00
+		db "THE CAVE.",00
 	RedguysBrotherText01:
-		db "SINCE HE LEFT.  "
+		db "THINGS GETTING  "
+		db "WORSE WITHOUT   "
+		db "HIM HERE.",00
+	RedguysBrotherText02:	
 		db "HE DID KNOW TO  "
 		db "FIGHT OFF THIS  "
-		db "MONSTERS.",$00
-	RedguysBrotherText02:
-		db "THE WIZARD IS MY"
-		db "BROTHER BUT..",$00	
+		db "MONSTERS..",00
 	RedguysBrotherText03:
-		db "I AM NOTHING    "
-		db "LIKE HIM..      "
-		db "WE GONA DIE..",$00
+		db "THE WIZARD IS MY"
+		db "BROTHER BUT..",00	
+	RedguysBrotherText04:
+		db ".. I AM NOTHING "
+		db "LIKE HIM!!",00
+	RedguysBrotherText05:
+		db "WE GONA DIE !!",$00
 
 	actionListBarKeeper00:
 		dw BarKeeperText00,goNextText
@@ -805,7 +884,7 @@ asciiLookUpTable:
 		db "I HAVE NEVER    "
 		db "SEEN SOMEONE GO "
 		db "OVER MY BAR LIKE"
-		db "THIS.",$00
+		db "THIS!",$00
 	BarKeeperText01:	
 		db "ARE YOU THAT    "
 		db "THIRSTY? HEHE   "
@@ -850,12 +929,12 @@ asciiLookUpTable:
 		db "WHEN YOU WHIP   "
 		db "DOWN OR LIMP    "
 		db "WHIP AT THE     "
-		db "CENTER ABOVE    ",$00
+		db "CENTER ABOVE",$00
 	TutorialLeadyText03:	
 		db "THE RING. YOU   "
 		db "CAN FLOAT STILL "
 		db "IF YOU DO NOT   "
-		db "USE THE DPAD",$00
+		db "USE THE DPAD.",$00
 	TutorialLeadyText04:	
 		db "THEN TAPING THE "
 		db "OPPOSIT SIDE ON "
@@ -867,9 +946,9 @@ asciiLookUpTable:
 		dw TutorialLeadyText06,goNextText
 		dw TutorialLeadyText07,goNextText
 		dw TutorialLeadyText08,goNextText
-		dw TutorialLeadyText09,goNextText
-		dw TutorialLeadyText10,spawnSmallHeartAndText
-		dw TutorialLeadyText11,endText
+		dw TutorialLeadyText09,spawnSmallHeartAndText
+;		dw TutorialLeadyText10,spawnSmallHeartAndText
+;		dw TutorialLeadyText11,endText
 	
 	TutorialLeadyText05:
 		db "YOU CAN RING    "
@@ -896,16 +975,38 @@ asciiLookUpTable:
 		db "BE REQUIERT BUT "
 		db "A GOOD SKILL TO "
 		db "SAVE SITUATIONS.",$00
-	TutorialLeadyText10:
-		db "I DID PREPARE A "	
-		db "PARKOUR AT THE  "
-		db "GRAVYARD TO     "
-		db "PRACTICE MORE.",$00
-	TutorialLeadyText11:
-		db "GOOD LUCK AND   "	
-		db "HAVE FUN TO     "
-		db "MASTER YOUR     "
-		db "WHIP SKILLS.",$00	
+;	TutorialLeadyText10:
+;		db "I DID PREPARE A "	
+;		db "PARKOUR AT THE  "
+;		db "GRAVYARD TO     "
+;		db "PRACTICE MORE.",$00
+;	TutorialLeadyText11:
+;		db "GOOD LUCK AND   "	
+;		db "HAVE FUN TO     "
+;		db "MASTER YOUR     "
+;		db "WHIP SKILLS.",$00	
+	
+	actionListTutorialLadyControls:
+		dw textControlLady00,goNextText
+		dw textControlLady01,initCurser
+		dw textControlLady02,switchControlls 
+		dw textControlLady03,endText
+	
+	textControlLady00:
+		db "IF YOU ARE NOT  "
+		db "HAPPY WITH THE  "
+		db "CONTROLS!",00
+	textControlLady01:
+		db "I CAN SWITCH SO "
+		db "RIGHT IS RIGHT  "
+		db "AND LEFT IS LEFT",00
+	textControlLady02:
+		db "   ORGINAL      "
+		db "   LOGIC CONTROL",$00
+	textControlLady03:
+		db "COME BACK ANY   "
+		db "TIME!",00	
+	
 	
 	actionListBarKeeper02:
 		dw BarKeeper02Text00,goNextText
@@ -946,14 +1047,12 @@ asciiLookUpTable:
 		db "THE DOOR. GOOD  "
 		db "LUCK OUT THERE.",$00		
 		
-		
-	
-	
+			
 	actionListZombieManDoina:
 		dw ListZombieManDoinaText00,endText
 
 	ListZombieManDoinaText00:
-		db "RUN RUN..       "
+		db "RUN RUN !!!!    "
 		db "I WILL TURN INTO"
 		db "A ZOMBIE SOON.",$00
 
@@ -969,7 +1068,7 @@ asciiLookUpTable:
 	ZombieManDoinaWifeText01:
 		db "THE WAY. HE     "
 		db "WILL FIND AND   "
-		db "TAKE US ALL.",$00
+		db "TAKE US ALL..",$00
 		
 	actionListZombieManDoinaHunter:
 		dw ZombieManDoinaHunterText00,goNextText
@@ -990,14 +1089,13 @@ asciiLookUpTable:
 		db "GUY WHO ARRIVED ",$00	
 	ZombieManDoinaHunterText01:	
 		db "SEEMED TO BE A  "
-		db "POOR SOUL. BUT  "
-		db "THAT GUY DOES   "
-		db "EAT OUT OF THE",$00
+		db "POOR SOUL. STILL"
+		db "HE DOES EAT OUT "
+		db "OF THE DEVILS",$00
 	ZombieManDoinaHunterText02:		
-		db "HAND OF A DEAMON"
-		db "HE DOMED US HERE"
-		db "WITH HIS BLIND  "
-		db "ACTIONS.",$00
+		db "HAND! HE DOMED  "
+		db "US HERE WITH HIS"
+		db "BLIND ACTIONS!",00
 	ZombieManDoinaHunterText03:		
 		db "HE IS ON THE WAY"
 		db "TO THE CASTLE.  "
@@ -1033,8 +1131,8 @@ asciiLookUpTable:
 		dw ZombieManDoinaWifeSecondText01,goNextText
 		dw ZombieManDoinaWifeSecondText02,endText
 		dw ZombieManDoinaWifeSecondText03,goNextText
-		dw ZombieManDoinaWifeSecondText04,endText
-		
+		dw ZombieManDoinaWifeSecondText04,endTextSimonHurt
+		dw ZombieManDoinaWifeSecondText05,endTextSimonHurt
 		
 	ZombieManDoinaWifeSecondText00:
 		db "WE NEED TO FIND "
@@ -1045,7 +1143,7 @@ asciiLookUpTable:
 		db "TO ME. HE WAS   "
 		db "HUMBLE AND DID  "
 		db "BRING LOVE IN   "
-		db "DARK TIMES",$00
+		db "DARK TIMES.",$00
 	ZombieManDoinaWifeSecondText02:
 		db "WE MIGHT NOT    "
 		db "MAKE IT WITHOUT "
@@ -1055,10 +1153,14 @@ asciiLookUpTable:
 	ZombieManDoinaWifeSecondText03:
 		db "THIS IS A WEAPON"
 		db "MY MAN USED TO  "
-		db "PROTECT US..",$00	
+		db "PROTECT US!!",$00	
 	ZombieManDoinaWifeSecondText04:
 		db "YOU MONSTER YOU "
-		db "KILLED HIM..",$00
+		db "KILLED HIM!!",$00
+	ZombieManDoinaWifeSecondText05:
+		db "STOP KILLING HIM"
+		db "OVER AND OVER   "
+		db "WILL NOT HELP!!",$00
 		
 		
 	actionListBarManDoina:
@@ -1069,7 +1171,7 @@ asciiLookUpTable:
 		dw BarManDoinaText04,shopRoutineKey
 		dw BarManDoinaText05,endText
 		dw BarManDoinaText06,endText
-		dw text06,endText
+		dw textNoMoney,endText
 		dw BarManDoinaText07,endText
 	
 	BarManDoinaText00:
@@ -1094,7 +1196,7 @@ asciiLookUpTable:
 		db "SOME DEPTS.",$00
 	BarManDoinaText04:
 		db "   NO KEY       "
-		db "   YES 20K GOLD ",$00
+		db "   YES 5000 GOLD",$00
 	BarManDoinaText05:	
 		db "COME BACK IF YOU"
 		db "DECIDE OTHERWISE",00
@@ -1129,10 +1231,44 @@ asciiLookUpTable:
 		db "THAT MANY HOLES "
 		db "IT HAS.",$00
 	BuilderManDoinaText03:	
-		db "THERE MUST BE   "
 		db "SOMETHING LIFING"
-		db "IN THE WALLS TO "
-		db "KEEP IT STANDING",$00
+		db "IN THE WALLS    "
+		db "UP THERE TO KEEP"
+		db "IT STANDING..",$00
+	
+	actionListTinnue:
+		dw textTinnue00,goNextText
+		dw textTinnue01,endText
+	
+	textTinnue00:
+		db "MY SHEEP DID EAT"
+		db "ALL MY COFFEE   "
+		db "BEENS!",00
+	textTinnue01:
+		db "NOW IT WONT STOP"
+		db "BOUNCING HAHA.. "
+		db "WUAHA.. CRY CRY "
+		db "MY COFFEE!!",00
+	actionListhooker:
+		dw textHooker00,goNextText
+		dw textHooker01,goNextText
+		dw textHooker02,spawnSmallHeartAndText
+	textHooker00:
+		db "IT IS HARD TO   "
+		db "GET PAUL AWAY   "
+		db "FORM WOW THIS   "
+		db "DAYS..",00
+	textHooker01:
+		db "HIS CASTLEVANIA "
+		db "ADDICTION COULD "
+		db "USE SOME WHIPING"
+		db "ACTION.",00
+	textHooker02:
+		db "BACK IN THE DAYS"
+		db "I TOOK MY WHIP  "
+		db "OUT AND HE WAS  "
+		db "ALL MINE!",00		
+		
 	
 	actionRedguyLiftingCurse:
 		dw liftCurseText00,liftCurse
@@ -1234,7 +1370,135 @@ asciiLookUpTable:
 		db "TALL. I WONDER  "
 		db "WHAT IS ON TOP  "
 		db "OF IT..",00	
+
+	actionListArmorSeller:
+		dw armorText00,goNextText
+		dw armorText01,initCurser
+		dw armorText02,shopArmor
+		dw armorText03,endText
+		dw textNoMoney,endText
+		dw textNoMoney,endText
+		
+	armorText00:		
+		db "I WISH I COULD  "
+		db "UPGRADE YOUR    "
+		db "ARMOR.",00
+	armorText01:		
+		db "BUT ALL I CAN DO"
+		db "GIVING IT A     "
+		db "FRESH PAINT. IF "
+		db "YOU HAVE GOLD.",00			
+	armorText02:
+		db "  1 NOTHING     "
+		db "  2 RUBY    2000"
+		db "  3 EMEROLD 2000"
+		db "  4 DIAMOND 2000",00	
+	armorText03:		
+		db "THANKS COME     "
+		db "BACK ANY TIME",00
 	
+	actionListPaul:
+		dw paulText00,goNextText
+		dw paulText01,goNextText
+		dw paulText02,goNextText
+		dw paulText03,endText
+		
+	paulText00:
+		db "HEY PAUL WHY    "
+		db "DID YOU MOVE TO "
+		db "DRCULAS GOLD    "
+		db "CHAMBER?",00
+	paulText01:
+		db "OHH NO MONEY    "
+		db "ISSUES ANYMORE..",00
+	paulText02:
+		db "SORRY I DO NOT  "
+		db "NEED A WOW      "
+		db "CLASSIC GUIDE   "
+		db "RIGHT NOW..",00
+	paulText03:
+		db "BUT I CAN COME  "
+		db "BACK WHEN THE   "
+		db "CURSE ARE LIFTED"
+		db "AROUND HERE.",00
+		
+	actionListmoonLadyCastle:
+		dw moon2Text00,goNextText
+		dw moon2Text01,goNextText
+		dw moon2Text02,goNextText
+		dw moon2Text03,goNextText
+		dw moon2Text04,goNextText
+		dw moon2Text05,goNextText
+		dw moon2Text06,goNextText
+		dw moon2Text07,goNextText	
+		dw moon2Text08,goNextText	
+		dw moon2Text09,goNextText	
+		dw moon2Text0a,endText
+		
+	moon2Text00:
+		db "THE MOON TURNED "
+		db "WHITE AGAIN SOON"
+		db "AFTER YOU LEFT.",00
+	moon2Text01:
+		db "I DO NOT FEAR   "
+		db "VAMPIRES. I OWN "
+		db "THE BIGGEST",00
+	moon2Text02:
+		db "GARLIC PLANTAGE "
+		db "IN TRANSELFANIA."
+		db ".. VAMP VACCIN.."		
+		db "ABOUT THE GUY..",00		
+	moon2Text03:
+		db "AS MUCH I LIKE  "
+		db "TO SEE HIM GONE "
+		db "WHAT HAPPEN IS  "
+		db "SO BAD..",00
+	moon2Text04:
+		db "HE IS MARKED AND"
+		db "WILL TURNE INTO "
+		db "A VAMPIRE..",00
+	moon2Text05:
+		db "DO NOT TRY TO   "
+		db "SAVE HIM. IT IS "
+		db "A TRAP. THE GUY "
+		db "WITH THE KEY.",00
+	moon2Text06:
+		db "HE WAS SEND TO  "
+		db "DECIVE YOU. BE  "
+		db "WARNED. THERE IS"
+		db "ONLY DEATH YOU",00
+	moon2Text07:
+		db "WILL FIND DOWN  "
+		db "THERE. JUST GO  "
+		db "AFTER THE COUNT "
+		db "AS LONG HE",00	
+	moon2Text08:
+		db "DOES NOT GROW   "
+		db "GROW TOO        "
+		db "POWERFULL..",00
+	moon2Text09:
+		db "YOU SEEM THE    "
+		db "ONLY ONE STRONG "
+		db "ENOUGH. DO SAVE "
+		db "THE LAND",00
+	moon2Text0a:
+		db "PLEASE DO NOT   "
+		db "FALL FOR THIS   "
+		db "TRAP. YOU ARE   "
+		db "TOO IMPORTANT.",00		
+
+	actionListAramus:
+		dw crossText00,goNextText
+		dw crossText01,endText
+		
+	crossText00:
+		db "DO YOU TRUST    "
+		db "THE CROSS?      ",00
+	
+	crossText01:
+		db "THE CROSS IS    "
+		db "EVIL!",00
+
 }
 	
 	
@@ -1242,6 +1506,7 @@ asciiLookUpTable:
 	
 	curserPos:
 		lda $36,x 
+		and #$00ff
 		beq ++
 		 
 		tay  			
@@ -1292,6 +1557,24 @@ asciiLookUpTable:
 	storeCurserPos02:
 		sta $36,x 
 	++  rts	
+	
+	textStateUpdater:
+		lda $36,x 
+		xba 
+		and #$00ff
+		beq +
+						; here we could ilustrate number form ram values 		
+		lda #$0000		; clear old Curser first we clear states 
+		sta $7fff00
+		sta $7fff20
+		sta $7fff40
+		sta $7fff60
+		sta $7fff02
+		sta $7fff22
+		sta $7fff42
+		sta $7fff62
+				
+	+	rts 
 	
 	
 	goNextTextWithSound:
@@ -1346,12 +1629,24 @@ asciiLookUpTable:
 		rtl				; actions also end the state..
 
 
-
 	initCurser:
 		jsl goNextText
 		lda #$0001
 		sta $36,x 
 		rtl
+
+	switchControlls:
+		lda #$0000			; set Vanilla 
+		sta !logicRingControlls
+		
+		lda $36,x 
+		stz $36,x 
+		cmp #$0002
+		bne +
+		lda #$0001			; set logic controll 
+		sta !logicRingControlls
+		
+	+	jml goNextText
 	
 	shopRoutineKey:
 		lda $36,x 
@@ -1363,7 +1658,7 @@ asciiLookUpTable:
 		lda RAM_simon_multiShot		; only get item once 
 		cmp #$0002
 		beq +
-		lda #$2000   			; Cost	; curse remove	
+		lda #$5000   			; Cost	; curse remove	
 		jsr checkCash
 		bcs endShopRoutine	
 		jsr giveKey
@@ -1458,7 +1753,7 @@ asciiLookUpTable:
 		rts 
 
 	spawnSmallHeartAndText:
-		jsl goNextText
+		jsl endText	
 		
 		phy		
 		jsl $82AFB6		; get empty event onto y register		
@@ -1467,8 +1762,9 @@ asciiLookUpTable:
 		lda $0a,x
 		adc #$0020
 		sta.w $0a,y
-		lda $0e,x 
-		sbc #$00c0
+;		lda $0e,x 
+;		sbc #$00c0
+		lda #$0000
 		sta.w $0e,y
 		lda $542		; simons current layer 
 		sta.w $02,y
@@ -1518,6 +1814,27 @@ asciiLookUpTable:
 		jsl goNextText
 		rtl 
 
+	shopArmor:
+		lda $36,x 
+		stz $36,x 
+		tay 
+		cpy #$0001
+		beq endArmorShop
+		
+		lda #$2000   			; Cost
+		jsr checkCash
+		bcs endArmorShop	
+		jsr getColorArmor
+
+	endArmorShop:	
+		jsl goNextText
+		rtl 
+	
+	getColorArmor:
+		sty !armorType		; set flag for blue armor 1e1a
+		LDA.W #$0072      	; SoundID  ;80DFF2 give armore here
+		JSL.L $8085E3 								                  
+		rts 
 	
 	bigWhip:
 		lda #$0003
@@ -1599,12 +1916,18 @@ asciiLookUpTable:
 		sta $10,x 
 		lda #$0100
 		sta $06,x 
-		lda #$0002
+		lda #$0003
 		sta $12,x 
-		lda #$0047
-		sta $2e,x 
+
+;		lda #$0047
+;		sta $2e,x 
 		rtl 
 	
+	endTextSimonHurt:
+		lda #$000c
+		sta RAM_simonSlot_State
+		lda #$0096
+		jsl lunchSFXfromAccum
 	endText:
 		stz $f0			; delete Pointers (section is used in transition and game over)
 		stz $f2 		
@@ -1618,6 +1941,7 @@ asciiLookUpTable:
 		lda #$0001		; terminate textUpdate 2 PPU
 		sta !textEngineState
 		rtl 
+	
 
 }
 
@@ -1731,6 +2055,7 @@ asciiLookUpTable:
 		jml NPCTextTrigger
 	
 	MoonLady:
+	moonLadyCastle:	
 		jsr NPCwalkAnimation		
 		jml NPCTextTrigger
 		
@@ -1746,12 +2071,27 @@ asciiLookUpTable:
 		jsl faceSimon
 		jsr loadPalettePracticeRing		
 		jml NPCTextTrigger	
-	TutorialLeady01:
-		jsl faceSimon	
-		jml NPCTextTrigger	
-	TutorialLeady02:
+
+	aramus:
+		jsr walkBackAndForward
+		bra +
+
+	hooker:
+	Tinnue:
 		jsl faceSimon
-		jml NPCTextTrigger	
+		lda $04,x 
+		ora #$0e00
+		sta $04,x 
+		bra +
+	ArmorSeller:
+	TutorialLeady01:
+	TutorialLeady02:
+	TutorialLadyControls:
+		jsl faceSimon
++		jml NPCTextTrigger	
+
+
+
 	BarKeeper02Doina:
 		jsl faceSimon
 		jsr NPCwalkAnimation
@@ -1790,20 +2130,41 @@ asciiLookUpTable:
 		lda !ownedWhipTypes
 		cmp #$0003
 		bne +
-		jsl clearSelectedEventSlotAll
+		
+		;		jsl clearSelectedEventSlotAll
+		lda #$00e0		; fix slot offset 
+		sta $26,x 
+		lda #$0070
+		sta $10,x 
+		stz.w $12,x 
+		lda #$0019		; give big heart on kill 
+		sta.w $14,x 
+		jml $83DDFE
+
+
 	+	jml ZombieManDoina
 		
 	ZombieManDoinaWifeSecond:
 		jsl ZombieManDoinaWife
 
-		lda !ownedWhipTypes
-		cmp #$0003
-		bne +
-		lda $34,x 
+;		lda !ownedWhipTypes
+;		cmp #$0003
+		lda !killedHusband
+		beq +
+		lda $34,x 				; new text check and update 
 		cmp #$0006
 		bcs +
 		lda #$0006
 		sta $34,x 	
+
+		lda !killedHusband
+		cmp #$0006
+		bcc +
+		lda #$000a
+		sta $34,x 	
+		
+;		lda #$0100				; was thinking to let her count how many times you killed him.. but since I do no furhter content this would be stupid 
+;		sta $36,x 
 
 	+	rtl 
 	
@@ -1814,6 +2175,7 @@ asciiLookUpTable:
 		jml BarKeeper00
 		
 	door:
+		jsr pushSimonOut
 		lda $92
 		cmp #$0002
 		bne +
@@ -1832,6 +2194,65 @@ asciiLookUpTable:
 		
 	+	stz $2e,x 
 	++	rtl 
+	
+	door2:
+		lda $34,x 		; flag door is opening 
+		bne +
+		
+		jsr pushSimonOut
+		lda $32,x 		; flag door is touched 
+		beq ++
+		lda RAM_simon_multiShot
+		cmp #$0002
+		bne ++
+	
+	+	lda $34,x 		; move door 64 pixle up also use it as flag to skip collusion 
+		inc 
+		cmp.w #$0032
+		beq ++
+		sta $34,x 
+		dec.w RAM_X_event_slot_yPos,x 
+	++	rtl 
+
+
+	pushSimonOut:
+		jsl faceSimon
+		lda $04,x 
+		bne +
+		lda RAM_X_event_slot_xPos,x
+		sbc #$0008
+		cmp RAM_simonSlot_Xpos
+		bcs ++
+		
+		sta RAM_simonSlot_Xpos
+		sta $32,x 						; set sign we touched door
+;		jsr stopSimonsMovementSpeedX
+		bra +++
+
+	+   lda RAM_simonSlot_Xpos
+		sec
+		sbc #$0010
+		cmp RAM_X_event_slot_xPos,x
+		bcs ++
+		
+		lda RAM_X_event_slot_xPos,x
+		clc
+		adc #$0010
+		sta RAM_simonSlot_Xpos
+		sta $32,x 
+;		jsr stopSimonsMovementSpeedX		
+		bra +++
+		
+	++	lda #$0000
+		sta $32,x 						; dont check door when we are not next to it.. 
+	+++	lda #$0000
+		sta $04,x 
+		rts	
+
+;	stopSimonsMovementSpeedX:
+;		stz.w RAM_X_event_slot_xSpd
+;		stz.w RAM_X_event_slot_xSpdSub
+;		rts 
 
 	RedguyLiftingCurse:
 		jsr NPCwalkAnimation		
@@ -1847,7 +2268,9 @@ asciiLookUpTable:
 		jsl NPCTextTrigger
 		jsl	resetBG3Scroll
 		rtl 
-
+	Paul:			
+		jsr paulRoutine
+		jml NPCTextTrigger
 	resetBG3Scroll:
 		lda.l !textEngineState
 		beq +
@@ -1855,9 +2278,13 @@ asciiLookUpTable:
 		bra ++
 	+	lda #$000b
 	++	sta $46 		; cheep fix just changing a setting also fixes a issue with restoring this BG since we write to first screen 		; 46 #$0b00
+	-	
 		rtl 
 	
 	makePaletteDark:
+		lda $15fe		; I think the end of this table will not get used and it is clear on level start
+		bne -		
+		
 		lda $22,x 
 		clc 
 		adc #$0001
@@ -1917,36 +2344,21 @@ asciiLookUpTable:
 		dex 
 		bpl -
 		plx 
+		
+		lda #$ffff		; set flag to only trigger once till you die 
+		sta $15fe		; I think the end of this table will not get used and it is clear on level start
 		rtl 
 
-;		lda $22,x 		; a experiment with palettes.. 
-;		bne +
-;		lda #$ffff
-;		sta $22,x 
-;		sta $20,x
-;
-;	+	lda $3a
-;		and #$0001
-;		beq ++
-;		
-;		lda $20,x 
-;		sec 
-;		sbc #$1111
-;		bcc +
-;		sta $20,x 
-;		
-;	+	lda $20,x 
-;		sta $00
-;		phx 
-;		ldx #$0020
-;	-	lda.l $7e2220,x 
-;		and $00 
-;		sta.l $7e2220,x 
-;		dex
-;		dex
-;		bpl -
-;		plx
-;	++	rtl 
+	paulRoutine:		
+		lda $3a			; palette animations 
+		and #$1043
+		sta.l $7e2200
+		
+		lda $e6
+		and #$4444		
+		sta.l $7e2338
+		rts
+ 
 }   
 
 

@@ -98,7 +98,6 @@ pullPC 			; freeSpace
 ;		lda #$0006
 ;		sta $70 
 ;		rtl 
-		
 	mapControll:
 		lda $f2 
 		beq normalMapBehavier
@@ -107,7 +106,18 @@ pullPC 			; freeSpace
 		bne endMapLevelSelect
 		
 		jsl writeMapTextUpdateTable
-		
+		jsl buttonControllsMap
+
+	endMapLevelSelect:
+		rtl 			
+	normalMapBehavier:
+		DEC.B $68                            ;809D79|C668    |000068;  
+        BNE +
+        INC.W $1C00                          ;809D7D|EE001C  |811C00;  
+	+	rtl 
+
+
+	buttonControllsMap:
 		LDA.B $28    	; exit map with start or A 
         BIT.W #$1080                       
 	    beq +      
@@ -115,7 +125,7 @@ pullPC 			; freeSpace
         sta $1c00                        
 		sta $f2			; reset with normal map behavior 
 
-	+	lda $28
+	+	lda $28			; single press detect
 		bit #$0400
 		beq ++
 		lda.l $700002
@@ -127,7 +137,7 @@ pullPC 			; freeSpace
 		sta $700002
     ++  lda $28
 		bit #$0800
-		beq endMapLevelSelect 
+		beq endSinglePressCheckMapAdcance
 		lda.l $700002
 		sec 
 		sbc #$0001
@@ -135,13 +145,45 @@ pullPC 			; freeSpace
 		bne ++
 		lda $700000		; reset to highest level avalible 
 	++	sta $700002	
-    endMapLevelSelect:   
-		rtl                         
-	normalMapBehavier:
-		DEC.B $68                            ;809D79|C668    |000068;  
-        BNE +
-        INC.W $1C00                          ;809D7D|EE001C  |811C00;  
-	+	rtl 
+    endSinglePressCheckMapAdcance:  	
+		
+		lda $3a			; slow it down a bit with running even frames
+		bit #$0001
+		beq HoldButtonCheckMap
+		lda $20
+		bne +
+		stz.w $550		; hold timer. we just use simons slot since it is not used much in map mode and we like it to be cleard	
+	+   lda $550
+		clc
+		adc #$0001
+		cmp #$0018
+		bcs +
+		sta $550
+		bra HoldButtonCheckMap
+	
+	+	lda $20			; hold press detect 
+		bit #$0400
+		beq ++
+		lda.l $700002
+		cmp $700000
+		bcc +
+		lda #$ffff
+	+	clc
+		adc #$0001	
+		sta $700002
+    ++  lda $20
+		bit #$0800
+		beq HoldButtonCheckMap 
+		lda.l $700002
+		sec 
+		sbc #$0001
+		cmp #$FFFF
+		bne ++
+		lda $700000		; reset to highest level avalible 
+	++	sta $700002	 
+    HoldButtonCheckMap:   
+		rtl 
+		
 	
 	newMapExitBehavier:
 		lda $f2			; disable in level secect mode
@@ -184,8 +226,15 @@ pullPC 			; freeSpace
 ;		jsl SetDataBanktoA0
 		jsl SetDataBanktoA4
 		
-		ldy #$000d					; write first line
-		ldx #$001a
+		lda #$0000					; clear table
+		ldx #$0038
+	-	sta.l $7fff88,x
+		dex
+		dex
+		bpl -
+		
+		ldy #$000d					; write first line info
+		ldx #$001a					
 	-	lda levelSelectText00,y
 		and #$00ff
 		
@@ -201,7 +250,7 @@ pullPC 			; freeSpace
 		dex
 		bpl -
 		
-		lda $700002					; update selected level in update table 
+		lda $700002					; update Curser selected level in update table 
 		pha
 		and #$000f
 		inc 
@@ -216,9 +265,12 @@ pullPC 			; freeSpace
 		ora #$2000
 		sta $7fff9e 
 		
+		lda #$0000					; clear filler?? Since my routine sucks
+		sta $7fffa2
+		
 		ldy #$000d					; write second line 
 		ldx #$001a
-	-	LDA ($F2),Y		; read Ascii Character from text-table
+	-	LDA ($F2),Y					; read Ascii Character from text-table
 	;	lda levelSelectText01,y
 		and #$00ff
 		
@@ -234,7 +286,7 @@ pullPC 			; freeSpace
 		dex
 		bpl -
 		
-		lda $700002					; SRAM 
+		lda $700002					; SRAM read from levelTable to choose cutscen??
 		asl
 		tax 
 		lda levelTable,x 
@@ -263,6 +315,20 @@ pullPC 			; freeSpace
 		sta $13d4
 		
 		jsl updateMapTextPointer
+		
+;	loadProgress:		
+		lda.l $700004					; restore Score
+		sta $1f42 
+		
+		lda.l $700006
+		sta $1F40		
+		
+		lda.l $700008		
+		sta !armorType	
+
+		lda.l $70000a
+		sta !killedHusband
+
 		
 		jsl SetDataBankto81
 		
@@ -300,37 +366,37 @@ pullPC 			; freeSpace
 		dw $0421        ;1a		
 		dw $1422        ;1b		; dancer Boss
 		dw $0423        ;1c		; libery 
-		dw $0424        ;1d
-		dw $0425        ;1e
-		dw $0426        ;1f
-		dw $0427        ;20
-		dw $0528        ;21
-		dw $0527        ;22
-		dw $0528        ;23
-		dw $0529        ;24
-		dw $052a        ;25
-		dw $052b        ;26
-		dw $052c        ;27
-		dw $052d        ;28
-		dw $052e        ;29
-		dw $052f        ;2a
-		dw $0530        ;2b
-		dw $0531        ;2c
-		dw $0532        ;2d
-		dw $0633        ;2e
-		dw $0634        ;2f
-		dw $0635        ;30
-		dw $0636        ;31
-		dw $0637        ;32
-		dw $0738        ;33
-		dw $0739        ;34
-		dw $073a        ;35
-		dw $073b        ;36
-		dw $073c        ;37
-		dw $073d        ;38
-		dw $073e        ;39
-		dw $083f        ;3a
-		dw $0841        ;3b
+		dw $0424        ;1d		; libery 
+		dw $0425        ;1e		; libery 
+		dw $0426        ;1f		; gohtMeating
+		dw $0427        ;20		; gohtMeating
+		dw $0528        ;21		; gohtMeating
+		dw $0529        ;22		; grakul 
+		dw $052a        ;23		; dungeon
+		dw $052d        ;24		; frank 	
+		dw $052e        ;25		; gold 
+		dw $0530        ;26
+		dw $0531        ;27
+		dw $0532        ;28
+		dw $0533        ;29
+		dw $0534        ;2a
+		dw $0535        ;2b
+		dw $0536        ;2c			
+		dw $0537        ;2d		
+		dw $0638        ;2e
+		dw $0639        ;2f
+		dw $063a        ;30
+		dw $063b        ;31
+		dw $063c        ;32
+		dw $073d        ;33
+		dw $073e        ;34
+		dw $073f        ;35
+		dw $0741        ;36
+		dw $0742        ;37
+		dw $0742        ;38
+		dw $0742        ;39
+		dw $0842        ;3a
+		dw $0842        ;3b
 		dw $0842        ;3c
 		dw $0842        ;3d
 		dw $0842        ;3e
@@ -339,7 +405,8 @@ pullPC 			; freeSpace
 		dw $0a42        ;42
 		dw $0a42        ;43
 		dw $0a42	    ;44
-	
+		
+
 	removePWScreenWithMapScreen:
 		lda $1c00
 		cmp #$0004
@@ -443,8 +510,20 @@ pullPC 			; freeSpace
 	
 ;---------------------------------- old job asm 
 	saveProgress:
-		ldx #$0086						; start max level 
+		lda $86							; skip save on first section since you could accidently overwrite score 	
+		cmp #$0005
+		beq endSaveProgress				
+		
+		lda $1F42 						; save score
+		sta.l $700004
+		lda $1F40 
+		sta.l $700006
+		lda !armorType	
+		sta.l $700008
+		lda !killedHusband
+		sta.l $70000a
  
+		ldx #$0086						; start max level 
 	-	lda.l levelTable,x				; find current level you are in 
 		and #$00ff 
 		dex
@@ -555,6 +634,13 @@ pullPC 			; freeSpace
 ;		jsl SetDataBanktoA0
 		jsl SetDataBanktoA4
 		
+		ldx #$0020
+		lda #$0000					; clear level text table 
+	-	sta.l $7fff88,X
+		dex
+		dex
+		bpl -
+		
 		lda !jobTable00
 		sta $f0
 		jsl secondTownPointerFix	; since we use the same level for two towns.. 
@@ -570,7 +656,7 @@ pullPC 			; freeSpace
 		tax
 		LDA.l asciiLookUpTable,x	
 		plx 	
-				
+		
 		sta.l $7fff88,X   
 		iny 
 		inx
@@ -635,9 +721,9 @@ pullPC 			; freeSpace
 		dw textAquaduct,$0000,$0000,$0002	      ;lvl f
 		dw textAquaduct,$0000,$0000,$0002	     ;lvl 10
 		dw textAquaduct,$0000,$0000,$0002	      ;lvl 11
-		dw textBodley,$0000,$0000,$0002	      ;lvl 12 tower puw
-		dw textBodley,$0000,$0000,$0002	      ;lvl 13
-		dw textBodley,$0000,$0000,$0002	     ;lvl 14
+		dw textBodlyMansion,$0000,$0000,$0002	      ;lvl 12 tower puw
+		dw textBodlyMansion,$0000,$0000,$0002	      ;lvl 13
+		dw textBodlyMansion,$0000,$0000,$0002	     ;lvl 14
 		dw emptyText,$0000,$0000,$0013	  ;lvl 15	rotating
 		dw emptyText,$0000,$0000,$0013	       ;lvl 16
 		dw textKoranotsLayer,$0000,$0000,$0003	      ;lvl 17
@@ -659,10 +745,10 @@ pullPC 			; freeSpace
 		dw textSecretMeating,$0000,$0000,$00f3	  ;lvl 27
 		dw textSecretMeating,$0000,$0000,$00f3	  ;lvl 28
 		dw textGrakulsQuater,$0000,$0000,$0013	      ;lvl 29
-		dw emptyText,$0000,$0000,$0013	   ;lvl 2a dungeon
-		dw emptyText,$0000,$0000,$0013	  ;lvl 2b
-		dw emptyText,$0000,$0000,$0013	  ;lvl 2c frankQuater
-		dw emptyText,$0000,$0000,$0013	      ;lvl 2d
+		dw textDungeon,$0000,$0000,$0013	   ;lvl 2a dungeon
+		dw emptyText,$0000,$0000,$0033	  ;lvl 2b
+		dw emptyText,$0000,$0000,$0023	  ;lvl 2c frankQuater
+		dw textDungeon,$0000,$0000,$0013	      ;lvl 2d
 		dw emptyText,$0000,$0000,$0013	    ;lvl 2e gold
 		dw emptyText,$0000,$0000,$0013	  ;lvl 2f
 		dw emptyText,$0000,$0000,$0013	  ;lvl 30
@@ -671,7 +757,7 @@ pullPC 			; freeSpace
 		dw emptyText,$0000,$0000,$0013	      ;lvl 33
 		dw emptyText,$0000,$0000,$0013	  ;lvl 34
 		dw emptyText,$0000,$0000,$0013	  ;lvl 35
-		dw emptyText,$0000,$0000,$0013	          ;lvl 36 secret 01
+		dw emptyText,$0000,$0000,$0012	          ;lvl 36 secret 01
 		dw CVshooterText,$0000,$0000,$0013	      ;lvl 37 ClockTower
 		dw emptyText,$0000,$0000,$0013	  ;lvl 38
 		dw emptyText,$0000,$0000,$0013	  ;lvl 39
@@ -711,11 +797,11 @@ pullPC 			; freeSpace
 	textViper:	
 		db "WICKED FALLS   ",$00
 	textRifer:
-		db "MURDER RIFER   ",$00
+		db "GOLD RIFER     ",$00
 	textPreCastle:
 		db "DEBORAH CLIFF  ",$00
-	textBodley:	
-		db "BODLEY MENSION ",$00
+	textBodlyMansion:	
+		db "BODLEY MANSION ",$00
 	textDitch:
 		db "WICKED DITCH   ",$00
 	emptyText:
@@ -736,7 +822,10 @@ pullPC 			; freeSpace
 		db "GHOST MEATING  ",$00		
 	textGrakulsQuater:
 		db "GRAKUL LAYER   ",$00
-		
+	textDungeon:	
+		db "TORTURE DUNGEON",$00	
+
+	
 	secondTownPointerFix:
 		lda $86
 		cmp #$0005

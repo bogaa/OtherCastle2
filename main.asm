@@ -10,6 +10,7 @@
 !deathCounter = 1
 !removeGFXreuse = 0
 
+!hotFixWhipCancle = 1				; always check ring with whip 
 !NoFatalCrusherHit = 1
 !BatRing = 1						; code in baseRomTweaks
 !removeTimer = 1
@@ -22,8 +23,11 @@
 !reUseBrkblBlock = 1
 !simonIdleAnimation = 1
 !subWeaponDropOnPickup = 1
+!extraSpritesOnScreen = 0
+!invertRingGlitchControll = 1
+!swordSkellyHitboxFix = 1
 
-;NEW RAM ALLOCATION IN FREERAM -----------------------------------------------
+;NEW RAM ALLOCATION IN FREERAM ------- till $1e7f----------------------------------------
 !textEngineState = $1E18	; write 2 to write text and 1 to terminate. 4 lines with 16 Character 
 !armorType = $1e1a
 !whipLeanth = $1e1c
@@ -39,6 +43,9 @@
 !layer2ScrollBehavier = $1e30 
 !bafferRam = $1e32				; just make sure not to use it twice in a level
 !noWhipSwitch = $1e34			; probably use a other way TODO
+!logicRingControlls = $1e36		; above rings controlls are inverted try to fix this here
+!killedHusband = $1e38
+!aramusBelmontCross = $1e3a
 
 
 !jobTable00	= $1e40			; 
@@ -56,6 +63,15 @@ org $80810D
 ; freeSpace at	$A49000-A4FFFF ??
 ; freeSpace at 	$ff8a00		
 ;				$80C5BF-80C647
+
+;110000 collusion tables ROM offset
+;org $20c000 LvlTransitionTable
+
+
+;entrances a78000 ROM 138000
+
+;SPRITEASSEMBLY l2590 tutorialHackTweak
+;GFX some are in pointer and need to be plit for some reason??
 
 org $a08000							; free Space startpoint !!org $a0f000 freeSpace PrePatch
 pushPC

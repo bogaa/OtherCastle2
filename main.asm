@@ -29,6 +29,7 @@
 !swordSkellyHitboxFix = 1
 !jpWhipSound = 1
 !radio = 1
+!moonwalk = 1
 
 ;NEW RAM ALLOCATION IN FREERAM ------- till $1e7f----------------------------------------
 !textEngineState = $1E18	; write 2 to write text and 1 to terminate. 4 lines with 16 Character 

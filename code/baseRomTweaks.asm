@@ -97,6 +97,51 @@ org $fd8079
 endif 
 
 
+if !moonwalk == 1 
+org $80a792
+		jsl MoonWalk
+		rtl	
+
+pullPC
+	MoonWalk:
+		LDA $22e			;Simon walk movment if equal. Used when whiping
+		BNE simonFlip		;
+		LDA $02bc
+		BNE simonFlip		
+		LDA $20
+		BIT #$0080			;Check A button
+		BNE	endSimonFlip
+		
+		BIT #$0100 		;Check left button
+		BNE simonFlipLeft	
+	+	
+		BIT #$0200			;Check right button
+		BNE simonFlipRight
+	simonFlip:
+		LDA $0578
+		AND #$0002
+		STA $0578
+		TAY
+		LDA $8fbf,Y		;Look up table for spriteflip
+		STA $0544
+	endSimonFlip:
+		RTL
+	
+	simonFlipLeft:	
+		STZ $0544
+		STZ $0578
+		RTL
+	simonFlipRight:	
+		LDA.W #$4000
+		STA.W $0544
+		LDA.W #$0002
+		STA.W $0578
+		RTL
+pushPC 
+
+endif 
+
+
 
 if !invertRingGlitchControll == 1 
 org $80A9E2

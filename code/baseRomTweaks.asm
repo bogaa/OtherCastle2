@@ -89,6 +89,15 @@ org $84A1D8
 	db $F2,$Da,$00,$60
 
 
+
+if !jpWhipSound == 1		; only large whip?
+org $fd8079
+	db $01, $E0, $0E, $E7, $67, $ED, $BE, $EA, $07, $01, $05, $8E, $91, $01, $07, $93, $97, $01
+	db $09, $9F, $7F, $6D, $9C, $00, $00, $00, $F5, $34, $FA, $01, $E0, $0E, $E7, $67, $ED, $BE
+endif 
+
+
+
 if !invertRingGlitchControll == 1 
 org $80A9E2
 	jsl invertRingControllCheck
@@ -162,6 +171,10 @@ endif
 
 
 if !swordSkellyHitboxFix == 1 
+org $80F909
+		ADC.W #$0026                         ;80F909|691C00  |      ;  
+org $80F91A
+		SBC.W #$0026                         ;80F91A|E91C00  |      ;  
 
 endif  
 
@@ -443,7 +456,9 @@ pullPC
 		lda $86						; check for levels to not check simon for sprite priority 
 		cmp #$0001
 		beq +
-
+		cmp #$0020
+		beq +						; elevator use is wired otherwise... 
+		
 		jml $8CFF07					; RingMain HijackFix 
 	+	jml $8CFF0C					; no priority fix for this stages	
 pushPC 
@@ -469,7 +484,8 @@ pullPC				; free space
 
 	NewRingEventInit:
 		lda $14,x 		
-		beq ++
+		cmp #$0001
+		bne ++
 
 		lda #$0003		; get sprite slot offset 
 		sta $10,x
@@ -903,7 +919,7 @@ org $809545
 	noHealtWhileLoadingBranch:  				; reset stats
 ;	LDA.W #$0005                  
 ;    STA.W $13f2				; RAM_81_simonStat_Hearts        ;809548|8DF213  |8113F2;  
-    STZ.B $8e				; RAM_simon_subWeapon            ;80954B|648E    |00008E;  
+ ;   STZ.B $8e				; RAM_simon_subWeapon            ;80954B|648E    |00008E;  
 ;    STZ.B $90				; RAM_simon_multiShot            ;80954D|6490    |000090;  
 ;    STZ.B $92				; RAM_simon_whipType             ;80954F|6492    |000092;  
 	jsl halfHeartCount
@@ -924,10 +940,20 @@ org $809778
 
 org $819255
 	subweaponHeartCost:
-	dw $0000,$0001,$0001,$0001,$0002,$0004 		
+	dw $0000,$0001,$0001,$0001,$0002,$0003 		
 org $81A6FA	
 	subWeaponDamageData:
 	dw $0048,$0030,$0030,$0030,$0000                               
+
+org $80BD36				; clock behavier
+;		LDA.W #$0100                         ;80BD36|A90001  |      ;  
+;		STA.W RAM_81_simonStat_stopWatchTimer;80BD39|8DFA13  |8113FA;  
+;		LDA.W #$00F2                         ;80BD3C|A9F200  |      ;  
+;		JML.L lunchSFXfromAccum              ;80BD3F|5CE38580|8085E3;  
+		lda #$0094				;36 94 56
+		jsl lunchSFXfromAccum
+		jml newStopWatchbehavier
+
 
 org $80badd					
 		lda #$0010				; default 0008 axe hitbox 
@@ -943,7 +969,80 @@ org $80BBFC
 org $80BC12
 		jsl newHolyWbehavierFlame
 
+
+
 pullPC
+	restoreStopWatchCost:
+		sed
+		lda RAM_simonStat_Hearts
+		clc
+		adc #$0003
+		sta RAM_simonStat_Hearts
+		cld 
+		rtl 
+	
+	newStopWatchbehavier:	
+		lda $444
+		bne restoreStopWatchCost
+		
+		jsl checkForMan2Heal
+		
+		phx 
+		lda RAM_simonStat_Health_HUD		; give health
+		cmp #$0010
+		beq +
+		inc.w RAM_simonStat_Health_HUD		; restor on health when not full 
+				
+	+	lda #$0028							; timer herb coldown
+		sta $444
+		
+		lda $442							; slot not in use and values most likely be overwritten 
+		clc
+		adc #$0002
+		cmp #$000a
+		bne +
+		lda #$0000
+	+	sta $442
+		tax 
+		lda.l stopwatchEffects,x 
+		sta $44 	
+
+	++	plx 
+		rtl 
+	stopwatchEffects:
+		dw $0008,$0d00,$000f,$0400,$0004 
+
+	checkForMan2Heal:
+		lda $86
+		cmp #$0007		; check that we are in town 
+		bne +
+		lda $13d4		; check current death entrance
+		bne +
+		lda !ownedWhipTypes
+		cmp #$0003
+		bne +
+		
+		phx
+		ldx #$0800		; spawn NPC HunterBoss
+		lda #$000d
+		sta $10,x 
+		lda #$001f
+		sta $14,x 
+		lda #$0048
+		sta $0e,x 
+		lda #$0314
+		sta $0a,x 
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x  
+		lda #$0160
+		sta RAM_X_event_slot_SpriteAdr,x
+		lda #$0010
+		sta RAM_X_event_slot_HitboxYpos,x 
+		sta RAM_X_event_slot_HitboxXpos,x
+		
+		plx 
+	+	rtl
+
 	newHolyWbehavier:
 		STA.B RAM_X_event_slot_24,X          ;80BBFF|9524    |000024;  hijack fix
         STZ.B RAM_X_event_slot_22,X          ;80BC01|7422    |000022;  

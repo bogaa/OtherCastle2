@@ -260,7 +260,7 @@ ScrollSettingsBG:
 	dw $001A     ;lvl 2b
 	dw $0000     ;lvl 2c
 	dw $001A     ;lvl 2d
-	dw $001B     ;lvl 2e
+	dw $001B     ;lvl 2e gold
 	dw $001B     ;lvl 2f
 	dw $001B     ;lvl 30
 	dw $0000     ;lvl 31
@@ -330,7 +330,7 @@ org $85ca82		;tileAnimation 1
 	dw $87EF    ;lvl 2b
 	dw $87BF    ;lvl 2c
 	dw $87F7    ;lvl 2d
-	dw $87BF    ;lvl 2e
+	dw $87D3			; $87BF    ;lvl 2e
 	dw $87BF    ;lvl 2f
 	dw $87BF    ;lvl 30
 	dw $87BF    ;lvl 31
@@ -401,7 +401,7 @@ org $85cb0a		;tileAnimation 2
 	dw $87F3    ;lvl 2b
 	dw $87BF    ;lvl 2c
 	dw $87BF    ;lvl 2d
-	dw $87BF    ;lvl 2e
+	dw $87C3	; $87BF    ;lvl 2e
 	dw $87BF    ;lvl 2f
 	dw $87BF    ;lvl 30
 	dw $87BF    ;lvl 31

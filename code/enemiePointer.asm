@@ -7,8 +7,8 @@ dw enemyGFX9,enemyGFX10,enemyGFX11,enemyGFX11												;stage 2
 dw enemyGFX13,enemyGFX14,enemyGFX15,enemyGFX16,enemyGFX17,enemyGFX18						;stage 3
 dw enemyGFX19,enemyGFX20,enemyGFX20,enemyGFX2,enemyGFX23,enemyGFX24							;stage 4
 dw enemyGFX25,enemyGFX26																	;stage 5
-dw enemyGFX27,enemyGFX31,enemyGFX29,enemyGFX30,enemyGFX31,enemyGFX32,enemyGFX34,enemyGFX63,enemyGFX4	;stage 6
-dw enemyGFX36,enemyGFX36,enemyGFX38,enemyGFX41,enemyGFX41,enemyGFX31,enemyGFX42				;stage 7
+dw enemyGFX27,enemyGFX31,enemyGFX29,enemyGFX30,enemyGFX31,enemyGFX32,enemyGFX34,enemyGFX63,enemyGFX5	;stage 6
+dw enemyGFX36,enemyGFX36,enemyGFX38,enemyGFX41,enemyGFX41,enemyGFX39,enemyGFX42				;stage 7
 dw enemyGFX43,enemyGFX45,enemyGFX44,enemyGFX43												;stage 8
 dw enemyGFX49,enemyGFX49,enemyGFX49,enemyGFX50,enemyGFX50,enemyGFX50,enemyGFX53,enemyGFX55	;stage 9
 dw enemyGFX55,enemyGFX58,enemyGFX57,enemyGFX58,enemyGFX59,enemyGFX32						;stage a
@@ -21,8 +21,8 @@ dw enemyAssembly9,enemyAssembly10,enemyAssembly11,enemyAssembly11															
 dw enemyAssembly13,enemyAssembly14,enemyAssembly15,enemyAssembly16,enemyAssembly17,enemyAssembly18									;stage 3
 dw enemyAssembly19,enemyAssembly20,enemyAssembly20,enemyAssembly2,enemyAssembly23,enemyAssembly24									;stage 4
 dw enemyAssembly25,enemyAssembly26																									;stage 5
-dw enemyAssembly27,enemyAssembly31,enemyAssembly29,enemyAssembly30,enemyAssembly31,enemyAssembly32,enemyAssembly34,enemyAssembly63,enemyAssembly4 ;stage 6
-dw enemyAssembly36,enemyAssembly36,enemyAssembly38,enemyAssembly41,enemyAssembly41,enemyAssembly31,enemyAssembly42					;stage 7
+dw enemyAssembly27,enemyAssembly31,enemyAssembly29,enemyAssembly30,enemyAssembly31,enemyAssembly32,enemyAssembly34,enemyAssembly63,enemyAssembly5 ;stage 6
+dw enemyAssembly36,enemyAssembly36,enemyAssembly38,enemyAssembly41,enemyAssembly41,enemyAssembly39,enemyAssembly42					;stage 7
 dw enemyAssembly43,enemyAssembly45,enemyAssembly44,enemyAssembly43																	;stage 8
 dw enemyAssembly49,enemyAssembly49,enemyAssembly49,enemyAssembly50,enemyAssembly50,enemyAssembly50,enemyAssembly53,enemyAssembly55	;stage 9												
 dw enemyAssembly55,enemyAssembly58,enemyAssembly57,enemyAssembly58,enemyAssembly59,enemyAssembly32 									;stage a
@@ -87,9 +87,22 @@ org $868C56	; lvl 0
 	db $07,$2e,$0c,$12,$03,$0b,$07,$43
 	
 	enemyGFX5:
-
+	db $00,$00
+;	db $00,$6a,$9d,$ca,$a8 	;moon
+	db $00,$6a				 ;platform
+	dl NewPlatform1			;platform
+	db $00,$6c,$9d,$97,$aa	;bat
+	db $00,$6e,$fd,$9b,$aa	;skelly
+	db $00,$74,$7d,$c6,$a8	;ring, block and bubbles
+	db $00,$76,$1d,$ee,$ab  ;bonePillar
+;	db $00,$7a,$fd,$f7,$ac,$ff,$ff	;clubGuy 73
+	db $00,$7a,$3d,$c0,$af ;medusa
+	db $00,$7c,$1d,$ea,$b0 ;spider
+;	db $00,$7e,$7d,$ab,$aa,$ff,$ff ;dirt
+	dw $ffff 
 	enemyAssembly5:
-	
+	db $06,$17,$0c,$12,$03,$0b,$07
+
 ;org $68CF0	; lvl 5
 ;	enemyGFX6:
 ;	db $00,$00 
@@ -201,7 +214,9 @@ org $868C56	; lvl 0
 	db $00,$76,$1d,$ea,$b0 ;spider
 	db $00,$78,$5d,$b0,$b2 ;platform
 ;	db $00,$7a,$9d,$9f,$b6,$ff,$ff ;mudMan ,$34
-	db $00,$7a,$7d,$e0,$c9,$ff,$ff	;oldMan,$FF,$FF ;stairs
+	db $00,$7a
+	dl gfxNPCWizard
+	dw $ffff						; $7d,$e0,$c9,$ff,$ff	;oldMan,$FF,$FF ;stairs
 	enemyAssembly13:
 	db $08,$03,$3f,$0c,$0b,$44,$43,$17,$0d
 	
@@ -209,17 +224,21 @@ org $868C56	; lvl 0
 	enemyGFX14: 
 	db $00,$00
 	db $00,$6a,$7d,$c6,$a8 ;ring, block and bubbles
-	db $00,$6c,$BD,$8B,$E3 ;headlessKinght
+
 ;	db $00,$6c,$dd,$f7,$b7 ;fallingBridge 3a
 ;	db $00,$72,$9d,$97,$aa ;bat
 ;	db $00,$72,$5d,$b0,$b2 ;platform 17
 ;	db $00,$74,$1d,$ee,$ab ;bonePillar $0b
-	db $00,$72,$1d,$bc,$af ;trapDoor
-	db $00,$74,$bd,$fa,$b7 ;fuzzyBall $6d
+	db $00,$6c,$1d,$bc,$af ;trapDoor
+	db $00,$6e,$bd,$fa,$b7 ;fuzzyBall $6d
 ;	db $00,$76,$bd,$b6,$b2;plant $35
-	db $00,$76,$DD,$BD,$E5,$ff,$ff  ;stoneGolem
+	db $00,$70,$DD,$BD,$E5  ;stoneGolem
+	db $00,$76				; $BD,$8B,$E3 ;headlessKinght
+	dl gfxHeadlessKnight2	
+	dw $ffff
 	enemyAssembly14:
-	db $05,$03,$7e,$67,$6d,$7f
+	db $05,$03,$67,$6d,$7f,$7e
+	
 	
 ;org $68E5B ; lvl e 
 	enemyGFX15:
@@ -512,6 +531,23 @@ org $868C56	; lvl 0
 	db $00,$7a,$9d,$cd,$ca,$ff,$ff ;redSkelly
 	enemyAssembly38:
 	db $06,$17,$03,$43,$0f,$56,$69
+
+
+	enemyGFX39:
+	db $00,$00
+;	db $00,$6a,$9d,$ca,$a8 ;moon
+	db $00,$6a
+	dl gfxNPCWizard					;$7d,$e0,$c9	;oldMan
+	db $00,$70,$1d,$8a,$c8	;fallingChandelire
+	db $00,$72,$7D,$C6,$A8 ;ring, block and bubbles	
+	db $00,$74,$dd,$ab,$cc ;tableChairs
+;	db $00,$7c
+;	dl sheepGFX
+	db $ff,$ff ;platform $5d,$b0,$b2
+
+	enemyAssembly39:
+	db $04,$0d,$4d,$03,$42
+
 	
 ;org $690F5	;	lvl 26 less books
 ;	enemyGFX39:
@@ -647,7 +683,8 @@ org $691CD ; lvl 2c
 	db $00,$70,$fd,$9b,$aa ;skelly
 	db $00,$76,$1d,$cf,$b9 ;boneDragon
 ;	db $00,$7a,$1d,$ee,$ab ;bonePillar 0b
-	db $00,$7a,$5d,$b0,$b2 ;platform
+	db $00,$7a
+	dl NewPlatform2						; $5d,$b0,$b2 ;platform
 	db $00,$7c,$9d,$97,$aa,$ff,$ff ;bat
 	enemyAssembly49:
 	db $06,$63,$03,$12,$5d,$17,$0c
@@ -903,6 +940,15 @@ org $FE9D6d
 		dw $0c03			; size 
 		db $80 
 
+org $FEA98d
+	gfxNPCWizard:
+		dw $0c03			; size 
+		db $80 
+
+org $FEB5AD
+	gfxHeadlessKnight2:
+		dw $1003
+		db $80 
 org $a8c2bd
 	NewPlatform1:
 		db $44,$02,$80

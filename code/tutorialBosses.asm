@@ -24,6 +24,8 @@ org $80D7F1
 	getEmptyEventSlot:      
 org $82B459
 	gravetyFallCalculation4000:      ;839895|2259B482|82B459;  
+org $82D647
+	getPixleOffsetXposAwayFromSimon:		;86C56F|2247D682|82D647;  		
 
 org $81f93a					; palette animation chandelire BG dest 
 	dw $2200
@@ -3074,6 +3076,74 @@ org $82EFAD
 {	; --------------------- bossViper --------------------------------------
 org $82E7BC
 JSL.L NewViperShootingInterfall		; CODE_82E82D                    ;82E7BC|222DE882|82E82D;  
+
+org $84B038
+	sprAssID_510_bossViperHead00: 
+		db $06                               ;84B038|        |0000FE;  
+		dd $24AA07FE,$24A807EE               ;84B039|        |      ;  
+		dd $24A6F70E,$24A4F7FE               ;84B041|        |      ;  
+		dd $24A2F7EE,$24A0F7DE               ;84B049|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_511_bossViperHead01: 
+		db $07                               ;84B051|        |0000FE;  
+        dd $24AA07FE,$24C207EE               ;84B052|        |      ;  
+        dd $24C007DE,$24A6F70E               ;84B05A|        |      ;  
+        dd $24A4F7FE,$24AEF7EE               ;84B062|        |      ;  
+        dd $24ACF7DE                         ;84B06A|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_512_bossViperHead02: 
+		db $07                               ;84B06E|        |0000FE;  
+        dd $24AA07FE,$24C807EE               ;84B06F|        |      ;  
+        dd $24C607DE,$24A6F70E               ;84B077|        |      ;  
+        dd $24A4F7FE,$24C4F7EE               ;84B07F|        |      ;  
+        dd $24ACF7DE                         ;84B087|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_513_bossViperHead03: db $08                               ;84B08B|        |      ;  
+        dd $24AA07FE,$24CE17EE               ;84B08C|        |      ;  
+        dd $24CC07EE,$24A6F70E               ;84B094|        |      ;  
+        dd $24A4F7FE,$24CA07DE               ;84B09C|        |      ;  
+        dd $24C4F7EE,$24ACF7DE               ;84B0A4|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_514_bossViperNeck00: 
+		db $01                               ;84B0AC|        |0000F9;  
+        dd $24E0F9F9                         ;84B0AD|        |      ;  
+
+org $84B14E
+	sprAssID_524_bossViperNeck01: 
+		db $01                               ;84B14E|        |0000F9;  
+        dd $256CF9F9                         ;84B14F|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_525_bossViperNeck02: 
+		db $01                               ;84B153|        |0000F9;  
+        dd $256EF9F9                         ;84B154|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_526_bossViperNeck03: 
+		db $01                               ;84B158|        |0000F9;  
+        dd $2580F9F9                         ;84B159|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_527_bossViperNeck04: 
+		db $01                               ;84B15D|        |0000F9;  
+        dd $2582F9F9                         ;84B15E|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_528_bossViperNeck05: 
+		db $01                               ;84B162|        |0000F9;  
+        dd $2584F9F9                         ;84B163|        |      ;  
+                                                            ;      |        |      ;  
+	sprAssID_529: 
+		db $01                               ;84B167|        |0000F9;  
+        dd $2586F9F9                         ;84B168|        |      ;  
+                                                            ;      |        |      ;  
+    sprAssID_530: 
+		db $01                               ;84B16C|        |0000F9;  
+        dd $2588F9F9                         ;84B16D|        |      ;  
+                                                            ;      |        |      ;  
+sprAssID_531_bossViperHead04: 
+		db $07                               ;84B171|        |0000FE;  
+        dd $24AA07FE,$258C17EE               ;84B172|        |      ;  
+        dd $258A07EE,$24A6F70E               ;84B17A|        |      ;  
+        dd $24A4F7FE,$24C4F7EE               ;84B182|        |      ;  
+        dd $24ACF7DE     
+
 
 }
 

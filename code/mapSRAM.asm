@@ -78,6 +78,10 @@ org $809FF6
 		;	jml extraGFXLoad
 
 
+org $82BB3B
+		jml levelTransitHijack		; when new level is loaded when new level is loaded exit Handler
+		nop 
+
 org $86B6F5					; level loading sequents						
 		phx
 		phy
@@ -107,6 +111,8 @@ pullPC 			; freeSpace
 		
 		jsl writeMapTextUpdateTable
 		jsl buttonControllsMap
+
+		stz !flagSkipBoss		; load bosses on retrie 
 
 	endMapLevelSelect:
 		rtl 			
@@ -329,6 +335,8 @@ pullPC 			; freeSpace
 		lda.l $70000a
 		sta !killedHusband
 
+		lda.l $700010
+		sta !dogLeash
 		
 		jsl SetDataBankto81
 		
@@ -522,6 +530,8 @@ pullPC 			; freeSpace
 		sta.l $700008
 		lda !killedHusband
 		sta.l $70000a
+		lda !dogLeash
+		sta.l $700010
  
 		ldx #$0086						; start max level 
 	-	lda.l levelTable,x				; find current level you are in 
@@ -541,7 +551,16 @@ pullPC 			; freeSpace
 		sta.l $700002					; update progress too 
 	endSaveProgress:	
 		rtl 
-	
+
+	levelTransitHijack:					; when new level is loaded exit Handler
+		lda RAM_simon_multiShot			; clear double.. or checkpoint card 
+		and #$0002
+		sta RAM_simon_multiShot
+		
+		lda #$0006						; hijack fix 
+		sta RAM_mainGameState
+		rtl 
+		
 	levelJobLoad:
 ;		lda $0086
 ;		bne +
@@ -558,7 +577,7 @@ pullPC 			; freeSpace
 		cmp $86
 		beq +
 		stz !flagSkipBoss
-		
+				
 	+	ldy !textEngineState
 		cpy #$0000
 		beq +
@@ -749,7 +768,7 @@ pullPC 			; freeSpace
 		dw emptyText,$0000,$0000,$0033	  ;lvl 2b
 		dw emptyText,$0000,$0000,$0023	  ;lvl 2c frankQuater
 		dw textDungeon,$0000,$0000,$0013	      ;lvl 2d
-		dw emptyText,$0000,$0000,$0013	    ;lvl 2e gold
+		dw textTreasureRoom,$0000,$0000,$0003	    ;lvl 2e gold
 		dw emptyText,$0000,$0000,$0013	  ;lvl 2f
 		dw emptyText,$0000,$0000,$0013	  ;lvl 30
 		dw emptyText,$0000,$0000,$0013	  ;lvl 31 zapfQuater
@@ -797,7 +816,7 @@ pullPC 			; freeSpace
 	textViper:	
 		db "WICKED FALLS   ",$00
 	textRifer:
-		db "GOLD RIFER     ",$00
+		db "GOLD RIVER     ",$00
 	textPreCastle:
 		db "DEBORAH CLIFF  ",$00
 	textBodlyMansion:	
@@ -824,7 +843,8 @@ pullPC 			; freeSpace
 		db "GRAKUL LAYER   ",$00
 	textDungeon:	
 		db "TORTURE DUNGEON",$00	
-
+	textTreasureRoom:
+		db "BAT GOLD SQUIRT",$00
 	
 	secondTownPointerFix:
 		lda $86

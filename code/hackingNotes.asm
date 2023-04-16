@@ -5,7 +5,12 @@
 ; get cursed and fight him as a dead belmont
 ; blue armore health regan
 ; NPC sheep talk? too much coffee, NPC telling more tips ,switch whips leather good for platforming  
-
+; secret stage 1
+; door health
+; add moonwalk 
+; add town as checkpoint 
+; dancer bumping
+; evil cross 
 
 
 $001C = !RAM_bg1CamXpos,
@@ -108,7 +113,9 @@ $0562 = !RAM_simonSlot_SubAnimationCounter,
 $0566 = !RAM_simonSlot_SpriteAttributeSub_Pallete,
 $056C = !RAM_simonSlot_Collusion_Donno00,
 $056E = !RAM_simonSlot_forceCrouchFrameCounter,
+;						RAM_simonSlot_RingSpeed = $000574   
 $0576 = !RAM_simonSlot_Collusion_Donno01,
+
 $0578 = !RAM_simonSlot_direction,
 
 $0580 = !RAM_eventSlot_Base,
@@ -143,12 +150,14 @@ $0580 = !RAM_eventSlot_Base,
 			;	d = 10 ??
 			;	c = 20 
 			;	b = 40 used often .. rossery??
-			;	a = 80 
+			;	a = 80 noDespawn			; messes with other stuff?? Bosses not hitable??
 			!event_slot_mask = $30
 			;32 movement logic??
 
 
 $0F00 = !RAM_OAM_Page,
+;						RAM_OAM_PROPERTY_BITS = $1100-$111f					   ;      | 
+
 $1120 = !RAM_FreeRamPage_E0_byte_not_cleard,
 
 $1200 = !RAM_channel_W_0_paletteAnimation,
@@ -187,6 +196,7 @@ $13A0 = !RAM_enemieIDSlotAssignPPUTable,
 $13D0 = !RAM_ScrollBG1SyncSpeed,
 $13D2 = !RAM_ScrollBG3SyncSpeed,
 $13D4 = !RAM_deathEntrance,
+;                       RAM_OAM_ForceYposOffset = $0013DE 
 $13E2 = !RAM_currentMusicTrack,
 $13EC = !RAM_simonStat_whipUpgradDropFlag,
 $13F0 = !RAM_simonStat_Timer,
@@ -210,6 +220,7 @@ $1602 = !RAM_secretStage6_Floor_Flag,		; floor stage 6		; 00 can enter, 01 will 
 $1604 = !RAM_secret_Flag,					; suckhole stage 9	; 00 can enter, 01 will use second exit, 02 cant use secret
 ;$19c0 = !RAM_breakableWallsCollectedFlags, till $19ff (cleard on death) 
 ;$1a00 = ,,
+
 $1C00 = !RAM_state_Map_Scene,
 $1E02 = !RAM_titleScreen_menuSelect,
 $1E0A = !RAM_characterString_Castlevania4,	

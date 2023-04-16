@@ -14,9 +14,11 @@ org $80A227
 		dw simonState00_respawn              ;80A227|        |80A249;  	
 org $80A249
 		dw simonState11_Gradius
-	
+		dw simonStateElevate
 	simonState11_Gradius:
 		jml simonState11_GradiusL
+	simonStateElevate:
+		rtl 
 warnPC $80A279
 
 org $80A279
@@ -445,12 +447,59 @@ org $85FC92						; make secret reusable
 		nop
 		nop
 		nop
-		
-		
+ 
+org $85FB37 
+		jsl newTreasurOpenBehavier
+
+org $86C56F						; diving Bat hijack 
+		jml newDivingBat
+
+; ----------------------- tripple Shot pickup behavier -------------------
+org $80DF9B
+	;doubleShotPickupBehavier: 
+		jml newDoubleShotPickup			; dog 
+		nop
+		nop 
+org $80DFA3		
+	tripleShotPickupBehavier: 
+		jml newTrippleShotPickup		; key 
+		nop
+		nop 
+
+
 ; ------------------------- freeSpace ---------------------
 
 
-pullPC		
+pullPC	
+
+{; --------------------------- event ID 4e diving bat ------------------
+	newDivingBat:
+	;divingBat_state01: 
+		lda $14,x 
+		cmp #$0001
+		bne ++
+		JSL.L getPixleOffsetXposAwayFromSimon
+		cmp #$0050
+		bpl +
+		
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+		
+		LDA.W #$6000                         
+        STA.B RAM_X_event_slot_xSpdSub,X    
+        LDA.W #$0001                        
+        STA.B RAM_X_event_slot_xSpd,X      
+        LDA.W #$4000                      
+        STA.B RAM_X_event_slot_flip_mirror_attribute,X		
+		
+		jml $86C580
+	+	rtl
+		
+	++	JSL.L getPixleOffsetXposAwayFromSimon		;86C56F|2247D682|82D647;  		
+		jml $86C573									; normal dive bat check xpos to dive 
+
+}
+	
 {; -------------------------- AllsmallEnemyTweaks ---------------------
 	
 	resetBolderThrowStatue:
@@ -617,12 +666,16 @@ pullPC
 {	; ----------------------- Simon Gradius Controlls -----------------------------------------	
 
 	stateFixForNewStates:
+		cmp #$0012
+		beq +
 		cmp #$0011								; check if fly state 
-		bne +
-		jml $80A217								; forward to state table routine
-	+	LDA.W RAM_81_simonSlot_Collusion_Donno00;80A0D2|AD6C05  |81056C;  hijack fix 
+		beq +
+								; forward to state table routine
+		LDA.W RAM_81_simonSlot_Collusion_Donno00;80A0D2|AD6C05  |81056C;  hijack fix 
         BIT.W #$0001                         	;80A0D5|890100  |      ;
 		jml $80A0D8
+	+	jml $80A217	
+
 
 	simonState11_GradiusL:
 		jsl flyControll
@@ -1127,6 +1180,22 @@ pullPC
 }
 
 { ; ---------------------------- allSmallPatches ---------------------
+	newTrippleShotPickup:
+		lda #$0002
+		ora RAM_simon_multiShot
+		sta RAM_simon_multiShot
+		lda #$0084
+		jsl lunchSFXfromAccum
+		bra +
+	newDoubleShotPickup:
+		LDA.W #$0017 				;#$0084                         
+                                                                     
+        JSL.L lunchSFXfromAccum                      
+		lda RAM_simon_multiShot            
+        ora #$0001
+		sta RAM_simon_multiShot
+	+	JML.L clearSelectedEventSlotAll      
+	
 	
 	hardcodeSlotOffsetBrige8:
 		lda $14,x 
@@ -1188,7 +1257,12 @@ pullPC
 ;secretBreakabGrState00: LDA.W $1602                          ;83E351|AD0216  |811602;  
 
 	halfHeartCount:
-		phx 
+		lda RAM_simon_subWeapon								; carry clock through death 
+		cmp #$0005
+		beq +
+		stz.w RAM_simon_subWeapon	
+		
+	+	phx 
 		lda $13f2 
 		and #$00f0
 		beq +
@@ -1256,6 +1330,7 @@ pullPC
 		sta !ownedWhipTypes
 		sta !allSubweapon
 		sta !killedHusband
+		sta !dogLeash
 ;	endif
 	+	rtl
 	newTable:
@@ -1321,7 +1396,7 @@ pullPC
         JMP.W ($00)                 
 	newEventJumpTable: 
 		dw cameraLockDown00,cameraLockDown01,cameraLockDown02,leverBGScroll3,leverBGScroll4,levelBGWrap5,realCurse6
-		dw eventSpawnBossAtXpos,puwexOrb08
+		dw eventSpawnBossAtXpos,puwexOrb08,lvl9HurbSecret09,stage6Elevator0a,stage7Liberary0b,stage1Pipe0c
 
 	eventKeepUpWithSimon:
 		lda $54e			; keep up with simon
@@ -1398,6 +1473,7 @@ pullPC
 		
 	cameraLockDown01:			; level $13
 		jsl eventKeepUpWithSimon
+		jsl elevatorBodleyMension
 		
 		lda $54e			
 ;		cmp #$00a0			;
@@ -1483,6 +1559,56 @@ pullPC
 		sta $a4
 			
 	++	rtl 
+
+
+	elevatorBodleyMension:
+		lda RAM_X_event_slot_state,x 
+		beq +
+		
+		lda #$0012
+		sta RAM_simonSlot_State
+		stz.w RAM_simonSlot
+		
+		lda RAM_simonSlot_Ypos
+		sec
+		sbc #$0002
+		sta RAM_simonSlot_Ypos
+		cmp #$02a5
+		bcs endElevatorBodly
+		
+		stz.b RAM_X_event_slot_state,x 	; terminate elevate 
+		stz.w RAM_simonStat_stopWatchTimer		
+		lda #$0004
+		sta RAM_simonSlot_State
+		lda.l !backUpButtonMapWhip
+		sta RAM_buttonMapWhip
+		
+	+	lda RAM_simon_multiShot			; elevator card check 
+		and #$0001
+		beq endElevatorBodly
+	
+		lda RAM_buttonPressCurFram		; up button check 
+		bit #$0800
+		beq endElevatorBodly
+
+		lda RAM_simonSlot_Ypos		; init elevator ride 
+		cmp #$0565
+		bne endElevatorBodly
+		lda RAM_simonSlot_Xpos
+		cmp #$0018
+		bcs endElevatorBodly
+		
+		lda RAM_simon_multiShot		; elevator card remove 
+		eor #$0001
+		sta RAM_simon_multiShot
+		
+		lda #$0250
+		sta RAM_simonStat_stopWatchTimer
+		sta RAM_X_event_slot_state,x 
+		stz.w RAM_buttonMapWhip
+	endElevatorBodly:	
+		rtl 
+
 		
 	leverBGScroll4:
 		lda #$4000
@@ -1737,10 +1863,12 @@ pullPC
 	removeSubweapon:
 		lda RAM_simon_subWeapon
 		beq -
-		
+
+	removeItem:
 		phx 		
 		jsl getEmptyEventSlot
-		lda RAM_simon_subWeapon
+		txy 
+		lda RAM_simon_subWeapon	
 		clc
 		adc #$0019						; callculate item drop ID
 		sta $10,x 
@@ -1773,7 +1901,7 @@ pullPC
 		sta RAM_X_event_slot_xSpdSub,x 
 		lda #$ffff
 		sta RAM_X_event_slot_xSpd,x
-		
+				
 	++	plx 		
 		stz.b RAM_simon_subWeapon
 		
@@ -1927,6 +2055,384 @@ pullPC
 		sta RAM_X_event_slot_HitboxYpos,x
 		plx
 		jml clearSelectedEventSlotAll
+
+	lvl9HurbSecret09:
+		LDA.B RAM_X_event_slot_state,X     ; new state   
+		PHX                                  
+        ASL A                                
+        TAX                                  
+        LDA.L dogHurbRoutineTable,X        
+        PLX                                  
+        STA.B $00  
+        JMP.W ($00) 
+
+
+	dogHurbRoutineTable:
+		dw dogHurbRoutineTable00,dogHurbRoutineTable01,dogHurbTransformFace02
+		
+	dogHurbRoutineTable00:
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x 
+		lda RAM_simonSlot_Ypos
+		cmp #$0008
+		bcs +
+		lda #$0008				; make simon not wrap to bottom since cameral lock event.. 
+		sta RAM_simonSlot_Ypos
+	+	jsl carrySetOnSimonEventCollusion
+		bcc +
+		
+		jsl elevatorCardPassCheck
+		bcs +
+		
+		lda #$0250
+		sta RAM_simonStat_stopWatchTimer
+		sta RAM_simon_invulnerable_counter
+		stz.w RAM_buttonMapWhip				; enable whiping 	
+		
+		lda #$0001
+		sta $12,x 
+	+	rtl 
+
+	elevatorCardPassCheck:
+		lda RAM_buttonPressCurFram		; up button check 
+		bit #$0800
+		beq +		
+	
+	elevatorCardPassCheckNoInput:	
+		lda RAM_simon_multiShot			; elevator card check 
+		and #$0001
+		beq +		
+
+		lda RAM_simon_multiShot		; elevator card remove 
+		and #$0002
+		sta RAM_simon_multiShot
+		clc
+		bra ++
+		
+	+	sec 
+	++	rtl
+
+	dogHurbRoutineTable01:			
+		lda $3a							; mystic glitching 
+		sta RAM_mosaicEffect_Value_BG
+		lda #$0008
+		sta $44
+;		and #$000f
+;		sta RAM_blackFade
+		
+		lda #$0012						; simon elevator state 
+		sta RAM_simonSlot_State
+		stz.w RAM_simonSlot
+		
+		lda #$8af4						; skelly sprite
+		sta $00,x 
+		
+		ldy #$0400						; blink skelly 
+		lda $3a 
+		bit #$0004
+		beq +
+			
+		ldy #$0e00
+	+	tya 
+		sta $04,x 
+		
+		lda #$0180
+		sta $26,x 
+		
+		lda #$0818
+		sta $0a,x 
+		lda #$0038
+		sta $0e,x 		
+		
+		lda RAM_simonSlot_Xpos
+		clc
+		adc #$0002
+		sta RAM_simonSlot_Xpos
+		cmp #$0800
+		bcc endElevatorHurb
+		
+		lda.l !backUpButtonMapWhip	
+		sta RAM_buttonMapWhip				; enable whiping 	
+		lda #$0002						; end elevator face NPC Init face 
+		sta RAM_X_event_slot_state,x 	; terminate elevate 
+		stz.w RAM_simonStat_stopWatchTimer
+		stz.w RAM_simon_invulnerable_counter		
+		stz.w RAM_mosaicEffect_Value_BG
+;		stz.w RAM_blackFade
+		lda #$0004
+		sta RAM_simonSlot_State			; replace event with NPC 
+		
+		lda #$000d						
+		sta $10,x 
+		lda #$001e
+		sta $14,x 		
+		clc 
+		adc #$0002
+		sta $12,x 
+	endElevatorHurb:			
+		rtl 
+		
+	dogHurbTransformFace02:				; clock $1e sub id  	
+		rtl 
+
+	stage6Elevator0a:
+		lda $12,x 
+		bne engageStage6Elevator
+		
+		lda #$0080						; make it occopie a slot for this stage and not despawn 
+		sta RAM_X_event_slot_HitboxID,x 
+		jsl carrySetOnSimonEventCollusion
+		bcc +
+		jsl elevatorCardPassCheck
+		bcs +
+		
+		lda #$0250
+		sta RAM_simon_invulnerable_counter
+		sta RAM_simonStat_stopWatchTimer
+		lda #$8000
+		sta RAM_simonSlot_spritePriority
+		lda #$0001
+		sta $12,x 
+		
+	+	rtl 
+	engageStage6Elevator:
+;		lda #$03b0
+;		sta $a6 						; set border for less glitches of bg update missing a line 
+		
+		lda #$9fd1
+		sta RAM_simonSlot
+		lda #$0024
+		sta RAM_simonSlot_AnimationCounter
+		
+		stz.w RAM_buttonMapWhip				; disable whiping 
+		
+		lda #$0012
+		sta RAM_simonSlot_State
+		
+		lda RAM_simonSlot_Xpos		; move left first then up 
+		sec
+		sbc #$0002							
+		sta RAM_simonSlot_Xpos	
+		cmp #$0040
+		bcs +
+		
+		lda #$0040
+		sta RAM_simonSlot_Xpos
+		
+		lda RAM_simonSlot_Ypos
+		sec
+		sbc #$0003
+		sta RAM_simonSlot_Ypos
+		cmp #$0330	
+		bcs +
+		
+		jsl leaveElevatorState
+;		lda #$0000
+;		sta $12,x					; end elevator ride  
+;		sta RAM_simonSlot_spritePriority
+;		sta RAM_simon_invulnerable_counter
+;		sta RAM_simonStat_stopWatchTimer
+;		lda #$0004
+;		sta RAM_simonSlot_State 
+;
+;		lda.l !backUpButtonMapWhip	
+;		sta RAM_buttonMapWhip				; enable whiping 	
+		
+	+	rtl 
+
+
+	stage7Liberary0b:
+		lda $12,x 
+		bne engageLiberaryElevator
+		
+		lda #$0080						; make it occopie a slot for this stage and not despawn 
+		sta RAM_X_event_slot_HitboxID,x 
+		jsl carrySetOnSimonEventCollusion
+		bcc +
+		jsl elevatorCardPassCheck
+		bcs +
+
+		lda #$0250
+		sta RAM_simon_invulnerable_counter
+		sta RAM_simonStat_stopWatchTimer
+		lda #$0001
+		sta $12,x 
+		
+		stz.w RAM_buttonMapWhip
+		lda #$0012
+		sta RAM_simonSlot_State
+		lda #$0037
+		jsl lunchSFXfromAccum
+		
+	+	rtl 
+	engageLiberaryElevator:
+		lda #$9bb9
+		sta RAM_simonSlot
+		lda #$8000		
+		sta RAM_simonSlot_spriteAttributeFlipMirror
+		lda $3a
+		and #$000f
+
+		sta RAM_simonSlot_AnimationCounter
+		adc #$0020
+		sta RAM_simonSlot_Ypos
+		
+		lda RAM_simonSlot_Xpos		; move left first then up 
+		clc
+		adc #$0003							
+		sta RAM_simonSlot_Xpos	
+		cmp #$07d0
+		bcc +
+		
+		jsl leaveElevatorState
+		
+	+	rtl 
+
+	stage1Pipe0c:
+		lda $12,x 
+		bne pipeTransition
+		
+		lda #$818b
+		sta $00,x 
+		lda #$8018
+		sta $02,x 
+		
+		lda RAM_simonSlot_Ypos
+		cmp #$0060
+		bcc +
+
+		jsl carrySetOnSimonXposEventCollusion
+		bcc +
+		lda RAM_buttonPressCurFram
+		bit #$0400
+		beq +
+		jsl elevatorCardPassCheckNoInput		
+		bcs +
+
+		
+		lda #$0001
+		sta $12,x					; inite pipe  ride  
+		lda #$0300
+		sta RAM_simon_invulnerable_counter
+		sta RAM_simonStat_stopWatchTimer
+		stz.w RAM_buttonMapWhip
+		stz.b $00,x 
+		lda #$0072
+		jsl lunchSFXfromAccum
+		
+	+	rtl 
+	pipeTransition:
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x 		; make it not despawn 
+		
+		lda $12,x
+		cmp #$0002
+		beq pipeMario
+		
+		lda #$9bb9
+		sta RAM_simonSlot
+		stz.w RAM_simonSlot_spritePriority
+		
+		lda #$0012			; move down the pipe 
+		sta RAM_simonSlot_State 
+		inc.w RAM_simonSlot_Ypos
+		lda RAM_simonSlot_Ypos
+		cmp #$00c0
+		bcc +
+		
+		lda #$0950			; make the the event look like luigi on to of pipe 
+		sta RAM_X_event_slot_xPos,x 
+		lda #$0078
+		sta RAM_X_event_slot_yPos,x 
+		lda #$00a0
+		sta RAM_X_event_slot_SpriteAdr,x 
+		lda #luigiSpriteAssembly
+		sta $00,x 
+		stz.b $02,x 
+			
+		lda #$00e0 
+		sta RAM_simonSlot_Ypos
+		
+		lda #$0000			; move right
+		sta RAM_simonSlot	
+		lda RAM_simonSlot_Xpos
+		clc
+		adc #$0003
+		sta RAM_simonSlot_Xpos		
+		cmp #$0950
+		bcc +
+		
+		lda #$0072
+		jsl lunchSFXfromAccum
+		
+		lda #$0002
+		sta $12,x 
+	+	rtl 
+	pipeMario:					; luigi appear ince palette.. 						
+		inc.b RAM_X_event_slot_yPos,x 
+		
+		lda #$9bb9				; simon get out of the pipe 
+		sta RAM_simonSlot		
+		dec.w RAM_simonSlot_Ypos
+		lda RAM_simonSlot_Ypos
+		cmp #$0077
+		bcs +
+		
+		lda #$0004				; exit pipe 
+		sta RAM_simonSlot_State
+		lda.l !backUpButtonMapWhip	
+		sta RAM_buttonMapWhip	 
+		lda #$8018
+		sta RAM_simonSlot_spritePriority
+		jml clearSelectedEventSlotAll		; clear event 
+	+	rtl 
+	
+	leaveElevatorState:
+		lda #$0000
+		sta $12,x					; end elevator ride  
+		sta RAM_simonSlot_spritePriority
+		sta RAM_simon_invulnerable_counter
+		sta RAM_simonStat_stopWatchTimer
+		lda #$0004
+		sta RAM_simonSlot_State 
+
+		lda.l !backUpButtonMapWhip	
+		sta RAM_buttonMapWhip				; enable whiping 	
+
+		rtl 
+
+	carrySetOnSimonEventCollusion:
+        lda RAM_81_simonSlot_Ypos
+		sec
+		sbc #$0010
+		cmp RAM_X_event_slot_yPos,x                        
+        bcs +
+		
+		clc 
+		adc #$0020
+		cmp RAM_X_event_slot_yPos,x 
+		bcc + 		
+	
+	carrySetOnSimonXposEventCollusion:		
+		lda RAM_81_simonSlot_Xpos          
+        sec
+		sbc #$0008
+		cmp RAM_X_event_slot_xPos,x                        
+        bcs +                      
+        
+		clc
+		adc #$0010
+		cmp RAM_X_event_slot_xPos,x                        
+        bcc +             
+		
+		
+		
+
+		sec
+		rtl 
+	+	clc 
+		rtl 
+
 }
 
 	
@@ -1934,7 +2440,7 @@ pullPC
 	eventNewPlatform:		
 		rtl 
 
-; ---------------------------- New Floating Platform -----------------------------------------	
+; ---------------------------- New Platform -----------------------------------------	
 	NewFloatingPlatform_ev17:
 		lda $14,x
 		bit #$0080					; bit check for new platform behavier
@@ -2048,29 +2554,47 @@ pullPC
 		rtl 
 	
 	raftBehavierGold:
-		jsl initPlatform
-		jsl $82C312 	;Platform So you can stand on it
-			
-	raftGainSpeed01:
-		lda $0080
-		beq endRaftGainSpeed01
-		lda #$0400
-		clc
-		adc $18,x
-		sta $18,x 
-		lda $1a,x
-		adc #$0000
-		sta $1a,x
-		cmp #$0002
-		bne endRaftGainSpeed01
-		lda #$8000		; max speed 
-		sta $18,x
-		lda #$0001
-		sta $1a,x
-	endRaftGainSpeed01:		
-		jsl stopRaft
-		jsl myCollusinRaft01		
-		rtl 	 
+		jsl raftBehavier
+		lda $04,x 
+		ora #$0800
+		sta $04,x 
+		rtl 
+
+	newTreasurOpenBehavier:				  ; treasue routine 
+		JSL.L lunchSFXfromAccum          ; hijackfix    ;85FB37|22E38580|8085E3;  		
+		
+		ldy #$0017
+		jsl searchForEventIDinY
+		bcs +
+		lda RAM_simon_ForceGroundBehavier	; skip not on platform 
+		beq +		
+		lda #$fffd
+		sta.w RAM_X_event_slot_ySpd,y 
+		lda #$8000
+		sta.w RAM_simonSlot_SpeedSubYpos,y 
+	+	rtl 
+
+	searchForEventIDinY:	
+		sty $00
+		phx 
+		LDX.W #$0580                   
+		clc 
+                                         
+	-	LDA.B RAM_X_event_slot_ID,X    
+		cmp $00 
+		clc 
+		BEQ +                     
+        TXA                            
+        CLC                            
+        ADC.W #$0040                   
+        TAX                            
+        CPX.W #$0EC0                   
+        BCC -                    
+                                                        
+    +	txy 
+		plx 
+		RTL                             
+		
 
 
 	myCollusinRaftBounce:
@@ -2110,42 +2634,42 @@ pullPC
 ;		lda #$fffe
 ;		sta $1e,x 
 ;		stz $1c,x
-	EndCollisionBounce:
+	EndCollisionBounce:		
 		rtl 
 
-	myCollusinRaft01:
-		lda #$2000		;fall speed acceleration
-		clc 
-		adc $1c,x 
-		sta $1c,x 
-		bcc ++
-		lda $1e,x 
-		clc
-		adc #$0001
-		cmp #$0002
-		bne +
-		stz $1c,x
-	+	sta $1e,x
-	++	
-		
-		phx 
-		LDA.B RAM_X_event_slot_xPos,X        				; check if we can fall again
-        STA.B $00							 
-        LDA.B RAM_X_event_slot_yPos,X        
-        CLC                                  
-        ADC.W #$0008                         
-        STA.B $02						     
-        JSL.L $80CF86 		; readCollusionTable7e4000       ;80BBC9|2286CF80|80CF86;  
-		
-		BEQ +                   
-        BMI +  
-		plx 
-		bra ++ 
-	+	plx 
-		lda #$fffe
-		sta $1e,x 
-	++	stz.w $1e,x 
-		rtl 
+;	myCollusinRaft01:
+;		lda #$2000		;fall speed acceleration
+;		clc 
+;		adc $1c,x 
+;		sta $1c,x 
+;		bcc ++
+;		lda $1e,x 
+;		clc
+;		adc #$0001
+;		cmp #$0002
+;		bne +
+;		stz $1c,x
+;	+	sta $1e,x
+;	++	
+;		
+;		phx 
+;		LDA.B RAM_X_event_slot_xPos,X        				; check if we can fall again
+;        STA.B $00							 
+;        LDA.B RAM_X_event_slot_yPos,X        
+;        CLC                                  
+;        ADC.W #$0008                         
+;        STA.B $02						     
+;        JSL.L $80CF86 		; readCollusionTable7e4000       ;80BBC9|2286CF80|80CF86;  
+;		
+;		BEQ +                   
+;        BMI +  
+;		plx 
+;		bra ++ 
+;	+	plx 
+;		lda #$fffe
+;		sta $1e,x 
+;	++	stz.w $1e,x 
+;		rtl 
 		
 
 
@@ -2637,19 +3161,92 @@ pullPC
 		bra ++
 	+ 	LDA.L whipStateTable,X 
 	++	rtl 
+
+	stopWatchTimerHurb:
+		lda RAM_simon_subWeapon
+		cmp #$0005
+		bne +
+		lda $444
+		beq +
+		dec.w $444 
+	+	rtl 		
+	
+	annoyingDogRoutine:
+		lda RAM_simon_multiShot			; elevator card check 
+		and #$0001
+		beq endDogMischief
+
+		lda RAM_frameCounter			; make it rare so when frame counter is equal to RNG
+		bit.w RAM_RNG_1	
+		beq endDogMischief
+		bit.w RAM_RNG_2
+		bne endDogMischief	
+		bit.w RAM_RNG_3
+		bne endDogMischief			
+		
+		lda #$002c					; 14	17 
+		jsl lunchSFXfromAccum
+		
+		lda RAM_simon_subWeapon			; exchange items 
+		sta $00
+		
+		jsl removeItem
+		lda #$0009
+		sta.w $2e,y 
+		lda #$ffff						; push it up  a bit 
+		sta.w RAM_X_event_slot_ySpd,y 
+		
+		lda $3a 
+		bit #$0001
+		beq +
+		
+		lda RAM_simon_multiShot			; also throw keys away 
+		and #$0002
+		beq +
+		lda #$0001
+		sta RAM_simon_multiShot
+		lda $00
+		sta RAM_simon_subWeapon			; give subweapon but throw key 	
+		
+		lda #$0024
+		sta.w $10,y 
+		bra endDogMischief
+
+	+   lda $00
+		bne endDogMischief
+		sta RAM_simon_subWeapon			; give no subweapon back and throw away hearts in anger 
+		lda #$0019
+		sta.w $10,y 
+		sed
+		lda RAM_simonStat_Hearts
+		sec
+		sbc #$0005
+		bmi +
+		sta RAM_simonStat_Hearts		; simple no minus hearts 
+	+   cld 
+;		ldx #$0000
+;		txy 
+	endDogMischief:	
+		rtl 
 	
 	
 	pauseCheckHijack:
 		lda $70
 		cmp #$0005 						; only run main game 
 		bne +
+		jsl dogLeashRoutine
 		
+		jsl stopWatchTimerHurb
 		jsl selectSubweaponsWhenUpgraded
 		jsl doBlueSkinL
-		
+if !radio == 1
+		jsl musicSelector		
+endif 		
 		lda $66							; dont run while pause
 		bne +
-
+		
+		jsl annoyingDogRoutine 
+		
 		lda !layer2ScrollBehavier
 		beq +
 		jsl runBGScreenScrollGlobal			; this is located along the event that triggers it in the tutorialHackTweak.asm 
@@ -2659,7 +3256,70 @@ pullPC
 	+	JSL.L $80978F                    ;hijackFix this will check for pause
 		rtl
 
+	dogLeashRoutine:
+		lda !dogLeash
+		beq ++
+		
+		lda RAM_buttonPressCurFram
+		bit #$0020
+		beq ++
+		
+		lda !dogLeash
+		cmp #$0002
+		beq +							
+		lda RAM_simon_multiShot			; take away 
+		and #$0002
+		sta RAM_simon_multiShot	
+		lda #$0002
+		sta !dogLeash
+		bra ++	
+								
+	+	
+		lda RAM_simon_multiShot			; give 	
+		ora #$0001
+		sta RAM_simon_multiShot	
+		lda #$0001
+		sta !dogLeash
+	++	rtl 
 
+if !radio == 1
+	musicSelector:
+		lda $20				; Select Hold check
+		bit #$2000
+		beq endMusicSelector	 
+
+		lda $28				; rotate music with select X
+		cmp #$0040
+		bne playMusicSelecteded
+		lda !costumMusicNumber
+		inc 
+		inc
+		cmp #$0046
+		bne +
+		lda #$0000
+	+	sta !costumMusicNumber	 
+		
+	playMusicSelecteded: 
+		lda $28				
+		cmp #$0080				; A button Press
+		bne endMusicSelector		
+		
+		lda !costumMusicNumber				; selected music
+		jsl $8280DD			; music change
+		JSL.L $80859E  		; donno seems to tune the music a bit quicker..
+;		lda #$000f0			; reset Music
+;		JSL.L $8085E3
+		
+;		pla				; get rid of stuck pointer to check again if Simon died
+;		sep #$20
+;		pla
+;		rep #$30
+;		sec
+;		JML.L $8097A5
+		
+	endMusicSelector:	
+		rtl
+endif 
 
 	selectSubweaponsWhenUpgraded:
 		ldx $8e							; get current subweapon 
@@ -2867,10 +3527,12 @@ pullPC
 
 pushPC		
 
+org $81a253
+	db $48,$34							; make clock Hud green (hurb)
+org $84816c
+	db $24 								; sprite assembly 
 
-
-
-org $81FF27
+org $81FF27								; data bank 81 use of free space 
 	FireWhipLoadScrDest:
 		dw $0100,$6200                      
         dl whipFireStrightGFXdata       
@@ -2879,6 +3541,13 @@ org $81FF27
         dw $69C0                           
         dl whipFireNoWhipGFXdata         
         dw $FFFF
+	newHUDupgradIcons:
+		dw $0000
+		dw $7264 
+		dw $3666 
+		dw $7665 
+org $80C6F1
+    LDA.W newHUDupgradIcons,Y 			; multiShotUpgradHudSpritePPU,Y  ;80C6F1|B953A2  |81A253;  
 
 org $FE8F1D
 	whipFireStrightGFXdata: 
@@ -2953,6 +3622,31 @@ org $81e24b							; Viper Boss Water Blocks on startup
 org $83e034 
 	cmp #$0003						; no rising water faster Transition 
 
+
+org $848F15
+	;sprAssID_99_oldManWalking00: 
+;	wizzardSprite00:
+	oldManFr1:
+		db $06                               ;848F15|        |0000FD;  
+        dd $220A08FD
+		dd $220808ED               ;848F16|        |      ;  
+        dd $2206F8FD
+		dd $2204F8ED               ;848F1E|        |      ;  
+        dd $2202E8FD
+		dd $2200E8ED               ;848F26|        |      ;  
+                                                            ;      |        |      ;  
+	;sprAssID_100_oldManWalking01: 
+;	wizzardSprite01:	
+	oldManFr2:
+		db $06                               ;848F2E|        |0000FD;  
+        dd $222208FD
+		dd $222008ED               ;848F2F|        |      ;  
+        dd $220EF8FD
+		dd $220CF8ED               ;848F37|        |      ;  
+        dd $2202E8FD
+		dd $2200E8ED               ;848F3F|        |      ;  
+
+
 org $8489D1  ; ghost 
     ;sprAssID_03: 
 		db $03                               ;8489D1|        |0000F8;  
@@ -2987,24 +3681,6 @@ org $8490D7
 ;		dd $2202F101               ;8490E8|        |      ;  
         dd $4200F1F1
 		dd $2200F1E1               ;8490F0|        |      ;  
-
-org $848F15
-	oldManFr1:				; sprAssID_99: 
-		db $06                               ;old man sprite assembly 
-        dd $260A08FD
-		dd $260808ED               ;848F16|        |      ;  
-        dd $2206F8FD
-		dd $2204F8ED               ;848F1E|        |      ;  
-        dd $2202E8FD
-		dd $2200E8ED               ;848F26|        |      ;  
-    oldManFr2: 
-		db $06                               ;848F2E|        |0000FD;  
-        dd $262208FD
-		dd $262008ED               ;848F2F|        |      ;  
-        dd $220EF8FD
-		dd $220CF8ED               ;848F37|        |      ;  
-        dd $2202E8FD
-		dd $2200E8ED               ;848F3F|        |      ;  
 
 
 org $84FE7F						; $84FFB5 free Space Orginal
@@ -3099,7 +3775,10 @@ org $84FE7F						; $84FFB5 free Space Orginal
 		db $e0,$00,$2e,$6E
 	
 org $848246					; more free space for sprite assembly 
-
+	luigiSpriteAssembly:
+		db $02                              
+		db $f8,$08,$02,$24
+		db $f8,$f8,$00,$24
 	AssPaul:
 		db $08
 		db $10,$e8,$82,$22
@@ -3112,6 +3791,53 @@ org $848246					; more free space for sprite assembly
 		db $00,$f8,$a2,$22
 		db $f0,$f8,$a0,$22
 
+
+	AssAramus00:
+		db $04
+		db $f8,$f8,$24,$24
+		db $08,$f8,$26,$24
+		db $f8,$08,$44,$24
+		db $08,$08,$46,$24
+						 
+	AssAramus01:         
+		db $04           
+		db $f8,$f8,$28,$24
+		db $08,$f8,$2a,$24
+		db $f8,$08,$48,$24
+		db $08,$08,$4a,$24
+
+	AssGuy:         
+		db $03           
+		db $00,$e8,$2e,$26
+		db $00,$f8,$4e,$26
+		db $00,$08,$40,$26
+
+	oldManBrawnPents00:				; 
+		db $06                               ;old man sprite assembly 
+        dd $260A08FD
+		dd $260808ED               ;848F16|        |      ;  
+        dd $2206F8FD
+		dd $2204F8ED               ;848F1E|        |      ;  
+        dd $2202E8FD
+		dd $2200E8ED               ;848F26|        |      ;  
+    oldManBrawnPents01: 
+		db $06                               ;848F2E|        |0000FD;  
+        dd $262208FD
+		dd $262008ED               ;848F2F|        |      ;  
+        dd $220EF8FD
+		dd $220CF8ED               ;848F37|        |      ;  
+        dd $2202E8FD
+		dd $2200E8ED               ;848F3F|        |      ;  
+
+headlessKnightNPC: 
+		db $07                              
+		dd $2C62E4E0     
+        dd $2C64E4F0         
+		dd $2C66f4E0     
+        dd $2C68f4F0   
+		dd $2C6a04E0     
+        dd $2C6c04F0 
+		dd $2C600880 	
 warnPC $84896E	
 
 }

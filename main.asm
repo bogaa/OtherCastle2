@@ -4,6 +4,7 @@
 ; - monster warp fast and throw stuff
 ; $b8 disables event collecting items?? 
 ; $13c0 simon cant move timer 
+; elevator in stage 13 for curienTK
 
 ;lorom
 
@@ -26,6 +27,8 @@
 !extraSpritesOnScreen = 0
 !invertRingGlitchControll = 1
 !swordSkellyHitboxFix = 1
+!jpWhipSound = 1
+!radio = 1
 
 ;NEW RAM ALLOCATION IN FREERAM ------- till $1e7f----------------------------------------
 !textEngineState = $1E18	; write 2 to write text and 1 to terminate. 4 lines with 16 Character 
@@ -46,6 +49,8 @@
 !logicRingControlls = $1e36		; above rings controlls are inverted try to fix this here
 !killedHusband = $1e38
 !aramusBelmontCross = $1e3a
+!costumMusicNumber = $1e3c 	
+!dogLeash = $1e3e
 
 
 !jobTable00	= $1e40			; 
@@ -79,15 +84,17 @@ pushPC
 incsrc code/baseRomTweaks.asm		
 ;incsrc code/jobs.asm 				; will be applied to the ROM beforehand  
 incsrc code/textEngine.asm 
-incsrc code/tutorialHackTweak.asm
+;incsrc code/tutorialHackTweak.asm	; moved for space 
 
 pullPC
 warnPC $a0c000
 org $A49000
 pushPC 
 
+incsrc code/tutorialHackTweak.asm
 incsrc code/tutorialBosses.asm
 incsrc code/mapSRAM.asm
+incsrc code/bloodDripTitle.asm
 
 pullPC
 warnPC $a4ffff
@@ -100,5 +107,4 @@ incsrc code/practice.asm
 endif
 
 ;incsrc code/NewEnemies/oldManEvID0d.asm 
-
 

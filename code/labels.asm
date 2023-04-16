@@ -21,15 +21,6 @@
                        RAM_X_event_slot_HitboxYpos = $00002A;      |        |      ;  
                        RAM_X_event_slot_Movement2c = $00002C;      |        |      ;  
                        RAM_X_event_slot_HitboxID = $00002E  ;      |        |      ;  
-			;47 hitable? a=? b=? c=? d=?   e=9? f=GetHurtSubW g=GetHurtWhip h=GetHit  9 collect? 
-;			h = 01 hurt 
-;			g = 02 subWea hitable 
-;			f = 04 whip hitable 
-;			e = 08 collect able also needs bit 01 set 
-;			d = 10 not despawnable!
-;			c = 20 
-;			b = 40 used often .. rossery??
-;			a = 80 
                        RAM_X_event_slot_mask = $000030      ;      |        |      ;  
                        RAM_X_event_slot_32 = $000032        ;      |        |      ;  
                        RAM_X_event_slot_34 = $000034        ;      |        |      ;  
@@ -70,7 +61,7 @@
                        RAM_simon_whipType = $000092         ;      |        |      ;  
                        RAM_pointerEventTracker01 = $000094  ;      |        |      ;  
                        RAM_pointerEventTracker02 = $000096  ;      |        |      ;  
-                       RAM_spritePrioManip = $00009D        ;      |        |      ;  
+                       RAM_spritePrioManip = $00009C        ;      |        |      ;  
                        RAM_camLockLeft = $0000A0            ;      |        |      ;  
                        RAM_camLockRight = $0000A2           ;      |        |      ;  
                        RAM_camLockTop = $0000A4             ;      |        |      ;  
@@ -133,11 +124,11 @@
                        RAM_simonSlot_Collusion_Donno00 = $00056C;      |        |      ;  
                        RAM_simonSlot_forceCrouchFrameCounter = $00056E;      |        |      ;  
                        RAM_simonSlot_Collusion_Donno01 = $000576;      |        |      ;  
-;						RAM_simonSlot_RingSpeed = $000574    
+ 
 					   RAM_simonSlot_direction = $000578    ;      |        |      ;  
                        RAM_eventSlot_Base = $000580         ;      |        |      ;  
                        RAM_OAM_Page = $000F00    
-;						RAM_OAM_PROPERTY_BITS = $1100-$111f					   ;      |        |      ;  
+ 
                        RAM_FreeRamPage_E0_byte_not_cleard = $001120;      |        |      ;  
                        RAM_channel_W_0_paletteAnimation = $001200;      |        |      ;  
                        RAM_channel_W_1_paletteAnimation = $001210;      |        |      ;  
@@ -154,7 +145,7 @@
                        RAM_ScrollBG1SyncSpeed = $0013D0     ;      |        |      ;  
                        RAM_ScrollBG3SyncSpeed = $0013D2     ;      |        |      ;  
                        RAM_deathEntrance = $0013D4          ;      |        |      ;  
-;                       RAM_OAM_ForceYposOffset = $0013DE 
+
 					   RAM_currentMusicTrack = $0013E2      ;      |        |      ;  
                        RAM_simonStat_whipUpgradDropFlag = $0013EC;      |        |      ;  
                        RAM_simonStat_Timer = $0013F0        ;      |        |      ;  
@@ -171,7 +162,7 @@
                        RAM_channel_DMA_6 = $0014E0          ;      |        |      ;  
                        RAM_channel_DMA_7 = $0014F0          ;      |        |      ;  
                        RAM_masktTable_respawnEvents = $001500;      |        |      ;  
-                       ; RAM_breakableWallTable = 19C0
+
 					   RAM_titleScreen_menuSelect = $001E02 ;      |        |      ;  
                        RAM_characterString_Castlevania4 = $001E0A;      |        |      ;  
                        RAM_monoSound_flag = $001E16         ;      |        |      ;  

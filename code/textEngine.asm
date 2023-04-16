@@ -30,6 +30,11 @@ pullPC
 		LDA.L !textEngineState                        
 		BNE runTextEngine                      
         jsr.w mapScreenText
+		
+		lda RAM_simonSlot_State	; gradius and elevator can glitch so we do not run when simon is in that state
+		sec 
+		sbc #$0011 
+		bcs runTextEngine
 
 		lda #$0001				; run text engine and text display on different frames 
 		bit $3a
@@ -544,7 +549,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 				
 		rts 
 		
-	
+	goNextTextSetBGMode2:
+		stz.w $46 
 	goNextText:
 		inc $34,X
 		inc $34,X
@@ -558,48 +564,48 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 
 {	; NPC Text ------------------------------------------------------------------------
 	npcSpriteIDlist:			; list is based in subID $14																		
-		dw oldMan3Fr1,jungLadyFr1,oldManFr1,jungLadyFr1					; $8f15
-		dw oldManFr1,oldMan3Fr1,jungLadyFr1,jungLadyFr1					; 08
-		dw jungLadyFr1,oldMan3Fr1,$89f0,jungLadyFr1						; 0c
-		dw $89f0,jungLadyFr1,oldManFr1,oldMan3Fr1						; 10
-		dw doorSpriteAssembly,oldManFr1,oldMan3Fr2,oldManFr1
-		dw oldMan3Fr1,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 18
-		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly
-		dw oldMan3Fr1
+		dw oldMan3Fr1,jungLadyFr1,oldManFr1,jungLadyFr1					; 00$8f15
+		dw oldManFr1,oldMan3Fr1,jungLadyFr1,jungLadyFr1					; 04
+		dw jungLadyFr1,oldMan3Fr1,$89f0,jungLadyFr1						; 08
+		dw $89f0,jungLadyFr1,oldManBrawnPents00,oldMan3Fr1				; 0c
+		dw doorSpriteAssembly,oldManFr1,AssGuy,oldManFr1				; 10
+		dw oldMan3Fr1,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 14
+		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly		; 18
+		dw AssAramus00,$8af4,oldManBrawnPents00,headlessKnightNPC								; 1c 
 		
 	
 	npcSpriteIDlist2:	
-		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1					; zombie Walk $96a0,$968b 
-		dw oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1
-		dw jungLadyFr1,oldMan3Fr2,$968b,jungLadyFr1		; $8f2e
-		dw $968b,jungLadyFr1,oldManFr2,oldMan3Fr2
-		dw doorSpriteAssembly,oldManFr2,$0000,oldManFr1
-		dw oldMan3Fr2,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 18
-		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly
-		dw oldMan3Fr2													; 1d 
+		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1					; 00 zombie Walk $96a0,$968b 
+		dw oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1					; 04
+		dw jungLadyFr1,oldMan3Fr2,$968b,jungLadyFr1						; 08 $8f2e	
+		dw $968b,jungLadyFr1,oldManBrawnPents01,oldMan3Fr2						; 0c 
+		dw doorSpriteAssembly,oldManFr2,AssGuy,oldManFr1					; 10
+		dw oldMan3Fr2,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 14
+		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly		; 18	
+		dw AssAramus01,$8af4,oldManBrawnPents01,headlessKnightNPC													; 1c 
 	
 	
 
 	mainNPCStateTable: 
-		dw NPCState00			; init
-		dw NPCText01	   		; mainText
-		dw NPCStateOldMan02	   	; man sells cheats
-		dw NPCStateOldMan03		; lady gives cheats
-		dw NPCRedguy			; redguy aka town wizard
-		dw MoonLady
-		dw RedguysBrother
-		dw BarKeeper00
-		dw TutorialLeady00
-		dw TutorialLeady01
-		dw TutorialLeady02
-		dw BarKeeper02Doina	
-		dw ZombieManDoina
-		dw ZombieManDoinaWife
-		dw ZombieManDoinaHunter
-		dw ZombieManDoinaWifeSecond	; 0d
-		dw BarManDoina
-		dw BuilderManDoina
-		dw door
+		dw NPCState00			; 00 init			
+		dw NPCText01	   		; 00 mainText
+		dw NPCStateOldMan02	   	; 00 man sells cheats
+		dw NPCStateOldMan03		; 00 lady gives cheats
+		dw NPCRedguy			; 01 redguy aka town wizard
+		dw MoonLady				; 02
+		dw RedguysBrother		; 03
+		dw BarKeeper00			; 04
+		dw TutorialLeady00		; 05
+		dw TutorialLeady01		; 06
+		dw TutorialLeady02		; 07
+		dw BarKeeper02Doina		; 08	
+		dw ZombieManDoina		; 09
+		dw ZombieManDoinaWife	; 0a
+		dw ZombieManDoinaHunter	; 0b
+		dw ZombieManDoinaWifeSecond	; 0c
+		dw BarManDoinaKeySeller	; 0e
+		dw BuilderManDoina		; 0f
+		dw door					; 10
 		dw RedguyLiftingCurse   ; 11
 		dw TipLeady00			; 12
 		dw TipLeady01			; 13
@@ -613,37 +619,43 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw hooker				; 1b
 		dw door2				; 1c
 		dw aramus				; 1d 
+		dw skellyHurb			; 1e
+		dw NPCbossQuestGiver	; 1f	
+		dw headlessNPC			; 20
 		
 	actionListMainNPC:
-		dw actionSeller,actionListGivingLady
-		dw actionListRedguy
-		dw actionListMoonLady
-		dw actionListRedguysBrother
-		dw actionListBarKeeper00
-		dw actionListTutorialLeady00
-		dw actionListTutorialLeady01
-		dw actionListTutorialLeady02
-		dw actionListBarKeeper02
-		dw actionListZombieManDoina
-		dw actionListZombieManDoinaWife
-		dw actionListZombieManDoinaHunter
-		dw actionListZombieManDoinaWifeSecond
-		dw actionListBarManDoina
-		dw actionListBuilderManDoina
-		dw $0000
-		dw actionRedguyLiftingCurse
-		dw actionListTipLeady00
-		dw actionListTipLeady01
-		dw actionListArmorSeller
-		dw actionListArmorSeller
-		dw actionListPaul
-		dw $0000			; door2 17 
-		dw actionListmoonLadyCastle
-		dw actionListTutorialLadyControls
-		dw actionListTinnue
-		dw actionListhooker
-		dw $0000			; door2 1c 	
-		dw actionListAramus
+		dw actionSeller,actionListGivingLady 	; 01
+		dw actionListRedguy						; 02
+		dw actionListMoonLady					; 03
+		dw actionListRedguysBrother				; 04
+		dw actionListBarKeeper00				; 05
+		dw actionListTutorialLeady00			; 06
+		dw actionListTutorialLeady01			; 07
+		dw actionListTutorialLeady02			; 08
+		dw actionListBarKeeper02				; 09
+		dw actionListZombieManDoina				; 0a
+		dw actionListZombieManDoinaWife			; 0b
+		dw actionListZombieManDoinaHunter		; 0c
+		dw actionListZombieManDoinaWifeSecond	; 0d 
+		dw actionListBarManDoinaKeySeller		; 0e
+		dw actionListBuilderManDoina			; 0f 
+		dw $0000								; 10
+		dw actionRedguyLiftingCurse				; 11
+		dw actionListTipLeady00					; 12
+		dw actionListTipLeady01					; 13
+		dw actionListArmorSeller				; 14
+		dw actionListArmorSeller				; 15
+		dw actionListPaul						; 16
+		dw $0000								; door2 17 
+		dw actionListmoonLadyCastle				; 18
+		dw actionListTutorialLadyControls		; 19
+		dw actionListTinnue						; 1a
+		dw actionListhooker						; 1b
+		dw $0000								; door2 1c 	
+		dw actionListAramus						; 1d
+		dw actionListSkellyHurb					; 1e 
+		dw actionListNPCbossQuestGiver			; 1f 
+		dw actionListHeadlessNPC				; 20
 		
 	actionSeller:
 ;		dw text00,goNextText
@@ -777,13 +789,14 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "POWER WHEN YOU  "
 		db "DIE.",00
 	redguyText08:
+		db "THEN YOU NEED   "
+		db "TO POWER IT UP  "
+		db "AGAIN! OR COME  "
+		db "BACK TO ME.",00
+	redguyText09:
 		db "PRESSING SELECT "
 		db "WILL LET YOU    "
 		db "SWITCH THE WHIP.",$00
-	redguyText09:
-		db "THEN YOU NEED   "
-		db "TO POWER IT UP  "
-		db "AGAIN!",00
 	redguyText10:
 		db "I TOKE THE GUY  "
 		db "FROM THE TOWN TO"
@@ -1163,7 +1176,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "WILL NOT HELP!!",$00
 		
 		
-	actionListBarManDoina:
+	actionListBarManDoinaKeySeller:
 		dw BarManDoinaText00,goNextText
 		dw BarManDoinaText01,goNextText
 		dw BarManDoinaText02,goNextText
@@ -1348,7 +1361,9 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw whipText00,goNextText
 		dw whipText01,goNextText
 		dw whipText02,goNextText
-		dw whipText03,endText	
+		dw whipText03,goNextText
+		dw whipText04,goNextText	
+		dw whipText05,endText	
 	
 	whipText00:
 		db "IT IS GETTING   "
@@ -1364,8 +1379,16 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "FOR PLATFORMING."
 		db "TRY SWITCHING ON"
 		db "DIFFERENT TASKS."
+	whipText03:
+		db "ON RINGS TRY TO "
+		db "FULLY EDTANDED  "
+		db "THE WHIP..",00
+	whipText04:
+		db "THEN IT SHOULD  "
+		db "BE EASY TO MOVE "
+		db "TO THE NEXT ONE!"
 		db "ALSO I NEVER",00
-	whipText03:		
+	whipText05:		
 		db "SEEN A TREE THIS"
 		db "TALL. I WONDER  "
 		db "WHAT IS ON TOP  "
@@ -1489,16 +1512,128 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 
 	actionListAramus:
 		dw crossText00,goNextText
-		dw crossText01,endText
+		dw crossText01,initCurser
+		dw crossText02,crossDowngradeUpgrade
+		dw crossText03,endText
+		dw crossText04,endText
 		
 	crossText00:
-		db "DO YOU TRUST    "
-		db "THE CROSS?      ",00
-	
+		db "I AM A BELMONT  "
+		db "TOO. THEY CALL  "
+		db "ME ARAMUS.",00	
+		
 	crossText01:
+		db "DO YOU TRUST    "
+		db "THE CROSS?",00
+	
+	crossText02:
+		db "  YES STRONGEST "
+		db "  SUBWEAPON!!   " 
+		db "                "
+		db "  NO! IT IS EVIL",00	
+	
+	crossText03:
 		db "THE CROSS IS    "
 		db "EVIL!",00
 
+	crossText04:
+		db "I RECOMMAND NOT "
+		db "USING THE CROSS "
+		db "AT ALL. JUST TO "
+		db "BE SAVE.",00
+
+	actionListSkellyHurb:
+		dw hurbText00,goNextText
+		dw hurbText01,goNextText
+		dw hurbText02,goNextText
+		dw hurbText03,transForm2Skelly	
+	
+	hurbText00:
+		db "A BELMONT! WELL "
+		db "SINCE YOU ARE   "
+		db "HERE I GUESS YOU"
+		db "LOOK FOR CURE.",00		
+	hurbText01:
+		db "I HAVE A HURB TO"
+		db "MAKE ZOMBIES ACT"
+		db "LIKE A HUMAN    "
+		db "AGAIN HEHEHA!!",00
+	hurbText02:
+		db "BUT IT WILL COST"
+		db "YOUR LIFE! HE HE"
+		db "HAR HA HA!",00 
+	hurbText03:
+		db "WHAT YOU HAVE   "
+		db "INVINITE LIFES? "	
+		db "LET ME TEST     "
+		db "THAT!!",00	
+			
+	actionListNPCbossQuestGiver:
+		dw questText00,goNextText	
+		dw questText01,giveLeash
+		dw questText02,goNextText	
+		dw questText03,goNextText	
+		dw questText04,endText	
+		
+	questText00:
+		db "THEY VANISHED!  "
+		db "BEEN A STRANGE  "
+		db "COPPLE..",00 
+	questText01:
+		db "HERE IS A DOG   "
+		db "LEASH. NOW YOU  "
+		db "CAN MANAGE YOUR " 
+		db "ANNOYING DOG!",00 
+	questText02:
+		db "PRESS L ONCE OR " 
+		db "TWICE TO WRAP   "
+		db "YOUR DOG. LIKE  "
+		db "THIS HE",00
+	questText03:
+		db "HE WILL NOT     "
+		db "BOTHER YOU WHILE"
+		db "FIGHTING.",00 		
+	questText04:
+		db "DO IT AGAIN WHEN"
+		db "YOU MISS THE    "
+		db "FURRY COMPANION.",00		
+	
+	actionListHeadlessNPC:
+		dw headlessText00,goNextTextSetBGMode2	
+		dw headlessText01,goNextText
+		dw headlessText02,goNextText
+		dw headlessText03,goNextText
+		dw headlessText04,goNextText
+		dw headlessText05,endText
+	
+	
+	headlessText00:	
+		db "BUTT!!",00		; noone will see you say butt butt we did 
+	headlessText01:
+		db "DO NOT STEP ON  "
+		db "MY HEAD! IT IS  "		
+		db "HAVING A DRINK  "
+		db "SOMEWHERE..",00
+	headlessText02:
+		db "WE LOOK FOR THAT"
+		db "BELMONT GUY. HE "
+		db "IS CRAZY STRONG!"
+		db "I DID SEE HIM.",00
+	headlessText03:
+		db "SWING AROUND A  "
+		db "RING AND THE    "
+		db "THE CLOSER HE IS"
+		db "TO THE PEAK",00
+	headlessText04:	
+		db "THE HIGHER HE   "
+		db "LUNCHES IN THE  "
+		db "AIR AGAIN!",00
+	headlessText05:	
+		db "HIS LEFT SIDE   "
+		db "SWING IS A LOT  "
+		db "WEAKER THOUGH..",00	
+	
+	
 }
 	
 	
@@ -1752,6 +1887,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		sec 				; setCarry for having no cash
 		rts 
 
+	
 	spawnSmallHeartAndText:
 		jsl endText	
 		
@@ -1813,7 +1949,35 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	endGiftItem04:		
 		jsl goNextText
 		rtl 
+	giveLeash:
+		lda #$0001
+		sta !dogLeash
+		lda #$000e			; play sound 
+		jsl lunchSFXfromAccum
+		jml goNextText
 
+	crossDowngradeUpgrade:
+		lda $36,x 
+		stz $36,x 
+		tay 
+		cpy #$0004
+		bne upgradeCross
+		lda #$0001
+		sta !aramusBelmontCross		
+		lda #$0070
+		jsl lunchSFXfromAccum
+		bra +
+	upgradeCross:
+		stz.w !aramusBelmontCross	
+		lda $34,x		; skip two text pointer
+		clc 
+		adc #$0002
+		sta $34,x 
+		
+		lda #$0037			; play sound 
+		jsl lunchSFXfromAccum
+	+	jml goNextText
+		
 	shopArmor:
 		lda $36,x 
 		stz $36,x 
@@ -1922,6 +2086,17 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 ;		lda #$0047
 ;		sta $2e,x 
 		rtl 
+	
+	transForm2Skelly:
+		lda #$0011
+		sta $10,x 
+		stz.w $12,x 
+		lda #$0047
+		sta RAM_X_event_slot_HitboxID,x 
+		lda #$0100
+		sta RAM_X_event_slot_event_slot_health,x
+		lda #$001e
+		sta RAM_X_event_slot_subId,x 
 	
 	endTextSimonHurt:
 		lda #$000c
@@ -2039,26 +2214,30 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 ; -------------------------- NPC LOGIC MAIN -------------------------------------------
 		
 	
-	NPCStateOldMan02:		; typical NPC routine
-		jsr NPCwalkAnimation
-		jsr walkBackAndForward
-		jml NPCTextTrigger	; text trigger has rtl at the end what will end the routine
+;	NPCStateOldMan02:		; typical NPC routine
+;		jsr NPCwalkAnimation
+;		jsr walkBackAndForward
+;		jml NPCTextTrigger	; text trigger has rtl at the end what will end the routine
 
-    NPCStateOldMan03:		
-		jsr NPCwalkAnimation	
-		jsr walkBackAndForward
-		jml NPCTextTrigger
+;   NPCStateOldMan03:		
+;		jsr NPCwalkAnimation	
+;		jsr walkBackAndForward
+;		jml NPCTextTrigger
 		        
-	NPCRedguy:
-		jsr NPCwalkAnimation		
-		jsr walkBackAndForward
-		jml NPCTextTrigger
-	
+;	NPCRedguy:
+;		jsr NPCwalkAnimation		
+;		jsr walkBackAndForward
+;		jml NPCTextTrigger
+
 	MoonLady:
 	moonLadyCastle:	
 		jsr NPCwalkAnimation		
 		jml NPCTextTrigger
-		
+	
+	NPCRedguy:
+	NPCStateOldMan03:
+	NPCStateOldMan02:
+	NPCbossQuestGiver:	
 	RedguysBrother:
 		jsr NPCwalkAnimation		
 		jsr walkBackAndForward
@@ -2073,6 +2252,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		jml NPCTextTrigger	
 
 	aramus:
+		jsr NPCwalkAnimation
 		jsr walkBackAndForward
 		bra +
 
@@ -2089,8 +2269,39 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	TutorialLadyControls:
 		jsl faceSimon
 +		jml NPCTextTrigger	
+	
+	skellyHurb:
+		ldy #$0400
+		lda $3a 
+		bit #$0008
+		beq +
+			
+		ldy #$0e00
+	+	tya 
+		sta $04,x 
+		jml NPCTextTrigger
 
-
+	headlessNPC:
+		lda #$0160
+		sta RAM_X_event_slot_SpriteAdr,x 
+		
+		lda #$0013				; we need this for the level.. we set it 2 zero in the action list for the text to show 
+		sta $46
+		
+		lda RAM_simonSlot_Ypos	; make a sound when you step on the skull 
+		cmp #$0345
+		bne +
+		lda RAM_simonSlot_Xpos	
+		and #$fff0
+		cmp #$0100
+		bne +
+		lda $20,x 
+		bne +
+		inc.w $20,x 
+		lda #$0044
+		jsl lunchSFXfromAccum
+		
+	+	jml NPCTextTrigger
 
 	BarKeeper02Doina:
 		jsl faceSimon
@@ -2127,11 +2338,17 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		jml NPCTextTrigger
 		
 	ZombieManDoinaHunter:
+		lda !dogLeash			; story continues in the Castle the leash does unlock future content in the castle so we are don here
+		bne clearHunterNPC
+		
 		lda !ownedWhipTypes
 		cmp #$0003
 		bne +
 		
-		;		jsl clearSelectedEventSlotAll
+		lda RAM_simon_subWeapon	; we cclear the hunter NPC altogether and spawn a new one to clear things up and let you progress
+		cmp #$0005
+		beq clearHunterNPC
+		
 		lda #$00e0		; fix slot offset 
 		sta $26,x 
 		lda #$0070
@@ -2141,10 +2358,14 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		sta.w $14,x 
 		jml $83DDFE
 
-
 	+	jml ZombieManDoina
-		
+	clearHunterNPC:
+		jml clearSelectedEventSlotAll
+	
 	ZombieManDoinaWifeSecond:
+		lda !dogLeash
+		bne clearHunterNPC
+
 		jsl ZombieManDoinaWife
 
 ;		lda !ownedWhipTypes
@@ -2168,7 +2389,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 
 	+	rtl 
 	
-	BarManDoina:		
+	BarManDoinaKeySeller:		
 		jml NPCStateOldMan02
 	
 	BuilderManDoina:
@@ -2190,6 +2411,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		beq ++
 		lda #$500
 		sta $a0 
+		stz.w RAM_X_event_slot_event_slot_health,x 		; make the door die quick
 		rtl 
 		
 	+	stz $2e,x 

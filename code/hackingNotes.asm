@@ -3,15 +3,12 @@
 ; gaibon reapearing in castle
 ; koranot new jump
 ; get cursed and fight him as a dead belmont
-; blue armore health regan
-; NPC sheep talk? too much coffee, NPC telling more tips ,switch whips leather good for platforming  
-; secret stage 1
-; door health
-; add moonwalk 
-; add town as checkpoint 
-; dancer bumping
-; evil cross 
+; blue armore health regan?
 
+; add tip backentrance to town.. why is it open? trader?
+; dancer bumping
+; EXTRA tip hook on medua rings when they are high to go under things 
+; BBQ souce with pizza souce sweet spicy though PC Smokin' Stampede Beer & Chipotle BBQ
 
 $001C = !RAM_bg1CamXpos,
 $001E = !RAM_bg1CamYpos,

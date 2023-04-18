@@ -1298,7 +1298,7 @@ pullPC
 	+	lda RAM_simonSlot_spriteAttributeFlipMirror		
 		beq giveSimonHeart4CrossCatch
 				
-	++	bne +
+	++	beq +
 		lda #$ffff				; manipulate the direction simon gets boosted 
 		sta RAM_81_simonSlot_empty00
 		
@@ -1306,6 +1306,10 @@ pullPC
 		sta RAM_simonSlot_State
 		LDA.W #$004e			; 3e   95                      
 		jsl lunchSFXfromAccum             
+		
+		lda RAM_81_simonSlot_empty00	; we got oposit so we toggle 
+		eor #$ffff
+		sta RAM_81_simonSlot_empty00
 
 	giveSimonHeart4CrossCatch:	
 		sed
@@ -1396,7 +1400,7 @@ pullPC
         JMP.W ($00)                 
 	newEventJumpTable: 
 		dw cameraLockDown00,cameraLockDown01,cameraLockDown02,leverBGScroll3,leverBGScroll4,levelBGWrap5,realCurse6
-		dw eventSpawnBossAtXpos,puwexOrb08,lvl9HurbSecret09,stage6Elevator0a,stage7Liberary0b,stage1Pipe0c
+		dw eventSpawnBossAtXpos,puwexOrb08,lvl9HurbSecret09,stage6Elevator0a,stage7Liberary0b,stage1Pipe0c,zapfBatCam_0d
 
 	eventKeepUpWithSimon:
 		lda $54e			; keep up with simon
@@ -2432,6 +2436,37 @@ pullPC
 		rtl 
 	+	clc 
 		rtl 
+		
+	zapfBatCam_0d:
+		jsl eventKeepUpWithSimon
+		lda RAM_simonSlot_Xpos
+		cmp #$0240
+		bmi +
+		cmp #$0300
+		bpl +
+		lda RAM_simonSlot_Ypos
+		cmp #$00c0
+		bpl +
+
+		lda #$0200		; cam fix 
+		sta $a2 
+		stz.b $a6	
+		
+		inc $20,x 		; delay for the cam to catch up else events will respawn after boss clear routine 
+		lda $20,x 
+		cmp #$0040
+		bmi +
+		
+		jsl clearSelectedEventSlotAll	; spawn zapf 
+		lda #$002a
+		sta $10,x 
+		lda #$0005
+		sta $14,x 
+		lda RAM_simonSlot_Xpos
+		sta $0a,x 
+		
+
+	+	rtl 
 
 }
 
@@ -2441,8 +2476,20 @@ pullPC
 		rtl 
 
 ; ---------------------------- New Platform -----------------------------------------	
+	-	lda $04,x 
+		ora #$0800
+		sta $04,x 
+		bra ++
 	NewFloatingPlatform_ev17:
-		lda $14,x
+		lda RAM_currentLevel		; gold platter for gold stage 
+		cmp #$002e
+		beq -
+		cmp #$002f
+		beq -
+		cmp #$0030
+		beq -
+		
+	++	lda $14,x
 		bit #$0080					; bit check for new platform behavier
 		bne newPlatformJumpTable
 		jsl $82C2B0
@@ -2462,7 +2509,7 @@ pullPC
 +		rtl 
 
 	newServBordType: 
-		dw standStill,raftBehavier,raftBehavierBounce,raftBehavierGold            		
+		dw standStill,raftBehavier,raftBehavierBounce,wrapingPlatform_03,risingWhenTouched_04,wrapingPlatform_05            		
 		
 ; ---------------------------- RAFT 1 -----------------------------------------		
 	standStill:
@@ -2552,13 +2599,75 @@ pullPC
 	+	jsl frontCollusionUpBounce
 
 		rtl 
-	
-	raftBehavierGold:
-		jsl raftBehavier
-		lda $04,x 
-		ora #$0800
-		sta $04,x 
+
+	wrapingPlatform_03:
+		LDA.W #$A6EF               			; #$A701, #$A6F8
+        STA.B $00,x                   
+		jsl $82C312 						; Platform So you can stand on it
+		
+		dec.w RAM_X_event_slot_yPos,x 		
+		lda RAM_X_event_slot_yPos,x 
+		and #$00ff
+		sta RAM_X_event_slot_yPos,x 
 		rtl 
+			
+			
+	wrapingPlatform_05:
+		LDA.W #$A6EF               			; #$A701, #$A6F8
+        STA.B $00,x                   
+		jsl $82C312 						; Platform So you can stand on it
+		
+		inc.w RAM_X_event_slot_yPos,x 		
+		lda RAM_X_event_slot_yPos,x 
+		and #$00ff
+		sta RAM_X_event_slot_yPos,x 
+		rtl 			
+	
+	risingWhenTouched_04:					; does not work with multiple platforms since it does not know to to reset till it reached the bottom.. a really smart moving down state might be able to tell.. 
+		lda RAM_simonSlot_State
+		cmp #$000f
+		beq risngPlatormMoveDown			; go down when simon is dead it looks better 
+		
+		LDA.W #$A6EF               			; #$A701, #$A6F8
+        STA.B $00,x                   		
+		lda $80
+		sta $22,x 							; check if behavier changed after platrom routine 
+		
+		jsl $82C312 						; Platform So you can stand on it
+		lda $22,x 
+		cmp $80
+		beq +
+		
+		lda $80
+		sta $12,x 							; use it as state 
+			
+
+	+	lda $80
+		beq risngPlatormMoveDown			; there are a view things that make this stop so we always go down when not set on platform 
+		lda RAM_X_event_slot_state,x 
+		bne risngPlatormMoveUp
+   
+   	risngPlatormMoveDown:	
+		lda $20,x
+		beq ++
+		lda $3a
+		and #$0001
+		beq +
+		dec.b $20,x 						; travel to starting pos
+		inc.b RAM_X_event_slot_yPos,x 
+	+	rtl 
+	++	stz.b RAM_X_event_slot_state,x 		; trashold to go down
+		rtl 
+   
+	risngPlatormMoveUp:
+
+		dec.w RAM_X_event_slot_yPos,x 		; first state 
+		inc.w $20,x 						; keep track of distance traveled 
+		rtl 
+
+
+
+	
 
 	newTreasurOpenBehavier:				  ; treasue routine 
 		JSL.L lunchSFXfromAccum          ; hijackfix    ;85FB37|22E38580|8085E3;  		
@@ -3344,7 +3453,7 @@ endif
 		ldx #$0004		
 	+	bit #$0080
 		beq ++
-;		ldx #$0005						; not selectable in this hack 
+		ldx #$0005						; herb  
 	
 	++	stx $8e
 	endsubWeaponSelect:	

@@ -749,7 +749,9 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw redguyText10,goNextText
 		dw redguyText11,goNextText
 		dw redguyText12,goNextText
-		dw redguyText13,endText
+		dw redguyText13,goNextText
+		dw redguyText14,goNextText
+		dw redguyText15,endText
 	
 	redguyText00:	
 		db "HELLO           "
@@ -812,7 +814,17 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "WARN THEM.",00	
 	redguyText13:
 		db "I DO HAVE A BAD "
-		db "FEELING..",00		
+		db "FEELING..       "
+		db "NO WORRY ABOUT  "
+		db "ME.",00	
+	redguyText14:
+		db "I HAD IN MIND TO"
+		db "FIGHT DRACULA   "
+		db "WITH THE DRAGON",00
+	redguyText15:	
+		db "THIS WILL NOT   "
+		db "BE POSSIBLE ANY "
+		db "TIME SOON..",00		
 	
 ;	redguyText08:	
 ;		db "MY ALLY HEADED  "
@@ -1362,37 +1374,41 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw whipText01,goNextText
 		dw whipText02,goNextText
 		dw whipText03,goNextText
-		dw whipText04,goNextText	
-		dw whipText05,endText	
+		dw whipText04,goNextText
+		dw whipText05,goNextText		
+		dw whipText06,endText	
 	
 	whipText00:
 		db "IT IS GETTING   "
 		db "DARK REALLY     "
-		db "QUICK HERE..    "
-		db "YOU GOT MY",00
-	whipText01:	
+		db "QUICK HERE..",00
+	whipText01:		
+		db "YOU GOT MY      "
 		db "BROTERS WHIP?   "
-		db "REMEMBER THE    "
-		db "LEATHER WHIP IS "
-		db "BETTER SUITED",00 
-	whipText02:		
-		db "FOR PLATFORMING."
-		db "TRY SWITCHING ON"
-		db "DIFFERENT TASKS."
+		db "REMEMBER THE    "		
+		db "LEATHER WHIP",00 	
+	whipText02:	
+		db "IS BETTER SUITER"
+		db "FOR PLATFORMING."		
+		db "TRY SWITCHING   "
+		db "THE WHIPS FOR",00
 	whipText03:
+		db "DIFFERENT TASKS."
 		db "ON RINGS TRY TO "
 		db "FULLY EDTANDED  "
-		db "THE WHIP..",00
+		db "THE LATHER WHIP.",00
 	whipText04:
 		db "THEN IT SHOULD  "
 		db "BE EASY TO MOVE "
-		db "TO THE NEXT ONE!"
-		db "ALSO I NEVER",00
-	whipText05:		
+		db "FROM ON RING TO "
+		db "THE NEXT ONE!",00
+	whipText05:	
+		db "ALSO I NEVER    "		
 		db "SEEN A TREE THIS"
-		db "TALL. I WONDER  "
-		db "WHAT IS ON TOP  "
-		db "OF IT..",00	
+		db "TALL!",00
+	whipText06:
+		db "I WONDER WHAT IS"
+		db "ON TOP OF IT?",00
 
 	actionListArmorSeller:
 		dw armorText00,goNextText

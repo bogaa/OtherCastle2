@@ -10,7 +10,7 @@ dw enemyGFX25,enemyGFX26																	;stage 5
 dw enemyGFX27,enemyGFX31,enemyGFX29,enemyGFX30,enemyGFX31,enemyGFX32,enemyGFX34,enemyGFX63,enemyGFX5	;stage 6
 dw enemyGFX36,enemyGFX36,enemyGFX38,enemyGFX41,enemyGFX41,enemyGFX39,enemyGFX42				;stage 7
 dw enemyGFX43,enemyGFX45,enemyGFX44,enemyGFX43												;stage 8
-dw enemyGFX49,enemyGFX49,enemyGFX49,enemyGFX50,enemyGFX50,enemyGFX50,enemyGFX53,enemyGFX55	;stage 9
+dw enemyGFX49,enemyGFX49,enemyGFX49,enemyGFX50,enemyGFX50,enemyGFX50,enemyGFX53,enemyGFX49	;stage 9
 dw enemyGFX55,enemyGFX58,enemyGFX57,enemyGFX58,enemyGFX59,enemyGFX32						;stage a
 dw enemyGFX62,enemyGFX62,enemyGFX63,enemyGFX64,enemyGFX65,enemyGFX66,enemyGFX31,enemyGFX68 	;stage b
 
@@ -24,7 +24,7 @@ dw enemyAssembly25,enemyAssembly26																									;stage 5
 dw enemyAssembly27,enemyAssembly31,enemyAssembly29,enemyAssembly30,enemyAssembly31,enemyAssembly32,enemyAssembly34,enemyAssembly63,enemyAssembly5 ;stage 6
 dw enemyAssembly36,enemyAssembly36,enemyAssembly38,enemyAssembly41,enemyAssembly41,enemyAssembly39,enemyAssembly42					;stage 7
 dw enemyAssembly43,enemyAssembly45,enemyAssembly44,enemyAssembly43																	;stage 8
-dw enemyAssembly49,enemyAssembly49,enemyAssembly49,enemyAssembly50,enemyAssembly50,enemyAssembly50,enemyAssembly53,enemyAssembly55	;stage 9												
+dw enemyAssembly49,enemyAssembly49,enemyAssembly49,enemyAssembly50,enemyAssembly50,enemyAssembly50,enemyAssembly53,enemyAssembly49	;stage 9												
 dw enemyAssembly55,enemyAssembly58,enemyAssembly57,enemyAssembly58,enemyAssembly59,enemyAssembly32 									;stage a
 dw enemyAssembly62,enemyAssembly62,enemyAssembly63,enemyAssembly64,enemyAssembly65,enemyAssembly66,enemyAssembly31,enemyAssembly68 	;stage b
 
@@ -681,13 +681,13 @@ org $691CD ; lvl 2c
 	db $00,$6a,$7d,$9b,$d8 ;spark,suckHole
 	db $00,$6e,$fd,$f0,$c6 ;ring, block and bubbles 2
 	db $00,$70,$fd,$9b,$aa ;skelly
-	db $00,$76,$1d,$cf,$b9 ;boneDragon
+	db $00,$78,$1d,$cf,$b9 ;boneDragon
 ;	db $00,$7a,$1d,$ee,$ab ;bonePillar 0b
-	db $00,$7a
+	db $00,$7c
 	dl NewPlatform2						; $5d,$b0,$b2 ;platform
-	db $00,$7c,$9d,$97,$aa,$ff,$ff ;bat
+	db $00,$7e,$9d,$97,$aa,$ff,$ff ;bat
 	enemyAssembly49:
-	db $06,$63,$03,$12,$5d,$17,$0c
+	db $06,$63,$03,$56,$5d,$17,$0c
 	
 ;org $6927C ; lvl 31
 	enemyGFX50:
@@ -764,19 +764,18 @@ org $691CD ; lvl 2c
 	enemyGFX58:
 	db $00,$00
 	db $00,$6a,$fd,$b8,$de ;bigGears
-	db $00,$6e,$5d,$db,$dc ;ring, block and bubbles4
-	db $00,$70,$9d,$97,$aa ;bat
-	db $00,$72,$dd,$a9,$ae ;horseHead
-;	db $00,$70,$9d,$de,$bb ;swordSkelly
-;	db $00,$76,$7d,$df,$dc ;skelly3
-;	db $00,$74,$bd,$8f,$c9 ;coffine
+;	db $00,$6e,$5d,$db,$dc ;ring, block and bubbles4
+	db $00,$6e,$9d,$97,$aa ;bat
+	db $00,$70,$dd,$a9,$ae ;horseHead
+;	db $00,$76,$7d,$81,$b4 ;gargoyl	 $3e
+	db $00,$72,$3d,$d7,$b9 ;eye
 	db $00,$74,$3d,$c0,$af ;medusa
-	db $00,$76,$7d,$81,$b4 ;gargoyl	
+	db $00,$76,$3d,$8e,$cf ;shildGargoyl	
 	db $00,$7c
 	dl gradiusIVGFX
 	db $ff,$ff
 	enemyAssembly58:
-	db $06,$7c,$03,$0c,$6f,$07,$3e
+	db $06,$7c,$0c,$6f,$72,$07,$75
 
 
 ;org $69369 ; lvl 3a

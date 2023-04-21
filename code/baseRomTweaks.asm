@@ -141,6 +141,15 @@ pushPC
 
 endif 
 
+org $80A758		; max fall speed 
+		SBC.W #$0007                         	;80A758|E90800  |      ;  
+		BCC +                      				;80A75B|900C    |80A769;  
+		LDA.W #$0000                         	;80A75D|A90000  |      ;  
+		STA.W RAM_81_simonSlot_SpeedSubYpos  	;80A760|8D5C05  |81055C;  
+		LDA.W #$0007                         	;80A763|A90800  |      ;  
+		STA.W RAM_81_simonSlot_SpeedYpos     	;80A766|8D5E05  |81055E;  
+	+ 	RTL                              
+
 
 
 if !invertRingGlitchControll == 1 

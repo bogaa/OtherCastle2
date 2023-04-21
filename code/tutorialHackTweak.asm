@@ -686,6 +686,9 @@ pullPC
 		rtl 
 	
 	coffineRocket:
+;		lda #$0080
+;		sta RAM_X_event_slot_HitboxID,x 
+		
 		LDA.B RAM_X_event_slot_state,X       ; $20,x timer
         PHX                                  ; $22,x subweapon Slot 
         ASL A                                ; $24,x backupSubweapon 
@@ -768,7 +771,8 @@ pullPC
 		
 		lda $8e					; backup subweapon 
 		sta $24,x 
-		lda #$0001				; give dagger default weapon 
+;		lda #$0001					; give dagger default weapon 
+		lda #$0000					; show nothing 
 		sta $8e	
 		
 	+	rtl 
@@ -778,15 +782,36 @@ pullPC
 		sta $00,x 
 				
 		jsl flyStateDefaults
-				
-		lda $20
+		
+		lda $30,x 
+		beq +
+		dec.b $30,x 
+		bra ++
+
+	+	lda $20
 		bit.b RAM_buttonMapWhip
 		beq +
-				
+			
+		lda #$0018
+		sta $30,x 
+		
+		lda #$0001						; shoot dagger
+		sta RAM_simon_subWeapon			
+		lda #$0004
+		sta $12,x 
+
+	+   lda $20
+		bit.b RAM_buttonMapJump
+		beq ++
+		
+		lda #$0020
+		sta $30,x 
+		lda #$0003						; shoot holywater 
+		sta RAM_simon_subWeapon	
 		lda #$0004
 		sta $12,x 
 		
-	+	rtl 
+	++	rtl 
 
 	coffineRocketShootState04:
 		lda #GradiusSpriteAssembly01
@@ -829,12 +854,12 @@ pullPC
 	++	rtl 
 
 	checkForDismount:
-		lda #$0400
+		lda #$2000
 		bit $20
 		beq +
-		lda $be 					; RAM_buttonMapJump
-		bit $28		
-		beq +
+;		lda $be 					; RAM_buttonMapJump
+;		bit $28		
+;		beq +
 	dismountCoffin:		
 		lda $24,x					; give orginal subweapon back 
 		sta $8e
@@ -912,10 +937,10 @@ pullPC
 		lda $54a
 		sta $0a,x
 
-		jsl choseSubweaponWithL
+;		jsl choseSubweaponWithL
 ;		jsl flyCollusionLikeJumpCollusion 
 		jsl flyCollusionRoutine		
-;		jsl checkForDismount
+		jsl checkForDismount
 		jsl checkForDismountOnCondition
 		rtl 
 	
@@ -1298,7 +1323,7 @@ pullPC
 	+	lda RAM_simonSlot_spriteAttributeFlipMirror		
 		beq giveSimonHeart4CrossCatch
 				
-	++	bne +
+	++	beq +
 		lda #$ffff				; manipulate the direction simon gets boosted 
 		sta RAM_81_simonSlot_empty00
 		
@@ -1306,6 +1331,10 @@ pullPC
 		sta RAM_simonSlot_State
 		LDA.W #$004e			; 3e   95                      
 		jsl lunchSFXfromAccum             
+		
+		lda RAM_81_simonSlot_empty00	; we got oposit so we toggle 
+		eor #$ffff
+		sta RAM_81_simonSlot_empty00
 
 	giveSimonHeart4CrossCatch:	
 		sed
@@ -1396,7 +1425,7 @@ pullPC
         JMP.W ($00)                 
 	newEventJumpTable: 
 		dw cameraLockDown00,cameraLockDown01,cameraLockDown02,leverBGScroll3,leverBGScroll4,levelBGWrap5,realCurse6
-		dw eventSpawnBossAtXpos,puwexOrb08,lvl9HurbSecret09,stage6Elevator0a,stage7Liberary0b,stage1Pipe0c
+		dw eventSpawnBossAtXpos,puwexOrb08,lvl9HurbSecret09,stage6Elevator0a,stage7Liberary0b,stage1Pipe0c,zapfBatCam_0d
 
 	eventKeepUpWithSimon:
 		lda $54e			; keep up with simon
@@ -2432,17 +2461,138 @@ pullPC
 		rtl 
 	+	clc 
 		rtl 
+		
+	zapfBatCam_0d:
+		jsl paletteAnimZapfBG
+		jsl eventKeepUpWithSimon
+		lda RAM_simonSlot_Xpos
+		cmp #$0240
+		bmi +
+		cmp #$0328
+		bpl +
+		lda RAM_simonSlot_Ypos
+		cmp #$00c0
+		bpl +
 
+		lda #$0200		; cam fix 
+		sta $a0 
+		sta $a2 
+		stz.b $a6	
+		
+		inc $20,x 		; delay for the cam to catch up else events will respawn after boss clear routine 
+		lda $20,x 
+		cmp #$0040
+		bmi +
+		
+		jsl clearSelectedEventSlotAll	; spawn zapf 
+		lda #$002a
+		sta $10,x 
+		lda #$0005
+		sta $14,x 
+		lda RAM_simonSlot_Xpos
+		sta $0a,x 		
+
+	+	rtl 
+
+	paletteAnimZapfBG:				; 22 timer 24 palette offset 26 switch to reverse anim 
+		lda $22,x 
+		beq +
+		dec.b $22,x				
+		bra +++
+	+	lda #$0008					; timer for palette change 10 frames  
+		sta $22,x 
+		
+		lda $26,x
+		cmp #$0030
+		bne accendAnimZapfBG
+	
+	decendAnimZapfBG:	
+		lda $24,x					; decend anim 
+		sec
+		sbc #$0010
+		bpl +
+		lda #$0000					; reset palette anim 
+		sta $26,x 
+	+	sta $24,x 
+		bra ++
+	
+	accendAnimZapfBG:
+		lda $24,x 					; acend anim 
+		clc
+		adc #$0010
+		cmp #$0040					; max set of palette
+		bne +
+		lda #$0030					; reset palette anim 
+		sta $26,x 
+	+	sta $24,x 
+		
+	++	phb
+		phx
+		phy 
+		sep #$20
+		lda #$86	
+		pha
+		plb
+		rep #$20
+		
+		lda #$ff00			;	paletteGetDark ; 16 bytes 2 7e228c 86ff00 ; 4 sets 
+		clc 
+		adc $24,x 
+		sta $00
+	
+		ldx #$0010
+		txy
+	-	lda ($00),y  
+		sta.l $7e228c,x
+		dey
+		dey
+		dex
+		dex
+		bpl -
+		
+		ply 
+		plx 
+		sep #$20
+		plb 
+		rep #$20
+		
+	+++	rtl 
+
+pushPC
+	org $86ff00			; dark palette 
+		db $00, $00, $00, $00, $B1, $76, $24, $00, $22, $00, $20, $00, $00, $00, $00, $00
+		db $00, $00, $00, $00, $B2, $66, $23, $00, $22, $00, $20, $00, $00, $00, $00, $00
+		db $00, $00, $00, $00, $ED, $49, $22, $00, $21, $00, $21, $00, $00, $00, $00, $00
+		db $00, $00, $00, $00, $AC, $41, $21, $00, $20, $00, $20, $00, $00, $00, $00, $00	
+pullPC 
+		
+		
+	
 }
 
 	
-{ ; ---------------------------- New Rotating Platform ----------------------------------------	
-	eventNewPlatform:		
+{ ; ---------------------------- New Platform ----------------------------------------	
+	eventNewPlatform:			
 		rtl 
 
 ; ---------------------------- New Platform -----------------------------------------	
+		
+	-	lda $04,x 
+		ora #$0800
+		sta $04,x 
+		bra ++
 	NewFloatingPlatform_ev17:
-		lda $14,x
+		lda RAM_currentLevel		; gold platter for gold stage 
+		cmp #$002e
+		beq -
+		cmp #$002f
+		beq -
+		cmp #$0030
+		beq -
+		cmp #$0035
+		beq -
+		
+	++	lda $14,x
 		bit #$0080					; bit check for new platform behavier
 		bne newPlatformJumpTable
 		jsl $82C2B0
@@ -2462,7 +2612,7 @@ pullPC
 +		rtl 
 
 	newServBordType: 
-		dw standStill,raftBehavier,raftBehavierBounce,raftBehavierGold            		
+		dw standStill,raftBehavier,raftBehavierBounce,wrapingPlatform_03,risingWhenTouched_04,wrapingPlatform_05            		
 		
 ; ---------------------------- RAFT 1 -----------------------------------------		
 	standStill:
@@ -2552,13 +2702,80 @@ pullPC
 	+	jsl frontCollusionUpBounce
 
 		rtl 
-	
-	raftBehavierGold:
-		jsl raftBehavier
-		lda $04,x 
-		ora #$0800
-		sta $04,x 
+
+	wrapingPlatform_03:
+		LDA.W #$A6EF               			; #$A701, #$A6F8
+        STA.B $00,x                   
+		jsl $82C312 						; Platform So you can stand on it
+		
+		dec.w RAM_X_event_slot_yPos,x 		
+		lda RAM_X_event_slot_yPos,x 
+		and #$00ff
+		sta RAM_X_event_slot_yPos,x 
 		rtl 
+			
+			
+	wrapingPlatform_05:
+		LDA.W #$A6EF               			; #$A701, #$A6F8
+        STA.B $00,x                   
+		jsl $82C312 						; Platform So you can stand on it
+		
+		inc.w RAM_X_event_slot_yPos,x 		
+		lda RAM_X_event_slot_yPos,x 
+		and #$00ff
+		sta RAM_X_event_slot_yPos,x 
+		rtl 			
+	
+	risingWhenTouched_04:					; does not work with multiple platforms since it does not know to to reset till it reached the bottom.. a really smart moving down state might be able to tell.. 
+		lda RAM_simonSlot_State
+		cmp #$000f
+		beq risngPlatormMoveDown			; go down when simon is dead it looks better 
+		
+		LDA.W #$A6EF               			; #$A701, #$A6F8
+        STA.B $00,x                   		
+		lda $80
+		sta $22,x 							; check if behavier changed after platrom routine 
+		
+		jsl $82C312 						; Platform So you can stand on it
+		lda $22,x 
+		cmp $80
+		beq +
+		
+		lda $80
+		sta $12,x 							; use it as state 
+			
+
+	+	lda $80
+		beq risngPlatormMoveDown			; there are a view things that make this stop so we always go down when not set on platform 
+		lda RAM_X_event_slot_state,x 
+		bne risngPlatormMoveUp
+   
+   	risngPlatormMoveDown:	
+		lda $20,x
+		beq ++
+		lda $3a
+		and #$0001
+		beq +
+		dec.b $20,x 						; travel to starting pos
+		inc.b RAM_X_event_slot_yPos,x 
+	+	rtl 
+	++	stz.b RAM_X_event_slot_state,x 		; trashold to go down
+		rtl 
+   
+	risngPlatormMoveUp:
+		dec.w RAM_X_event_slot_yPos,x 		; first state 
+		inc.w $20,x 						; keep track of distance traveled 
+		lda $20,x 
+		cmp #$00e0							; max 
+		bcc + 
+		dec.w $20,x 
+		inc.w RAM_X_event_slot_yPos,x 
+		
+		rtl 
+
+
+
+	
 
 	newTreasurOpenBehavier:				  ; treasue routine 
 		JSL.L lunchSFXfromAccum          ; hijackfix    ;85FB37|22E38580|8085E3;  		
@@ -3344,7 +3561,7 @@ endif
 		ldx #$0004		
 	+	bit #$0080
 		beq ++
-;		ldx #$0005						; not selectable in this hack 
+		ldx #$0005						; herb  
 	
 	++	stx $8e
 	endsubWeaponSelect:	
@@ -3808,9 +4025,9 @@ org $848246					; more free space for sprite assembly
 
 	AssGuy:         
 		db $03           
-		db $00,$e8,$2e,$26
-		db $00,$f8,$4e,$26
-		db $00,$08,$40,$26
+		db $F8,$e8,$2e,$26
+		db $F8,$f8,$4e,$26
+		db $F8,$08,$40,$26
 
 	oldManBrawnPents00:				; 
 		db $06                               ;old man sprite assembly 

@@ -22,10 +22,14 @@ org $80859E
 	musicLunchFix:			; wish I would know better what it does and could find a better name 
 org $80D7F1
 	getEmptyEventSlot:      
+org $82B407
+	gravetyFallCalculation2000:     ;85DB52|2207B482|82B407;  
 org $82B459
 	gravetyFallCalculation4000:      ;839895|2259B482|82B459;  
 org $82D647
 	getPixleOffsetXposAwayFromSimon:		;86C56F|2247D682|82D647;  		
+org $80CF86
+	readCollusionTable7e4000:       ;8289E5|2286CF80|80CF86;  
 
 org $81f93a					; palette animation chandelire BG dest 
 	dw $2200
@@ -2367,11 +2371,446 @@ pullPC
 
 
 }
+
+{	; bossZapf
+	initZapfBatNew:		     
+		LDY.W #$F23D                          
+        LDX.W #$1260                          
+        JSL.L bossGetPaletteY2X               
+        LDX.W #$0580                          
+        LDA.W #$0003                          
+        STA.B RAM_X_event_slot_Movement2c,X  
+        LDA.W #$0280                          
+        STA.B RAM_X_event_slot_xPos,X        
+        LDA.W #$0000                          
+        STA.B RAM_X_event_slot_xPosSub,X     
+        LDA.W #$0040                          
+        STA.B RAM_X_event_slot_yPos,X        
+        LDA.W #$0000                          
+        STA.B RAM_X_event_slot_yPosSub,X     
+        
+;		LDA.W #$0410  							; health big bat                         
+		lda #$820
+		STA.W $0586                           
+        STA.W $05BE                           
+        
+		LDA.W #$0150                        	; health small bats   
+;		lda #$2a0 
+		STA.W $05C6                           
+        STA.W $0606                           
+        STA.W $0646                           
+		sta $686								; new bat 	
+		sta $6c6
+		sta $706 
+
+       
+		STA.W $05FE                           
+        STA.W $063E                           
+        STA.W $067E                           
+        LDA.W #$0010                          
+        STA.W RAM_81_boss_Health_HUD          
+        LDA.W #$0086                          
+        STA.B RAM_X_event_slot_ID,X          
+        LDA.W #$0018                          
+        STA.B RAM_X_event_slot_HitboxXpos,X  
+        STA.B RAM_X_event_slot_HitboxYpos,X  
+  ;      LDY.W #$F223                          
+  ;      LDX.W #$1240                          
+  ;      JSL.L bossGetPaletteY2X               
+        LDX.W #$0580                          
+        LDA.W #$0001                          
+        STA.B RAM_X_event_slot_state,X       
+        LDA.W #$0078                          
+        JSL.L lunchSFXfromAccum               
+        LDX.W #$0580                          
+        RTL                                   
+
+	zapfNewHealthRoutine:
+		clc
+		adc $686								; new bat 	
+		clc
+		adc $6c6
+		clc 
+		adc $706 
+		clc
+;		adc #$0ff								; shift fix?? 
+		jsl bossPlus1LSRHealthHudCalc 
+		rtl 
+		
+	addNewSmallBatsZapf:
+		JSL.L $85D903                    ;	hijackFix adding a bat 
+		LDA.B RAM_X_event_slot_yPos,X                                   
+        ADC.W #$0020                     
+        STA.W RAM_81_X_event_slot_yPos,Y 
+        LDY.W #$0680                 
+        JSL.L $85D903                   
+      
+		LDA.B RAM_X_event_slot_xPos,X                                   
+        sbc #$0020                     
+        STA.W RAM_81_X_event_slot_xPos,Y 
+        LDY.W #$06c0                 
+        JSL.L $85D903          
+
+		LDA.B RAM_X_event_slot_yPos,X                                 
+        sbc #$0020                     
+        STA.W RAM_81_X_event_slot_yPos,Y 
+        LDY.W #$0700                 
+        JSL.L $85D903          
+		RTL                               
+
+	newHealthHitSmallBat:
+		bcs +
+		jsl $85DC6B					; hijack fix 	
+		
+	+	LDX.W #$0680                      
+		LDA.B RAM_X_event_slot_state,X     
+		CMP.W #$0004                      
+		BCS +                      			
+		JSL.L $85DC6B		; zapfSmallHealthRoutine         ;85DBFE|226BDC85|85DC6B;  
+
+	+	LDX.W #$06c0                      
+		LDA.B RAM_X_event_slot_state,X     
+		CMP.W #$0004                      
+		BCS +                      			
+		JSL.L $85DC6B		; zapfSmallHealthRoutine         ;85DBFE|226BDC85|85DC6B;  
+
+	+	LDX.W #$0700                      
+		LDA.B RAM_X_event_slot_state,X     
+		CMP.W #$0004                      
+		BCS +                      			
+		JSL.L $85DC6B		; zapfSmallHealthRoutine         ;85DBFE|226BDC85|85DC6B;  
+	+	rtl
+
+
+	newSmallZapfBatMainRoutine:
+        JSL.L $85D954		; hijack fix 			smallBatsStateRoutine          ;85D94C|2254D985|85D954;  
+       
+		JSL.L RNGgetMix00
+		ldx #$680
+		jsr YposMovmentAreaSmallZapf		
+		JSL.L $85D954
+
+		
+		JSL.L RNGgetMix00
+		ldx #$6c0
+		jsr YposMovmentAreaSmallZapf
+		JSL.L $85D954		
+
+		
+		JSL.L RNGgetMix00
+		ldx #$700
+		jsr YposMovmentAreaSmallZapf
+		JSL.L $85D954		
+
+		
+		LDX.W #$0580                         ;85D950|A28005  |      ;  
+		rtl
+
+	YposMovmentAreaSmallZapf:
+		lda RAM_X_event_slot_yPos,x 
+		cmp #$0060
+		bcc +
+		lda #$0060
+		sta RAM_X_event_slot_yPos,x 
+		lda #$fffe
+		sta RAM_X_event_slot_ySpd,x 
+	+	lda RAM_X_event_slot_yPos,x 
+		cmp #$0020
+		bcs +
+		lda #$0020
+		sta RAM_X_event_slot_yPos,x 
+	+	rts 
+
+	---	jml $85D989
+	--	jml $85D97F
+	-	jml $85D993
+	newBatRoutineResetTimer:	
+		CPX.W #$05C0     		;      smallBatsState00: 	delay before initiating               
+        BEQ -                     
+        CPX.W #$0600                    
+        BEQ --                     
+
+	    CPX.W #$0640                         
+        BEQ ---                    
+        
+		cpx.w #$0680
+		beq +
+
+		cpx.w #$06c0
+		beq ++
+
+		cpx.w #$0700
+		beq +++
+	
+	+	INC.B RAM_X_event_slot_32,X    
+        LDA.B RAM_X_event_slot_32,X    
+        CMP.W #$0008                  
+        BCS resetSmallZapfStates        
+		RTL                             
+
+	++	INC.B RAM_X_event_slot_32,X    
+        LDA.B RAM_X_event_slot_32,X    
+        CMP.W #$0018                  
+        BCS resetSmallZapfStates        
+		RTL                               
+ 
+	+++	INC.B RAM_X_event_slot_32,X    
+        LDA.B RAM_X_event_slot_32,X    
+        CMP.W #$0028                  
+        BCS resetSmallZapfStates        
+		RTL                  
+
+	resetSmallZapfStates:	
+		jml $85D993					;85D99A|6B      |      ;  
+
+
+	makeSmallBatsDieFinalState:
+		phx 
+
+		ldx #$5c0					; since we could not fix healthroutine to be right..
+	-	jsl clearSelectedEventSlotAll
+		txa
+		clc
+		adc #$0040
+		tax 
+		cmp #$740
+		bne -
+		
+		plx 
+
+		INC.B RAM_X_event_slot_32,X          ;85DAB6|F632    |000032;  
+        LDA.B RAM_X_event_slot_32,X          ;85DAB8|B532    |000032;  
+		rtl 
+
+	timerZapfDebree:
+		rtl 
+		
+	zapfNewDiveRule:
+		LDA.B RAM_X_event_slot_ySpdSub,X     ;85D84B|B51C    |00001C;  
+		SEC                                  ;85D84F|38      |      ;  
+		SBC.W #$0c00                         ;85D850|E90080  |      ;  
+		STA.B RAM_X_event_slot_ySpdSub,X     ;85D853|951C    |00001C;  
+		LDA.B RAM_X_event_slot_ySpd,X        ;85D855|B51E    |00001E;  
+		SBC.W #$0000                         ;85D857|E90000  |      ;  
+		STA.B RAM_X_event_slot_ySpd,X        ;85D85A|951E    |00001E;  
+		lda RAM_X_event_slot_yPos,x 
+		cmp #$0094
+		bcc +
+		lda #$0093
+		sta RAM_X_event_slot_yPos,x 
+	+	rtl
+;		inc.b $30,x 
+;		lda $30,x 
+;		cmp #$0030
+;		bcc +
+;		jsl clearSelectedEventSlotAll
+;	+	rtl 
+
+;	smallzapfCheckIfDead:
+;		CMP.W #$0005                         ;85DC37|C90500  |      ;  
+;        BNE CODE_85DC43                      ;85DC3A|D007    |85DC43;  
+
+;gravetyFallCalculation1000: 
+;		LDA.B RAM_X_event_slot_ySpdSub,X   
+;        CLC                                 
+;        ADC.W #$1000                      
+;        STA.B RAM_X_event_slot_ySpdSub,X   
+;        LDA.B RAM_X_event_slot_ySpd,X      
+;        ADC.W #$0000                      
+;        STA.B RAM_X_event_slot_ySpd,X      
+;        BMI +                    			
+;        LDA.B RAM_X_event_slot_ySpdSub,X   
+;        SEC                                 
+;        SBC.W #$0000                      
+;        LDA.B RAM_X_event_slot_ySpd,X      
+;        SBC.W #$0004                      
+;        BCC +                  				 
+;        LDA.W #$0000                      
+;        STA.B RAM_X_event_slot_ySpdSub,X   
+;        LDA.W #$0004                      
+;        STA.B RAM_X_event_slot_ySpd,X               
+;	+	RTL                                 
+
+	defineBossAreaZapf:
+		LDA.B RAM_X_event_slot_xPos,X      
+        CMP.W #$02F0                      
+        BCS +
+        CMP.W #$0210                      
+        BCC ++                     
+	--	LDA.B RAM_X_event_slot_yPos,X
+		cmp #$001f 
+		bcc +++
+	-	jsl $85D587			; hijack fix 
+		rtl 
+		
+	+	LDA.W #$02F0                      
+        STA.B RAM_X_event_slot_xPos,X                                      
+		bra -- 
+        
+	++	LDA.W #$0210                    
+        STA.B RAM_X_event_slot_xPos,X    
+        bra --                              
+   +++ 	lda #$0020
+		sta RAM_X_event_slot_yPos,X
+		bra -
+		
+	smallBatBoopFindGround:
+        phx 
+		LDA.B RAM_X_event_slot_yPos,X 
+		sec 
+		sbc #$0001 
+        STA.B $02 
+        LDA.B RAM_X_event_slot_xPos,X       
+        STA.B $00
+        JSL.L readCollusionTable7e4000       
+        BEQ ++
+		bpl +
+		inc a
+		bne ++
+		
+	+	plx
+		phx 
+		STZ.B RAM_X_event_slot_xSpd,X        
+        STZ.B RAM_X_event_slot_xSpdSub,X     
+        STZ.B RAM_X_event_slot_ySpd,X        
+        STZ.B RAM_X_event_slot_ySpdSub,X     
+
+        LDA.W #$0001                        
+        STA.B RAM_X_event_slot_state,X       
+		
+	++	plx
+		jml $85DB07 
+
+}
+
 ; --------------------------------------------------------------------------
+
 pushPC		
+
 ; --------------------------------------------------------------------------
 ; -------------------------------- hijacks and OG disASM -------------------
 ; --------------------------------------------------------------------------
+
+{	; bossZapf
+
+org $85D572
+;        JSL.L zapfBatStateRoutine            ;85D572|2287D585|85D587;  
+		jsl defineBossAreaZapf 
+		
+org $85D597
+	zapfBatStateTable: 
+		dw zapfBatState00                    ;85D597|        |85D5A9;  
+        dw zapfBatState01                    ;85D599|        |85D61C;  
+        dw zapfBatState02                    ;85D59B|        |85D647;  
+        dw zapfBatState03_fly                ;85D59D|        |85D6C1;  
+        dw zapfBatState04_wait               ;85D59F|        |85D7E9;  
+        dw zapfBatState05_dive               ;85D5A1|        |85D842;  
+        dw zapfBatState06_breakUp            ;85D5A3|        |85D878;  
+        dw zapfBatState07_smallBats          ;85D5A5|        |85D92F;  
+        dw zapfBatState08                    ;85D5A7|        |85DAB3;  	
+		; space for new states
+	zapfBatState00: 	
+		jml initZapfBatNew	
+warnPC $85D61B		
+
+org $85D61C
+		zapfBatState01:
+org $85D647
+		zapfBatState02:
+org $85D6C1
+		zapfBatState03_fly:
+org $85D6C5
+		CMP.W #$0060     ;Timer check when Big Bat dives 200 default			
+		
+org $85D7E9
+		zapfBatState04_wait:
+org $85D7F5			
+        CMP.W #$0048                     ;85D7F5|C93000  |      ;  		
+org $85D842
+		zapfBatState05_dive:	
+org $85D846
+        CMP.W #$0060                       ;diveTime 
+
+org $85d84b
+		jsl zapfNewDiveRule
+		bra +
+org $85D85C
+	+	zapfBatDiveAnimation:
+		
+org $85D878
+		zapfBatState06_breakUp:
+org $85D92F 
+		zapfBatState07_smallBats:
+org $85DAB3 
+		zapfBatState08:
+
+org $81F081
+;		zapfBatDiveSpeedYpos: 
+;			dw $FFFC,$FFFC,$FFFC,$FFFD           ;81F081|        |      ;  
+;			dw $FFFD,$FFFE,$FFFE,$FFFF           ;81F089|        |      ;  
+			dw $FFFa,$FFFa,$FFFb,$FFFc           
+			dw $FFFD,$FFFD,$FFFE,$FFFF          
+
+org $85DB79
+		jml smallBatBoopFindGround
+		nop 
+
+org $85DAB6                      
+		jsl makeSmallBatsDieFinalState
+
+;org $85DC37
+;		jsl smallzapfCheckIfDead	
+;		nop 
+	
+org $85DC19
+		jsl zapfNewHealthRoutine 
+
+org $85D8FE                     
+		jsl addNewSmallBatsZapf
+
+org $85D66E
+        LDY.W #$740		; event spawn?? #$0680                         ;85D66E|A08006  |      ;  
+
+org $85DAEE
+        LDX.W #$740       	; new event table start since we have more small bats    ; 85DAEE|A28006  |      ;  
+
+org $85DA6F
+        LDY.W #$740		; #$0680                         ;85DA6F|A08006  |      ;  
+org $85D7A3	
+;deathSpawnSythIntervall: 	????
+		LDY.W #$0740       ; 85D7A3|A08006  |      ;  
+
+;org $85DCE1
+;		nop 	; make sound on death 
+		
+org $85DBFC
+		jsl newHealthHitSmallBat
+		nop
+		nop
+
+org $85D94C
+		jsl newSmallZapfBatMainRoutine
+
+org $85D979
+		jml newBatRoutineResetTimer
+		nop 
+
+warnPC $85D97E
+
+org $85DB52			; debree fall speed 
+        JSL.L gravetyFallCalculation2000     ;85DB52|2207B482|82B407;  
+		jsl timerZapfDebree
+org $85DD58
+;		LDA.W #$0047          ; make debree hitable                ;85DD58|A90100  |      ;               
+
+
+org $86BA55			; make simon get controll after stairs appear 
+		lda #$0005
+		sta $70 
+		rtl 
+}
+
+
 
 {	; --------------------- bossFank  -------------------------------------
 org $81D3E1

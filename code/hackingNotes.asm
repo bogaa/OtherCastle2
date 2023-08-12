@@ -5,11 +5,19 @@
 ; get cursed and fight him as a dead belmont
 ; blue armore health regan?
 ; gold stage banana hoard. 
+; gold stage inomenal room when going back. gold to skelettons and blood 
 
 ; add tip backentrance to town.. why is it open? trader?
-; dancer bumping
+
 ; EXTRA tip hook on medua rings when they are high to go under things 
+
+
+
+
+; done
 ; BBQ souce with pizza souce sweet spicy though PC Smokin' Stampede Beer & Chipotle BBQ
+; tip duck in grass to find wirrling things 
+; dancer bumping
 
 $001C = !RAM_bg1CamXpos,
 $001E = !RAM_bg1CamYpos,
@@ -202,6 +210,8 @@ $13F2 = !RAM_simonStat_Hearts,
 $13F4 = !RAM_simonStat_Health_HUD,
 $13F6 = !RAM_boss_Health_HUD,
 $13FA = !RAM_simonStat_stopWatchTimer,
+
+;$1400 = !Ram_slotHitboxGroundCollusionSimon ; - $1436 
 
 $1480 = !RAM_channel_DMA_0,
 $1490 = !RAM_channel_DMA_1,

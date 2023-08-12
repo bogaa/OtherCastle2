@@ -383,23 +383,23 @@ pullPC 			; freeSpace
 		dw $052a        ;23		; dungeon
 		dw $052d        ;24		; frank 	
 		dw $052e        ;25		; gold 
-		dw $0530        ;26
-		dw $0531        ;27
-		dw $0532        ;28
-		dw $0533        ;29
-		dw $0534        ;2a
-		dw $0535        ;2b
-		dw $0536        ;2c			
-		dw $0537        ;2d		
-		dw $0638        ;2e
-		dw $0639        ;2f
-		dw $063a        ;30
-		dw $063b        ;31
-		dw $063c        ;32
-		dw $073d        ;33
-		dw $073e        ;34
-		dw $073f        ;35
-		dw $0741        ;36
+		dw $052f        ;26
+		dw $0530        ;27
+		dw $0535        ;28		; zapfQuater
+		dw $0537        ;29		; CV shooter 
+		dw $0538        ;2a		; clock tower climb 1
+		dw $0539        ;2b		; clocktower right
+		dw $053a        ;2c		; clocktower climb 2	
+		dw $053b        ;2d		; CV shooter 2
+		dw $063c        ;2e		; decend draculas bridge
+		dw $063d        ;2f		; draculas bridge 
+		dw $063e        ;30		; finall level 
+		dw $063f        ;31		
+		dw $0640        ;32
+		dw $0741        ;33
+		dw $0742        ;34
+		dw $0742        ;35
+		dw $0742        ;36
 		dw $0742        ;37
 		dw $0742        ;38
 		dw $0742        ;39
@@ -518,6 +518,10 @@ pullPC 			; freeSpace
 	
 ;---------------------------------- old job asm 
 	saveProgress:
+		lda $13d4						; skip save on last entrance so we can use it for secrets 
+		cmp #$0007
+		beq endSaveProgress	
+
 		lda $86							; skip save on first section since you could accidently overwrite score 	
 		cmp #$0005
 		beq endSaveProgress				
@@ -625,6 +629,9 @@ pullPC 			; freeSpace
 		lda !backUpButtonMapSubWe
 		sta $c2		
 		
+		stz.w !noWhipSwitch					; make sure we can switch whip again.. 
+		stz.w !autoScroll
+		
 		lda !jobTable03
 		and #$0f00
 		cmp #$0100
@@ -721,7 +728,7 @@ pullPC 			; freeSpace
 		rtl 
 		
 	equipmentLevels:					;current XXxx XXxx XXxx XX= disableAction 1j2w3s, x=Curse,x=whip Type
-		dw emptyText,$0000,$0000,$0003	;lvl 0
+		dw textFish,$0000,$0000,$0003	;lvl 0
 		dw textDitch,$0000,$0000,$0002	;lvl 1
 		dw textFirstTower,$0000,$0000,$0000          ;lvl 2
 		dw textFirstTower,$0000,$0000,$0000	        ;lvl 3
@@ -759,31 +766,31 @@ pullPC 			; freeSpace
 		dw textWickedWing,$0000,$0000,$0013	      ;lvl 22
 		dw textBottomLess,$0000,$0000,$0013	      ;lvl 23 liberarry
 		dw textBottomLess,$0000,$0000,$0013	     ;lvl 24
-		dw textBottomLess,$0000,$0000,$0013	  ;lvl 25
+		dw textBottomLess,$0000,$0000,$0013	  ;lvl 25		
 		dw textSecretMeating,$0000,$0000,$0003	    ;lvl 26 graqulQuater
 		dw textSecretMeating,$0000,$0000,$00f3	  ;lvl 27
-		dw textSecretMeating,$0000,$0000,$00f3	  ;lvl 28
+		dw textSecretMeating,$0000,$0000,$00f0	  ;lvl 28		; no weapon loadout since we have a secret room here.. FIXME hehe 
 		dw textGrakulsQuater,$0000,$0000,$0013	      ;lvl 29
 		dw textDungeon,$0000,$0000,$0013	   ;lvl 2a dungeon
 		dw emptyText,$0000,$0000,$0033	  ;lvl 2b
 		dw emptyText,$0000,$0000,$0023	  ;lvl 2c frankQuater
 		dw textDungeon,$0000,$0000,$0013	      ;lvl 2d
-		dw textTreasureRoom,$0000,$0000,$0003	    ;lvl 2e gold
-		dw emptyText,$0000,$0000,$0013	  ;lvl 2f
-		dw emptyText,$0000,$0000,$0013	  ;lvl 30
-		dw emptyText,$0000,$0000,$0013	  ;lvl 31 zapfQuater
-		dw emptyText,$0000,$0000,$0013	    ;lvl 32
-		dw emptyText,$0000,$0000,$0013	      ;lvl 33
-		dw emptyText,$0000,$0000,$0013	  ;lvl 34
-		dw emptyText,$0000,$0000,$0013	  ;lvl 35
+		dw textTreasureRoom00,$0000,$0000,$0003	    ;lvl 2e gold
+		dw textTreasureRoom00,$0000,$0000,$0013	  ;lvl 2f
+		dw textTreasureRoom00,$0000,$0000,$0013	  ;lvl 30
+		dw textTreasureRoom01,$0000,$0000,$0013	  ;lvl 31 zapfQuater
+		dw textTreasureRoom01,$0000,$0000,$0013	    ;lvl 32
+		dw textTreasureRoom01,$0000,$0000,$0013	      ;lvl 33
+		dw textTreasureRoom01,$0000,$0000,$0013	  ;lvl 34
+		dw textTreasureRoom01,$0000,$0000,$0013	  ;lvl 35
 		dw emptyText,$0000,$0000,$0012	          ;lvl 36 secret 01
 		dw CVshooterText,$0000,$0000,$0013	      ;lvl 37 ClockTower
-		dw emptyText,$0000,$0000,$0013	  ;lvl 38
-		dw emptyText,$0000,$0000,$0013	  ;lvl 39
-		dw emptyText,$0000,$0000,$0013	  ;lvl 3a
-		dw emptyText,$0000,$0000,$0013	      ;lvl 3b MummyRoom
-		dw emptyText,$0000,$0000,$0013	  ;lvl 3c Bridge
-		dw emptyText,$0000,$0000,$0013	      ;lvl 3d
+		dw textGear00,$0000,$0000,$0013	  ;lvl 38
+		dw textGear01,$0000,$0000,$0013	  ;lvl 39
+		dw textGear02,$0000,$0000,$0013	  ;lvl 3a
+		dw CVshooterText,$0000,$0000,$0013	      ;lvl 3b MummyRoom
+		dw textBridge,$0000,$0000,$0013	  ;lvl 3c Bridge
+		dw textBridge,$0000,$0000,$0013	      ;lvl 3d
 		dw emptyText,$0000,$0000,$0013	  ;lvl 3e FinalTower
 		dw emptyText,$0000,$0000,$0013	      ;lvl 3f Slog
 		dw emptyText,$0000,$0000,$0013	   ;lvl 41	Gai
@@ -834,7 +841,7 @@ pullPC 			; freeSpace
 	textWickedWing:	
 		db "WICKED WING    ",$00
 	CVshooterText:
-		db "GRADIUS IV     ",$00
+		db "CASTLE GRADIUS ",$00
 	textBottomLess:
 		db "DARK LIBERARY  ",$00
 	textSecretMeating:
@@ -843,9 +850,22 @@ pullPC 			; freeSpace
 		db "GRAKUL LAYER   ",$00
 	textDungeon:	
 		db "TORTURE DUNGEON",$00	
-	textTreasureRoom:
-		db "BAT GOLD SQUIRT",$00
-	
+	textTreasureRoom00:
+		db "DUCK BURG      ",$00
+	textTreasureRoom01:
+		db "SHINY BAT POOP ",$00	
+	textFish:
+		db "SPEKKIO        ",$00			
+	textGear00:
+		db "TIME TO SWING  ",$00
+	textGear01:
+		db "TIME TO TWIST  ",$00	
+	textGear02:
+		db "TIME TO ZIP    ",$00	
+	textBridge:
+		db "DRACULAS BRIDGE",$00		
+
+		
 	secondTownPointerFix:
 		lda $86
 		cmp #$0005

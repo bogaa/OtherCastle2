@@ -5,6 +5,7 @@
 ; $b8 disables event collecting items?? 
 ; $13c0 simon cant move timer 
 ; elevator in stage 13 for curienTK
+; fix save file to store progress and ora since points and stuff.. 
 
 ;lorom
 
@@ -28,8 +29,9 @@
 !invertRingGlitchControll = 1
 !swordSkellyHitboxFix = 1
 !jpWhipSound = 1
-!radio = 1
+!radio = 0
 !moonwalk = 1
+!newSecondQuestStartLevel = 1 
 
 ;NEW RAM ALLOCATION IN FREERAM ------- till $1e7f----------------------------------------
 !textEngineState = $1E18	; write 2 to write text and 1 to terminate. 4 lines with 16 Character 
@@ -53,11 +55,21 @@
 !costumMusicNumber = $1e3c 	
 !dogLeash = $1e3e
 
-
 !jobTable00	= $1e40			; 
 !jobTable01	= $1e42
 !jobTable02	= $1e44
 !jobTable03	= $1e46
+
+!autoScroll = $1e48				; 1 scroll right ..only auto scroll added. Cool would be to add all direction and have part of it beeing the scroll speed 
+
+
+!fishCatchedFlag = $19c0		; breakable wall table start till 19ff
+!bridgDragonProgress = $19c2
+!bridgDragonSpawn = $19c4		; breakable wall table start till 19ff
+!bridgDragonLeangth = $19c6		; breakable wall table start till 19ff
+!bridgDragonHealthHud = $19c8		; breakable wall table start till 19ff
+!bridgDragonRamPointer = $19ca		; array.. breakable wall table start till 19ff
+
 
 !jobTextDisplay = $7fff88		; job text display 2c size
 incsrc code/labels.asm
@@ -109,3 +121,45 @@ endif
 
 ;incsrc code/NewEnemies/oldManEvID0d.asm 
 
+check bankcross off
+org $F6A57D
+	simonSpriteData00:
+		dw $2004
+		db $80
+			incbin ".GFX/simonSheet.bin":($0000)-($1fff) 
+
+org $F6C5FD
+	simonSpriteData01:
+		dw $2003
+		db $80
+			incbin ".GFX/simonSheet.bin":($2000)-($3fff) 
+			
+org $F6E65D
+	simonSpriteData02:
+		dw $2003
+		db $80
+			incbin ".GFX/simonSheet.bin":($4000)-($5fff) 		
+
+org $F786BD
+	simonSpriteData03:
+		dw $2003
+		db $80
+			incbin ".GFX/simonSheet.bin":($6000)-($7fff) 				
+			
+org $F7A71D
+	simonSpriteData04:
+		dw $2003
+		db $80
+			incbin ".GFX/simonSheet.bin":($8000)-($9fff) 		
+
+org $F7C77D
+	simonSpriteData05:
+		dw $2003
+		db $80
+			incbin ".GFX/simonSheet.bin":($a000)-($bfff) 	
+			
+org $F7E7DD
+	simonSpriteData06:
+		dw $2003
+		db $80
+			incbin ".GFX/simonSheet.bin":($c000)-($dfff) 		

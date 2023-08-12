@@ -89,6 +89,50 @@ org $84A1D8
 	db $F2,$Da,$00,$60
 
 
+; -------- end fix sprites
+org $80A61D
+		JML.L idleAnimationRoutine 	                 
+
+pullPC
+	idleAnimationRoutine:
+		sta $560 						; hijack fix 
+		cmp #$0073
+		beq +
+		
+		lda $22e
+		bne +
+		lda $20
+		bne +
+		jsl idleAnimationStart 
+	+	rtl 
+
+	idleAnimationStart:
+		phx 
+		
+		lda $550					; !! should be empty
+		inc a
+		sta $550 
+		cmp #$003f
+		bcc +
+		stz $550 
+		
+	+	lsr
+		lsr
+		lsr
+		and #$003e
+		tax 
+		lda.l simonIdleFrameTable,x 
+		sta $560
+		
+		plx 
+		rtl 
+	simonIdleFrameTable:
+		dw $0001,$0074,$0075,$0076
+
+pushPC 
+endif 
+
+
 
 if !jpWhipSound == 1		; only large whip?
 org $fd8079
@@ -114,7 +158,7 @@ pullPC
 		
 		BIT #$0100 		;Check left button
 		BNE simonFlipLeft	
-	+	
+		
 		BIT #$0200			;Check right button
 		BNE simonFlipRight
 	simonFlip:
@@ -139,7 +183,33 @@ pullPC
 		RTL
 pushPC 
 
-endif 
+endif 	; ------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+; --------------------------------- small fixes Simon enviorment -----------------------------------
+org $86BBCA
+		jml removeRingWhipOnGearFix
+
+pullPC
+	removeRingWhipOnGearFix:
+		STA.W RAM_simonSlot_State            ;86BBCA|8D5205  |000552;	hijack fix  
+        lda $212
+		cmp #$0007
+		bne +
+		stz.w $212		; end ring whip routine 
+	+	RTL                                  ;86BBCD|6B      |      ;  
+pushPC 
+
 
 org $80A758		; max fall speed 
 		SBC.W #$0007                         	;80A758|E90800  |      ;  
@@ -149,6 +219,25 @@ org $80A758		; max fall speed
 		LDA.W #$0007                         	;80A763|A90800  |      ;  
 		STA.W RAM_81_simonSlot_SpeedYpos     	;80A766|8D5E05  |81055E;  
 	+ 	RTL                              
+
+; ---------------------------------------------------------------------------------------------------
+org $8087C8
+		JMP.W buttonResetRoutine ; reset button combo			; CODE_808131                    ;8087C8|4C3181  |808131; 
+org $80FED6
+	buttonResetRoutine:
+		LDA.W !backUpButtonMapJump  	; in case you rest while stuff was disabled 
+		STA.B RAM_buttonMapJump              ;808106|85BE    |0000BE;  
+		LDA.W !backUpButtonMapWhip                      ;808108|A90040  |      ;  
+		STA.B RAM_buttonMapWhip              ;80810B|85C0    |0000C0;  
+		LDA.W !backUpButtonMapSubWe                         ;80810D|A91000  |      ;  
+		STA.B RAM_buttonMapSubWep            ;808110|85C2    |0000C2;  
+		
+		jmp $8131 				
+warnPC $80FF30
+
+
+
+
 
 
 
@@ -199,7 +288,9 @@ pullPC
 		
 	++	rtl 
 pushPC 	
-endif 	
+endif 	; ------------------------------------------------------------------------------------------	
+
+
 
 
 if !hotFixWhipCancle == 1 
@@ -230,51 +321,10 @@ org $80F909
 org $80F91A
 		SBC.W #$0026                         ;80F91A|E91C00  |      ;  
 
-endif  
+endif 	; ------------------------------------------------------------------------------------------
 
 
-; -------- end fix sprites
-org $80A61D
-		JML.L idleAnimationRoutine 	                 
 
-pullPC
-	idleAnimationRoutine:
-		sta $560 						; hijack fix 
-		cmp #$0073
-		beq +
-		
-		lda $22e
-		bne +
-		lda $20
-		bne +
-		jsl idleAnimationStart 
-	+	rtl 
-
-	idleAnimationStart:
-		phx 
-		
-		lda $550					; !! should be empty
-		inc a
-		sta $550 
-		cmp #$003f
-		bcc +
-		stz $550 
-		
-	+	lsr
-		lsr
-		lsr
-		and #$003e
-		tax 
-		lda.l simonIdleFrameTable,x 
-		sta $560
-		
-		plx 
-		rtl 
-	simonIdleFrameTable:
-		dw $0001,$0074,$0075,$0076
-
-pushPC 
-endif 
 
 if !extraSpritesOnScreen == 1
 org $808DEE
@@ -329,7 +379,7 @@ pullPC
 		dw $14f1, $3264, $0080, $0080, $ffff
 
 pushPC 
-endif 
+endif 	; ------------------------------------------------------------------------------------------
 
 
 
@@ -389,18 +439,23 @@ pullPC
 		rtl 
 pushPC
 
-endif
+endif 	; ------------------------------------------------------------------------------------------
 
 
 if !reUseBrkblBlock == 1
 ; ----------------- make breakable wall recolactable in different screens -----------
+org $80E627
+;            BNE CODE_80E666                      ;80E627|D03D    |80E666;  
+			nop									; make event spawning what is skiped in first state. Should still be disabled over event type 1 table 
+			nop
 org $80E73A
 			nop 
 			nop
 			nop
 ;           STA.W $19C0,Y                        ;80E73A|99C019  |8119C0;  
 
-endif 
+
+endif 	; ------------------------------------------------------------------------------------------
 
 ; ----------------- have verticle update in both directions -----------
 
@@ -428,7 +483,8 @@ pullPC
 	
 pushPC
 
-endif 
+endif 	; ------------------------------------------------------------------------------------------
+
 
 ; ----------------- Remove Fatal Hit Crusher -----------------------
 if !NoFatalCrusherHit == 1
@@ -450,7 +506,7 @@ pullPC
 				lda #$000c
 				rtl 
 pushPC
-endif
+endif 	; ------------------------------------------------------------------------------------------
 
 ; ----------------- HeartDependendMultishot -----------------------
 if !HeartDependendMultishot == 1
@@ -480,6 +536,22 @@ pullPC											; free Space
 pushPC
 endif
 
+; ----------------- newSecondQuestStartLevel -----------------------
+if !newSecondQuestStartLevel == 1
+org $83FCD1
+	jsl setSecondQuestStartLevel
+	nop 
+
+pullPC
+	setSecondQuestStartLevel:
+	;	STZ.B RAM_currentLevel               	;83FCD1|6486    |000086;  
+		lda #$0005
+		sta RAM_currentLevel 
+		STZ.W RAM_81_simonStat_Health_HUD    		;83FCD3|9CF413  |8113F4; 
+		rtl
+pushPC
+endif 
+
 ; ----------------- lastSlotFixedRing -----------------------
 if !lastSlotFixedRing == 1
 org $80D7E4	
@@ -494,7 +566,7 @@ pullPC									; free space
 		STA.B $26,X                         ;80D7E6|7426    |000026;  
 		RTL
 pushPC
-endif
+endif 	; ------------------------------------------------------------------------------------------
 
 
 org $81A425							; mainRingHijack for different patches.. 
@@ -509,12 +581,16 @@ pullPC
 
 		lda $86						; check for levels to not check simon for sprite priority 
 		cmp #$0001
-		beq +
+		beq ++
 		cmp #$0020
-		beq +						; elevator use is wired otherwise... 
+		beq ++						; elevator use is wired otherwise... 
+;		cmp #$003c
+;		bne +
+;	+		
+			
 		
 		jml $8CFF07					; RingMain HijackFix 
-	+	jml $8CFF0C					; no priority fix for this stages	
+	++	jml $8CFF0C					; no priority fix for this stages	
 pushPC 
 
 
@@ -583,7 +659,7 @@ pullPC				; free space
         JMP.W ($00) 
 		
 	newRingEventSubID:
-		dw ringSubID80,ringSubID81,ringSubID82,ringSubID83,ringMedusaMovm84
+		dw ringSubID80,ringSubID81,ringSubID82,ringSubID83,ringMedusaMovm84,ringPlaceHolder85
 	
 	ringSubID80:						; rising and wrapping rings 				
 		lda RAM_simonSlot_State 
@@ -714,7 +790,15 @@ pullPC				; free space
 		dw ringGetRendomTimer,ringDisApearTimerInit,ringDisApearTimer,ringOnScreen
 		
 	ringGetRendomTimer:	
-		LDA.B RAM_RNG_2                 
+		lda RAM_X_event_slot_mask,x 
+		and #$00f0
+		cmp #$00f0
+		bne +
+		lda RAM_X_event_slot_HitboxID,x		; make events with mask Fx not disapear.. since could not fix despawn in dugenon for my level..
+		ora #$0080
+		sta RAM_X_event_slot_HitboxID,x
+			
+	+	LDA.B RAM_RNG_2                 
         AND.W #$003F                    
         CLC                             
         ADC.W #$0040                    
@@ -740,6 +824,8 @@ pullPC				; free space
 	ringDisApearTimer: 
 		lda #$0000					; make sprite disappear 
 		sta $00,x 
+		lda $2e,x
+		and #$0080
 		sta $2e,x 					; make it not hitable 
 						
 		lda RAM_simonSlot_State 	; check if simon currently on ring 
@@ -767,6 +853,7 @@ pullPC				; free space
 	+	rtl 
 	ringOnScreen:	
 		lda #$0022
+		ora $2e,x
 		sta $2e,X 					; make it hitable 
 		
 		DEC.B RAM_X_event_slot_24,X 
@@ -800,6 +887,16 @@ pullPC				; free space
 		jsl $8CFF49		; simon follow Ring
 						;jml $86C529 ??
 		rtl		
+
+	ringPlaceHolder85:
+;		stz.b $00,x 
+		lda #$0004
+		sta.w RAM_X_event_slot_HitboxXpos,x  
+		sta.w RAM_X_event_slot_HitboxYpos,x  
+		lda #$00a2			; hitbix that will not despawn a2
+		sta.w RAM_X_event_slot_HitboxID,x 
+		jsl $8CFF49		; simon follow Ring
+		rtl 
 				
 }
 		
@@ -891,7 +988,10 @@ org $8094da
 org $8cfd9a
 		lda #$0001
 
-org $8095c7			;Continue?
+org $8095c7				;Continue?
+
+org $80C784                      
+		BRA $1b         ;80C784|8021    |80C7A7;  make death counter 3 digits. 
 endif
 
 ; ----------------- make use of empty GFX provided with SC4ed extension -------------------------------
@@ -919,6 +1019,10 @@ org $68a3f			;Terminate second loads lvl 1f Castle DanceRoom
 org $68a77			;Terminate second loads lvl 2c Stage 8 part 2
 	db $ff,$ff		
 endif
+
+org $868AC3
+	dw $ffff		; terminate mummy level 9 reloads 
+
 
 if !levelSelect == 1
 org $809477
@@ -1065,6 +1169,10 @@ pullPC
 		rtl 
 	stopwatchEffects:
 		dw $0008,$0d00,$000f,$0400,$0004 
+;	bgEffectRotation:
+;		lda.l stopwatchEffects,x 
+;		sta $44 	
+;		rtl 
 
 	checkForMan2Heal:
 		lda $86

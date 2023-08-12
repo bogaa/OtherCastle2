@@ -1,8 +1,6 @@
 
 
 ; ------------------------- hijack Simon State -----------
-
-
 org $80A0D2
 		jml stateFixForNewStates
 		nop
@@ -28,11 +26,23 @@ org $80A279
 		nop
 
 
+org $80A287			; state 2 collusion with ground offset calc
+		jml stateFixCoffineRocket02
+;org $80A2E1			; state 5 collusion change ducking on ground 
+;		jml stateFixCoffineRocket05
+
 ; ------------------ old job.asm 
+
+org $80DFF2 
+	oneUpPickupBehavier:
+		LDA.W #$0086                         ;80DFF2|A99000  |      ;  
+        JSL.L lunchSFXfromAccum              ;80DFF5|22E38580|8085E3;  
+		JML.L clearSelectedEventSlotAll
+warnPC $80E00F
+
 
 org $80D732		
 		jsl hijackPlaceEventType0
-
 
 org $86B79E									;  hijack special level behavior
 		jsl newSpecialLevelBehavier
@@ -231,7 +241,8 @@ hunchBackJumpLongSpeeXposSub:
 hunchBackJumpLongSpeeXpos: 
 	dw $0002,$E000,$FFFD               
 
-
+org $81A4DC
+    dl event_ID_40_unusedTurningPlatform ;81A4DC|        |828A87;  
 org $81A551 
     dl eventNewPlatform					; event_ID_67_emptyEvent            ;81A551|        |83D3EF;
 org $81A461
@@ -466,15 +477,592 @@ org $80DFA3
 		nop
 		nop 
 
+org $80D253			; small Heart snow fix 
+		jml smallHeartSnowFix
+
+
+org $83F096			; crumbling bridge 
+	; bridgeColaps_stateTable: 
+		dw bridgeColaps_state00              ;83F096|        |83F0A0;  
+        dw bridgeColaps_state01              ;83F098|        |83F0A8;  
+		dw $F173				;       dw bridgeColaps_state02              ;83F09A|        |83F173;  
+		dw $F1D8				;       dw bridgeColaps_state03              ;83F09C|        |83F1D8;  
+		dw $F246				;       dw bridgeColaps_state04              ;83F09E|        |83F246;  
+        dw boneDragonBoss00                                                    ;      |        |      ;  
+		dw boneDragonBoss01
+		dw boneDragonBoss02
+	bridgeColaps_state00: 
+		jml bridgeColaps_state00L 
+                                                            ;      |        |      ;  
+
+	bridgeColaps_state01: 
+		jml bridgeColaps_state01L
+	
+	boneDragonBoss00:
+		jml boneDragonBossHead00L
+	
+	boneDragonBoss01:
+		jml boneDragonBossSpawn
+	boneDragonBoss02:			; dragonTail 
+		jml boneDragonBossTail
+	
+	warnPC $83F0BF
+org $83F0BF
+	branchEndCrumblingBridgeHijack:	
+;org $83F262
+;	LDX.W #$0f00                         ; fix shortage of events for boss spawn !! FIXME?? 83F262|A20008  |      ;  
+;
+;org $83F25D
+;	jml clearSelectedEventSlotAll
+
+org $83F2BA	
+	jsl newBatSpawnRoutineBridge
+	
+;org $81A506
+;	dl divingBatFIXhijack	
+
+org $82B990
+		dw skellyHighFiveTable00		; movedRoutine 
+org $82B99C							; highFiveSkelly NewStates 
+		dw skellyHighFiveTable06		; fireball	
+	skellyHighFiveTable06:
+		jml skellyHighFiveFireBall
+warnPC $82B9A6
+
+org $82B9E9							; highFiveSkellyFireballRoutine 
+;	skellyHighFiveTable03:
+		jml newHighFiveSkellyFireBall
+
+	skellyHighFiveTable00:	
+		jml movedSkellyHighFiveTable00
 
 ; ------------------------- freeSpace ---------------------
 
 
 pullPC	
 
-{; --------------------------- event ID 4e diving bat ------------------
+
+{; ------------------------- boss crumbling Bridge Dragon  ------------
+	; RAM $20,x followPosX, 30-32 direction delay 36-3e tailPointer in head Event 
+	; RAM $22,x followPosY,  34??
+
+;	divingBatFIXhijack:
+;		lda !bridgDragonSpawn	; this is needed as when you boost you skip spawns.. not a perfect fix but should do the trick  FIXME!! bad fix  
+;		beq +
+;		lda #$fffe 
+;		sta RAM_X_event_slot_xSpd,X 
+;		lda #$4000
+;		sta.b $04,x 
+;		lda #$0013
+;		jsl lunchSFXfromAccum
+;	+	jml $86C540
+	
+	boneDragonBossTail:
+		lda #dragonNeckLong
+		sta $00,x 
+		lda #$0081
+		sta RAM_X_event_slot_HitboxID,x  
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x
+		
+		LDA $3e,x 
+		beq +
+		tay 
+
+		jsl boxRestrictedMovemnt
+		jsl copyDeminishedSpeedvaluesXpos
+		jsl copyDeminishedSpeedvaluesYpos
+	+	rtl 
+
+	boxRestrictedMovemnt:
+;getPixleOffsetXposAwayFromSimon:     		; 82D647
+		LDA.B RAM_X_event_slot_xPos,X      	; change it to get pixle away form event and update pos if outside range 
+        SEC                                 
+        SBC.W RAM_X_event_slot_xPos,Y       
+        BPL +
+        EOR.W #$FFFF
+		cmp #$0020								; check distance
+		bcc ++
+		lda.w RAM_X_event_slot_xPos,Y        	; set max distance away from nighbour event   
+		sec
+		sbc #$0020								  
+		sta RAM_X_event_slot_xPos,X  
+		
+		jmp ++
+		
+	+	cmp #$0020								; check distance
+		bcc ++
+		
+		lda #$0020
+		clc 
+		adc.w RAM_X_event_slot_xPos,Y   		; set max distance away from nighbour event 
+		sta RAM_X_event_slot_xPos,X  		
+	
+	++	LDA.B RAM_X_event_slot_yPos,X      	; change it to get pixle away form event and update pos if outside range 
+        SEC                                 
+        SBC.W RAM_X_event_slot_yPos,Y       
+        BPL +
+        EOR.W #$FFFF
+		cmp #$000c								; check distance
+		bcc ++
+		lda.w RAM_X_event_slot_yPos,Y        	; set max distance away from nighbour event   
+		sec
+		sbc #$000c							  
+		sta RAM_X_event_slot_yPos,X  
+		
+		jmp ++
+		
+	+	cmp #$000c								; check distance
+		bcc ++
+		
+		lda #$000c
+		clc 
+		adc.w RAM_X_event_slot_yPos,Y   		; set max distance away from nighbour event 
+		sta RAM_X_event_slot_yPos,X  		     
+		
+	++	RTL                                
+
+	copyDeminishedSpeedvaluesXpos:
+		lda.w RAM_X_event_slot_flip_mirror_attribute,y 	; flip sprite 
+		sta.b RAM_X_event_slot_flip_mirror_attribute,x
+		and #$f000
+		beq +
+		lda #$fffe
+		jmp ++
+	+	lda #$0001	
+	++	sta.b RAM_X_event_slot_xSpd,x 
+		lda #$8000
+		sta.b RAM_X_event_slot_xSpdSub,x  	
+		rtl 
+		
+	copyDeminishedSpeedvaluesYpos:
+		lda $22,x 
+		cmp #$0003
+		bne +
+		
+		lda.w RAM_X_event_slot_ySpd,y 				; invert boss values so the tail moves oposite where he moves 
+		eor #$ffff
+		sta.b RAM_X_event_slot_ySpd,x 
+		lda.w RAM_X_event_slot_ySpdSub,y
+		eor #$ffff	
+		sta.b RAM_X_event_slot_ySpdSub,x 
+		rtl 
+
+	+	lda.w RAM_X_event_slot_ySpd,y 
+		sta.b RAM_X_event_slot_ySpd,x 
+		lda.w RAM_X_event_slot_ySpdSub,y 
+		sta.b RAM_X_event_slot_ySpdSub,x 
+		rtl 
+
+	boneDragonBossHead00L:		
+		lda.b $16,x
+		lsr 
+		lsr 
+		sta.b $16,x 							; reduse hitstun 
+		lda #$B123
+		sta $00,x 
+		
+		lda #$00c7
+		sta RAM_X_event_slot_HitboxID,x  
+		lda #$0010
+		sta RAM_X_event_slot_HitboxXpos,x
+		lda #$0008
+		sta RAM_X_event_slot_HitboxYpos,x
+		
+		
+		jsr bossDragonBridgeHealthHud
+		
+		jsr bossMovment 		
+		
+		lda $3e,x 								; once we collected them and updated them we can skip this 
+		beq +
+		jsr tailMovementPointerUpdate		
+		
+	+	lda $06,x 
+		bit #$f000
+		beq bossDragonDefeted
+		and #$0f00
+		bne +
+		ldy.w $3c,x 
+		beq +
+		stz.b $3c,x 
+		jsr loseDragonTail
+
+	+	cmp #$0300
+		bne +
+		ldy.w $36,x 
+		beq +
+		stz.b $36,x 
+		jsr loseDragonTail
+
+	+	cmp #$0200
+		bne +
+		ldy.w $38,x 
+		beq +
+		stz.b $38,x 
+		jsr loseDragonTail
+
+	+	cmp #$0100
+		bne +
+		ldy.w $3a,x 
+		beq +
+		stz.b $3a,x 
+		jsr loseDragonTail
+	
+	+	rtl 
+	
+	loseDragonTail:
+		pha 
+		lda #$003d
+		sta.w $10,y 
+		lda #$0000
+		sta.w $14,y 	
+		sta.w $12,y 
+		pla 		
+		rts 
+	
+	bossDragonDefeted:
+		lda #$0020
+		jsl lunchSFXfromAccum
+		
+		lda #$003d
+		sta $10,x 
+		stz.b $14,x 
+		stz.b $12,x 
+		lda #$5e0			; campera 1th boss 
+		sta $a2 
+		lda RAM_simonSlot_Xpos
+		cmp #$0500
+		bcc +
+		lda #$0700			; campera 1th boss 
+		sta $a2 
+	+	rtl 
+	
+	bossMovment: 
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+		
+;		lda RAM_simonSlot_Ypos
+;		sta RAM_X_event_slot_mask,X
+;		jsl $86C5DD
+		
+		LDA.w RAM_simonSlot_Xpos
+		sta $20,x 
+		LDA.w RAM_simonSlot_Ypos
+		sta $22,x 
+		
+		jsl bridgeDragonXposMovment
+		jsl bridgeDragonyposMovment
+		jsl bossArenaBounderiesYposDragon		
+		rts
+ 
+	bossArenaBounderiesYposDragon: 
+		LDA.B RAM_X_event_slot_yPos,X   
+        CMP.W #$00f0                    
+        BCS +     
+        CMP.W #$0010                    
+        BCC ++        
+        RTL                             
+	+	lda #$00f0
+		sta RAM_X_event_slot_yPos,X 
+		rtl 	
+	++	lda #$0010	
+		sta RAM_X_event_slot_yPos,X 
+		rtl 
+
+	tailMovementPointerUpdate:	; give all the tails the pointer for there event they should follow 		
+		lda #$0002			; set number of updates 
+		sta.w $00
+		phx 
+		
+		lda $36,x 			; this is our X slot so we do not need to phx 
+		pha 
+		lda $38,x 
+		pha 
+		lda $3a,x 
+		pha 
+		lda $3c,x 
+		tay  
+		lda $3e,x 
+		tax  	
+
+	-	txa 
+		sta.w $3e,y 
+		lda.w $00
+		inc 
+		sta.w $22,y 	
+	
+		tyx 
+		ply 
+		dec.w $00 
+		bpl -	
+		
+		txa 				; last entery 
+		sta.w $3e,y 		
+
+		plx 			
+		stz.b $3e,x 		; clear BossHead Ram slot after we destributed the pointers 
+		rts
+		 
+	
+	bridgeDragonXposMovment:
+		LDA.w $20,x     
+        CMP.B RAM_X_event_slot_xPos,X     
+        BCC bridgeDragonMoveBackwardDelayX          
+		                             
+	bridgeDragonMoveForwardDelayX:		
+		dec $30,x 			; moment change delay counter 
+		lda $30,x 
+		cmp #$ffd0
+		bcs bridgeDragonMoveBackward  
+	
+	bridgeDragonMoveForward:	
+		lda $04,x 
+		ora #$4000
+		sta $04,x 	
+		
+		CLC    
+		LDA.B RAM_X_event_slot_xSpdSub,X     
+        ADC.W #$0800                         
+        STA.B RAM_X_event_slot_xSpdSub,X     
+        LDA.B RAM_X_event_slot_xSpd,X        
+        ADC.W #$0000                         
+		cmp #$0003			; speed cap
+		beq +
+		STA.B RAM_X_event_slot_xSpd,X        
+     +  RTL                                  
+	
+	bridgeDragonMoveBackwardDelayX:
+		inc $30,x 			; moment change delay counter 
+		lda $30,x 
+		cmp #$0030
+		bcc bridgeDragonMoveForward  
+
+	bridgeDragonMoveBackward: 
+		lda $04,x 
+		and #$Bfff
+		sta $04,x 	
+		
+		SEC                                  
+        LDA.B RAM_X_event_slot_xSpdSub,X     
+        SBC.W #$0800                         
+        STA.B RAM_X_event_slot_xSpdSub,X     
+        LDA.B RAM_X_event_slot_xSpd,X        
+        SBC.W #$0000                         
+        cmp #$fffd			; speed cap
+		beq +
+		STA.B RAM_X_event_slot_xSpd,X        
+    +   RTL                                  
+
+; ------------------------------------------------------------------------
+
+	bridgeDragonyposMovment:
+		lda.b $22,x 
+        CMP.B RAM_X_event_slot_yPos,X
+        BCC bridgeDragonMoveForwardDelayY                                    
+
+		
+	bridgeDragonMoveDownwardDelay:		
+		dec $32,x 			; moment change delay counter 
+		lda $32,x 
+		cmp #$ffa0
+		bcs bridgeDragonMoveDownwardFix
+
+	bridgeDragonMoveUpwared:
+		CLC
+		LDA.B RAM_X_event_slot_ySpdSub,X    
+        ADC.W #$0800                        
+        STA.B RAM_X_event_slot_ySpdSub,X    
+        LDA.B RAM_X_event_slot_ySpd,X       
+        ADC.W #$0000                        
+        cmp #$0003			; speed cap
+		beq +
+		STA.B RAM_X_event_slot_ySpd,X       
+    +   RTL                                 
+   	bridgeDragonMoveDownwardFix:	
+		lda #$ffa0
+		sta $32,x 
+		jmp bridgeDragonMoveDownward
+	
+	
+	bridgeDragonMoveForwardDelayY:		
+		inc $32,x 			; moment change delay counter 
+		lda $32,x 
+		cmp #$0060
+		bcc bridgeDragonMoveUpwaredFix  
+		
+	bridgeDragonMoveDownward: 
+		SEC                                 
+        LDA.B RAM_X_event_slot_ySpdSub,X    
+        SBC.W #$0800                        
+        STA.B RAM_X_event_slot_ySpdSub,X    
+        LDA.B RAM_X_event_slot_ySpd,X       
+        SBC.W #$0000                        
+        cmp #$fffd			; speed cap
+		beq +
+		STA.B RAM_X_event_slot_ySpd,X       
+     +  RTL                                 
+	bridgeDragonMoveUpwaredFix:	
+		lda #$0060
+		sta $32,x 
+		jmp bridgeDragonMoveUpwared  
+
+;		jsl $80DEB9						; rossery effect 
+	bossDragonBridgeHealthHud:
+		lda !bridgDragonHealthHud		; this is done like this to have 2 dragons at once.. but this is stupid gameplay wise
+		and #$0fff							; first part is used as falg so it is not treated as normal enemy death routine 
+		clc 
+		adc $06,x 
+		sta !bridgDragonHealthHud		
+		rts 
+		
+	boneDragonBossSpawn:							; spawn all at once and then fix y!! FIXME 
+		stz.w !bridgDragonSpawn						; flag clear for next peace
+		stz.b RAM_X_event_slot_SpriteAdr,x 
+		
+		phx 										; backup xSlot 
+		lda !bridgDragonLeangth	
+		asl		
+		tax 
+		pla 
+		sta !bridgDragonRamPointer,x 
+		tax 
+
+		lda !bridgDragonLeangth	
+		cmp #$0004								; tail segment langth tails are basicly just sprite and hitbox data.. 
+		bne +
+		
+		dec.b $12,x 							; bossHead spawn 
+		inc.w !bridgDragonProgress			; mark boss as Spawned 
+		
+		phx 									; copy pointer array from the tail to the head. So we can controll the boss from the head 
+		phy 
+		
+		asl
+		tay
+	-	lda.w !bridgDragonRamPointer,y 
+		sta $3e,x 
+		
+		dex
+		dex 
+		dey
+		dey
+		bpl -
+		
+		ply
+		 
+		ldx #$000e		
+		lda #$0000								; clear pointer and flags for next spawn 
+	-	sta.w !bridgDragonSpawn,x 	
+		dex
+		dex 
+		bpl -
+		
+		plx 
+		
+		lda #$1400								; boss health and propertys 
+		sta $06,x 		
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x  
+		lda #$4600
+		sta $04,x 
+		
+		
+		jmp ++
+
+	+	inc.b $12,x 							; spawn a dragon tail and propertys 
+		inc.w !bridgDragonLeangth		
+		
+		lda #$4600								; pallete and orientation 
+		sta $04,x 
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x  
+		
+	++	rtl 
+	
+	bridgeColaps_state00L:							; make space for new states 
+		LDA.W #$0080                         
+        STA.B RAM_X_event_slot_HitboxID,X    
+        INC.B RAM_X_event_slot_state,X       
+	-	RTL                                  
+
+	bridgeColaps_state01L:						
+		LDA.B RAM_X_event_slot_22,X           
+        ASL A                                 
+        ASL A                                 
+        ASL A                                 
+        ASL A                                 
+        ASL A                                 
+        CLC                                   
+        ADC.W #$0130                          
+        CMP.W RAM_81_simonSlot_Xpos           
+        BCS -                       
+        		
+		LDY.B RAM_X_event_slot_22,X           
+        cpy.w #$0009										; starting point where it can start spawning 
+		bcc + 
+		jmp spawnBossDragon01
+	
+	checkSecondDragonSpawn:	
+		cpy.w #$001d										; starting point where it can start spawning 
+		bcc +
+		jmp spawnBossDragon02
+		
+	checkIfBridgeEnded:
+		CPY.W #$0024               						; a 1f dragon            
+        BCC +                       
+
+		INC.B RAM_X_event_slot_state,X 					; go to boss state end of the bridge 
+		
+	+	jml branchEndCrumblingBridgeHijack 
+	spawnBossDragon01:
+;		cpy #$000e
+;		bcs checkSecondDragonSpawn
+		lda !bridgDragonProgress
+		bne checkSecondDragonSpawn
+		lda #$0001
+		sta RAM_whiteFadeCounter
+		sta !bridgDragonSpawn
+		jmp checkSecondDragonSpawn
+	spawnBossDragon02:
+;		cpy #$0022											; starting point where it can start spawning 
+;		bcs checkIfBridgeEnded		
+		lda !bridgDragonProgress
+		cmp #$0001
+		bne checkIfBridgeEnded
+		lda #$0001
+		sta RAM_whiteFadeCounter		
+		sta !bridgDragonSpawn
+		jmp checkIfBridgeEnded
+
+	newBatSpawnRoutineBridge:
+		lda !bridgDragonSpawn
+		beq +	
+				
+		lda #$007d
+		jmp ++	
+		
+	+	lda #$004e
+	++	JSL $80D37A 			; crumblingBridgeWriteEventFromA ;83F2BA|227AD380|80D37A;  	
+		rtl
+;	crumblingBridgeNewEnding:
+;		CPY.W #$0028                         ;83F0BA|C02800  |      ;  
+;		BCS	+
+;		rtl 
+;;	+   lda #$ffff
+;;		sta $15fe							; end of event type 1 progression is probably never used anyway.. so nice to use it as a flag when the brige is cleared 
+;	minusLongJumpRTL:	
+;		sep #$20							
+;		pla 
+;		rep #$20
+;		pla 
+;		rtl 	
+}
+
+
+{; --------------------------- event ID 4e diving bat -----------------
 	newDivingBat:
-	;divingBat_state01: 
+	;divingBat_state01:	
 		lda $14,x 
 		cmp #$0001
 		bne ++
@@ -488,7 +1076,7 @@ pullPC
 		LDA.W #$6000                         
         STA.B RAM_X_event_slot_xSpdSub,X    
         LDA.W #$0001                        
-        STA.B RAM_X_event_slot_xSpd,X      
+		STA.B RAM_X_event_slot_xSpd,X      
         LDA.W #$4000                      
         STA.B RAM_X_event_slot_flip_mirror_attribute,X		
 		
@@ -500,8 +1088,21 @@ pullPC
 
 }
 	
-{; -------------------------- AllsmallEnemyTweaks ---------------------
+{; -------------------------- AllsmallEnemyTweaks ---------------------	
 	
+	smallHeartSnowFix:
+		lda $20,x 
+		cmp #$0001							; this is not perfect since some enemies type 1 or 2 can presist there mask.. but it probaly will not be a issue and worst thing is sprite messup 
+		beq +
+		LDA.B RAM_X_event_slot_ID,X          ;80D253|B510    |000010;  
+        ASL A                                ;80D255|0A      |      ;  
+        TAY                                  ;80D256|A8      |      ;  
+		jml $80D257 
+	+	jml $80D25E
+	
+
+		
+		
 	resetBolderThrowStatue:
 		lda #$0000
 		sta $00,x 
@@ -663,175 +1264,198 @@ pullPC
 }	
 	
 
-{	; ----------------------- Simon Gradius Controlls -----------------------------------------	
+{	; ----------------------- Simon Gradius Controlls ------------------	
+	stateFixCoffineRocket02:
+		lda.w #simonInCoffine						; skip stand up from ground when coffine sprite is loaded. 
+		cmp.w RAM_simonSlot
+		beq +
+		LDA.W RAM_81_simonSlot_Collusion_Donno01	;80A287|AD7605  |810576;  
+        SEC                                  		;80A28A|38      |      ;  
+		jml $80A28B
+	+	jml	$80A2AD									; skip state change  
+
+;	stateFixCoffineRocket05:
+;		lda.w #simonInCoffine						; skip crouching.. 
+;		cmp.w RAM_simonSlot
+;		beq +
+;		
+;		LDA.W RAM_81_simonSlot_Collusion_Donno01	;80A2E1|AD7605  |810576;  
+;        SEC                                 	 	;80A2E4|38      |      ;  
+;		jml $80A2E5
+;	+	jml $80A307
 
 	stateFixForNewStates:
 		cmp #$0012
 		beq +
-		cmp #$0011								; check if fly state 
+		cmp #$0011									; check if fly state 
 		beq +
-								; forward to state table routine
-		LDA.W RAM_81_simonSlot_Collusion_Donno00;80A0D2|AD6C05  |81056C;  hijack fix 
-        BIT.W #$0001                         	;80A0D5|890100  |      ;
+													; forward to state table routine
+		LDA.W RAM_81_simonSlot_Collusion_Donno00	;80A0D2|AD6C05  |81056C;  hijack fix 
+        BIT.W #$0001                         		;80A0D5|890100  |      ;
 		jml $80A0D8
 	+	jml $80A217	
 
-
-	simonState11_GradiusL:
-		jsl flyControll
-		jsl $80a77e					; update yPos based on speed 
-		jsl $80A76A					; update Xpos based on speed 
-		jsl flyBoudriesControllsAndScrools
-		;		JSL.L $80A792  ??
+	simonState11_GradiusL:							; unused here 
 		rtl 
-	
+
+
 	coffineRocket:
-;		lda #$0080
+;		lda #$0080							; will break the use on second entrance 
 ;		sta RAM_X_event_slot_HitboxID,x 
 		
-		LDA.B RAM_X_event_slot_state,X       ; $20,x timer
-        PHX                                  ; $22,x subweapon Slot 
-        ASL A                                ; $24,x backupSubweapon 
-        TAX                                  ;
-        LDA.L coffineRocketStateTable,X         
-        PLX                                  ;
-        STA.B $00                            ;
+		LDA.B RAM_X_event_slot_state,X       ; $20,x subweapon slot offset
+        PHX                                  ; $22,x subweapon ID to shoot
+        ASL A                                ; $24,x backupSubweapon normal state 
+        TAX                                  ; $30,x facing backup attr
+        LDA.L coffineRocketStateTable,X      ; $32,x facing backup dir 
+        PLX                                  ; $34,x autoScroll 
+        STA.B $00                            ; $36,x timer 
         JMP.W ($0000)        
-		
-	coffineRocketStateTable:
+	coffineRocketStateTable:	
 		dw coffineRocketState00,coffineRocketState01,coffineRocketState02
-		dw coffineRocketFlyState03,coffineRocketShootState04,coffineRocketDismountState05,coffineRocketDismountState06
 		
-	coffineRocketState00:	
-		lda.w #GradiusSpriteAssembly00
+	coffineRocketState00:
+		lda.w #GradiusSpriteAssembly00		; initiate sprite 
 		sta $00,x 
 		lda #$01c0
 		sta $26,x 
-		lda #$0001
-		sta $12,x 
-		rtl 
+		
+		lda $14,x
+		cmp #$0002
+		beq endOfLvlBossSpawn
 
-	coffineRocketState01:		; hit detection
-		lda $54a				; Simon xpos 
-		clc  
-		adc $28,x  
-		cmp $0a,x 				; compare xpos
-		bmi ++
+	coffineRocketStateMounting:
+	+	jsl checkSimonCollusionEvent		; check collusion with Simon 
+		bcc endCoffineRocket
 		
-		lda $0a,x 
-		clc
-		adc $28,x 
-		cmp $54a 		
-		bmi ++	
-								; 5aa ypos 
+		lda #GradiusSpriteAssembly01
+		sta $00,x 
 
-		lda $54e				; Simon  ypos 
-		clc  
-		adc $2a,x  
-		cmp $0e,x 				; compare ypos
-		bmi ++
-		
-		lda $0e,x 
-		clc
-		adc $2a,x
-		cmp $54e  
-		bmi ++
-		
+		lda $28							; press B to jump in 
+		bit !backUpButtonMapJump
+		beq endCoffineRocket
+	
 		lda #$0002
 		sta $12,x 
-;		inc $1f40 
 		
-	++	rtl 
-	coffineRocketState02:			; initiate flying 
-		lda $20,x
-		clc
-		adc #$0001
-		sta $20,x 
+		lda $8e							; backup subweapon 
+		sta $24,x 		
+
+		lda #$0001							; give default weapon
+		sta $8e 
 		
-		lda #GradiusSpriteAssembly01
-		sta $00,x 
-		
-		lda #$0000
-		sta $0212 				; whip Fix ?? 
-		
-		lda $20,x	
-		cmp #$0020
-		bmi +
-		
-		stz $20,x 				; reset timer 
-		lda #$0001				; go back to first state if not in range 
-		sta $12,x 
-		jsl coffineRocketState01
-		lda $12,x
-		cmp #$0001
-		beq +
-		
-		lda #$0003				; to flight state
-		sta $12,x 
-		
-		lda $8e					; backup subweapon 
-		sta $24,x 
-;		lda #$0001					; give dagger default weapon 
-		lda #$0000					; show nothing 
-		sta $8e	
-		
-	+	rtl 
-	
-	coffineRocketFlyState03:		; fly state 
-		lda.w #GradiusSpriteAssembly00
-		sta $00,x 
+		stz.b RAM_buttonMapWhip			; disable whip 
 				
-		jsl flyStateDefaults
+		lda #$0010
+		sta $36,x 	
+	endCoffineRocket:	
+		rtl 
+
+	endOfLvlBossSpawn:
+		lda RAM_X_event_slot_xPos,x
+		cmp #$0300
+		bcs coffineRocketStateMounting
 		
-		lda $30,x 
-		beq +
-		dec.b $30,x 
+		inc $36,x 						; lets make the coffine be wired till the boss event spawns 
+		lda $36,x 
+		cmp #$0050
+		bcs +
+		lda RAM_RNG_1
+		and #$0E00
+		sta $04,x 		
+		rtl 
+		
+	+	lda #$002a						; set boss 
+		sta $10,x
+		lda #$000b
+		sta $14,x 
+		lda #$0010
+		sta $a6						; set cam 
+		lda #$0200
+		sta $a0
+		sta $a2
+		rtl 	
+
+	coffineRocketState02:					; small delay 	
+		dec.b $36,x 
+		lda $36,x 
+		bne +
+		lda #$0001
+		sta $12,x 
+		
+		lda $0a,x 						; move simon to not move the coffine what looks wired 
+		sta RAM_simonSlot_Xpos 
+		lda $0e,x 
+		sta RAM_simonSlot_Ypos	
+		
 		bra ++
-
-	+	lda $20
-		bit.b RAM_buttonMapWhip
+	+	lda $3a
+		bit #$0004
 		beq +
-			
-		lda #$0018
-		sta $30,x 
+	++	lda.w #GradiusSpriteAssembly01
+		bra ++
+	+	lda.w #GradiusSpriteAssembly00
+	++	sta $00,x 
+		rtl 	
+	
+	coffineRocketState01:		
+		lda $14,x 
 		
-		lda #$0001						; shoot dagger
-		sta RAM_simon_subWeapon			
-		lda #$0004
-		sta $12,x 
-
-	+   lda $20
-		bit.b RAM_buttonMapJump
-		beq ++
+;		lda #$0001
+		sta !autoScroll
 		
-		lda #$0020
-		sta $30,x 
-		lda #$0003						; shoot holywater 
+		lda $20							; shoot trigger buttons 
+		bit.w !backUpButtonMapWhip
+		beq +
+		
+		lda #$0001						
+		sta $22,x 			
 		sta RAM_simon_subWeapon	
-		lda #$0004
-		sta $12,x 
 		
+		
+	+   lda $20
+		bit.w RAM_buttonMapJump
+		beq +
+		 
+		lda #$0003						
+		sta $22,x 			
+		sta RAM_simon_subWeapon	
+		
+	+	lda $20											; hold direction while holding button to shoot 
+		bit #$c000
+		beq +
+		lda $30,x 
+		sta RAM_simonSlot_spriteAttributeFlipMirror 
+		lda $32,x
+		sta RAM_simonSlot_direction
+		bra ++
+	+	lda RAM_simonSlot_spriteAttributeFlipMirror		; backup facing direction so we can keep it while holding button 
+		sta $30,x 					
+		lda RAM_simonSlot_direction
+		sta $32,x 
+	
+	++	jsl shootingSequentscoffeine 
+;		lda $14,x
+;		bne +	
+;		jsl cofineFlightRoutine							; needs to be at the end for dismount not colliding with our free shoots 
+;		rtl	
+	+	ldx.w RAM_XregSlotCurrent							; fix a bug wher x sometimes holds 480 
+		jsl cofineFlightRoutine
+		rtl 
+	shootingSequentscoffeine:
+		lda $22,x 						; does not shoot from accum but we use it to scheudle shoot.. 
+		beq ++
+;		lda $36,x 						; shot delay timer countdown 
+;		beq +
+;		dec.b $36,x
+;		bra ++
+;	+
+		jsl shootSubweaponInAccu
 	++	rtl 
 
-	coffineRocketShootState04:
-		lda #GradiusSpriteAssembly01
-		sta $00,x 
-		
-		jsl flyStateDefaults
-		
-		lda $20,x
-		clc
-		adc #$0001
-		sta $20,x 
-		sec  
-		cmp #$0010
-		bcc ++
-				
-		stz $20,x 					; reset to fly state 
-		lda #$0003
-		sta $12,x 
-		
-		lda $22,x 					; offset subweapon slots 
+
+	shootSubweaponInAccu:
+		lda $20,x 					; offset subweapon slots 
 		and #$00ff
 		clc 
 		adc #$0440
@@ -844,213 +1468,156 @@ pullPC
 		bne +
 		txa 
 		plx 
-		sta $22,x					; subweapon slot refferance  
+;		sta $22,x					; subweapon shot scheudled ??? lda ??
 		sta $2fa
 		jsl $80B9AB
-		rtl	
-	+	txa
+;		jsl curseInCoffineRoutine	; give curse for every shot 
+		stz.b $22,x					; reset shoot for new subweapon 
+;		lda #$0002
+;		sta.b $36,x 				; delay for shots 
+		rtl 
+
+	+	txa							; rotate full slots to find may be empty on the next frame 
 		plx 	
-		sta $22,x	
-	++	rtl 
-
-	checkForDismount:
-		lda #$2000
-		bit $20
-		beq +
-;		lda $be 					; RAM_buttonMapJump
-;		bit $28		
-;		beq +
-	dismountCoffin:		
-		lda $24,x					; give orginal subweapon back 
-		sta $8e
-		
-		lda #$0005
-		sta $12,x 
-		stz $20,x 
-		
-		lda #$0004
-		sta $552
-		stz $a0 
-	+	rtl 
-	checkForDismountOnCondition:
-		lda #$dff
-		cmp $a0 
-		bcc dismountCoffin
+		sta $20,x	
 		rtl 
+		
 
-	
-	coffineRocketDismountState05:
-		lda $20,x
+	checkSimonCollusionEvent:
+		lda $54a				; Simon xpos 
+		clc  
+		adc $28,x  
+		cmp $0a,x 				; compare xpos
+		bmi ++
+		
+		lda $0a,x 
 		clc
-		adc #$0001
-		sta $20,x 
-		cmp #$0040
-		bmi +
-		lda #$0001				; reset to first state after waiting 40 frames 
-		sta $12,x 
-		stz $20,x 
-	+	rtl 
+		adc $28,x 
+		cmp $54a 		
+		bmi ++	
+								; 5aa ypos 
+		lda $54e				; Simon  ypos 
+		clc  
+		adc $2a,x  
+		cmp $0e,x 				; compare ypos
+		bmi ++
 		
-	coffineRocketDismountState06:	
+		lda $0e,x 
+		clc
+		adc $2a,x
+		cmp $54e  
+		bmi ++
+		sec
 		rtl 
 		
-	flyStateDefaults:
-		jsl gradiusYposBoundiungPlayer
+	++	clc
+		rtl 
+
+	cofineFlightRoutine01:
+		jsl flightControlls	
+		bra +
+
+	cofineFlightRoutine:
+		lda $14,x
+		cmp #$0002
+		beq cofineFlightRoutine01
 		
-		lda $13F4					; check if Simon died
+		jsl dismountEndOfLevelRoutine
+		jsl flightControlls 
+		jsl flightBounderies 
+		
+		
+	+	lda RAM_simonSlot_Xpos ; follow Simon 
+		sta $0a,x 
+		lda RAM_simonSlot_Ypos
+		sta $0e,x 				
+
+		lda #$0004
+		sta RAM_simonSlot_State		
+		sta RAM_simonSlot_StateBackUp
+		
+;		lda #$0001				; air 
+;		sta $80
+;		lda #$9c25
+
+		lda #simonInCoffine
+		sta RAM_simonSlot
+		stz.w RAM_simonSlot_SubAnimationCounter			; prevent walk frames kicking in 
+		
+		lda RAM_simonSlot_Collusion_Donno01
+		cmp #$000f
 		bne +
+		jsl dismountCoffine
+
+	+	lda #$001b			; keep jumping collusion game likes to put you in croutch when colliding wiht ground 	
+		sta RAM_simonSlot_Collusion_Donno01
+;		lda #$0003			; 2 crouch 3 air 
+;		sta $57e 
 		
+;		lda $564
+;		cmp $34,x 
+;		bne +				; check if counter stops moving to make dismount possible 
+
+		
+
+;		bra ++
+;	+	lda $564			; store to find when it stops moving 
+;		sta $34,x 
+;	++	
+
+;		stz.w RAM_simonSlot
+;		lda #$0007
+;		sta RAM_simonSlot_AnimationCounter
+;		sta RAM_simonSlot_forceCrouchFrameCounter
+;		lda #$0006				; duck 
+;		sta RAM_simonSlot_State		
+		
+		lda $13F4					; check if Simon is dead
+		bne +		
+	
 	destroyGradiusShipOnDeath:	
 		jsl clearSelectedEventSlotAll	; die and destroy event 
-		lda #$003d
+		lda #$003d						
 		sta $10,x 
 		lda RAM_simonSlot_Xpos
 		sta $0a,x 
 		lda RAM_simonSlot_Ypos
-		sta $0e,x 				
-		rtl 
-;		lda #$0006					; reset 
-;		sta RAM_mainGameState
-		
-	+	lda #$0011					; set simon in different state 
-		sta RAM_81_simonSlot_State 	; 552
-;		sta $556					; not sure if needed?? what is this backup for anyway 
-		
-		lda #$0000
-		sta $540 					; disable sprite draw  
-		sta $578 					; face always right 					
-		sta $544 
-;		sta $1f8a					; face always right 				
+		sta $0e,x 	
+		stz.w !autoScroll	
+	+	rtl 
 
-;		lda RAM_81_X_event_slot_HitboxXpos,x ; update collusion make it bigger! 
-;		sta 
-;		lda RAM_81_X_event_slot_HitboxYpos,x 
-;		sta 
-		lda #$000f
-		sta $576 
+	dismountEndOfLevelRoutine:
+		lda #$dff
+		cmp $a0 
+		bcc dismountEndOfLevel
+	-	rtl 
+	dismountCoffine:
+		lda $20
+		cmp #$8400
+		bne -
+;		lda $28
+;		bit #$8000
+;		beq -
+	dismountEndOfLevel:
+		lda $24,x					; give orginal subweapon back 
+		sta $8e		
+		stz.b $12,x 		
 		
-		lda #$0006					; 06 and 07 disables whip?? 	
-		sta $57e					
+		lda !backUpButtonMapWhip	; enable whip again 
+		sta RAM_buttonMapWhip
+		stz.w !autoScroll
 		
-		lda $54e					; keep up with simon
-		sta $0e,x
-		lda $54a
-		sta $0a,x
-
-;		jsl choseSubweaponWithL
-;		jsl flyCollusionLikeJumpCollusion 
-		jsl flyCollusionRoutine		
-		jsl checkForDismount
-		jsl checkForDismountOnCondition
-		rtl 
-	
-	choseSubweaponWithL:
-		phx 
-		ldx $8e
-		lda $20							; press L and use arrows to choose
-		bit #$0020
-		beq ++
-		bit #$0100
-		beq +
-		ldx #$0001
-	+	bit #$0200
-		beq +
-		ldx #$0002		
-	+	bit #$0400
-		beq +
-		ldx #$0003		
-	+	bit #$0800
-		beq +
-		ldx #$0004		
-	+	stx $8e
-	++	plx 
-		rtl 
-	
-;	flyCollusionLikeJumpCollusion:
-;		lda #$0001
-;		sta $9c 
-;		jsl $80A3FA
-;		rtl 
-	
-	flyCollusionRoutine:
-		phx 
-		ldx #$540 		; simons base slot 
-		lda #$0018 		; hitbox Xpos
-		sta $08	
-		lda #$000e		; hitbox Ypos
-		sta $0a
-		jsl $80CE0C		; collusion Check with solid??
-		cmp #$0000
-		beq +
-		dec $54A
-		dec $54A
-		dec $54A
-		dec $54A 
-;		jsl checkCollussionDeath	FIXME totaly broken
-		
-	+	lda $0e			; 0e 	bottom collusion 	
-		beq +			
-		dec $54E 
-		dec $54E 
-
-		
-	+	lda $0c			; 0c 04 left collusion				
-		beq +
-		inc $54A
-		inc $54A
-
-	+	plx 		
-		phx 
-		LDA.B $02                            ;read Top collusion 
-        sec                                  
-        sbc.w #$001e                         
-        STA.B $02                            
-        JSL.L $80CF86						; readCollusionTable7e4000       
-		cmp #$0000
-		beq ++
-		inc $54E 
-		inc $54E 
-;		
-	++	plx 
+		lda $14,x					; set cam on dismount to go and discover stuff 
+		cmp #$0002
+		beq + 
+		stz.b $a0 
 		rtl
-		
-;	checkCollussionDeath:
-;		lda RAM_81_simonSlot_SpeedSubXpos
-;		clc 
-;		sbc #$000e
-;		sec
-;		cmp $a0
-;		bcs +
-;
-;		stz $13f4 
-;		brl destroyGradiusShipOnDeath
-;	+  	rtl 
-		
-	gradiusYposBoundiungPlayer: 						; moved to make space                                                                 
-		clc 
-		LDA.B RAM_X_event_slot_yPos,X  					; gradiusYposBoundiungPlayer: 
-        CMP.W #$00d1                    
-        BCS setCoffineIntoBoundBottom     
-        CMP.W #$000f                    
-        BCC setCoffineIntoBoundTop        
-        RTL                             
-                           
-                                                                                                                     
-   setCoffineIntoBoundBottom: 
-		LDA.W #$00d0                    
-        sta RAM_81_X_event_slot_yPos,x 
-		sta RAM_simonSlot_Ypos 
-		RTL                             
-                                        
-   setCoffineIntoBoundTop: 
-		LDA.W #$0010                    
-        sta RAM_81_X_event_slot_yPos,x 
-		sta RAM_simonSlot_Ypos
-        RTL  	
+	+	lda #$0d00
+		sta $a2 
+		rtl 
 
-; state controll ------------------------------------------		
-		
-	flyControll:
+	
+	flightControlls:
 		stz.w RAM_simonSlot_SpeedSubXpos		; stop movment when not pressing directions 
 		stz.w RAM_simonSlot_SpeedXpos
 		stz.w RAM_simonSlot_SpeedSubYpos
@@ -1074,9 +1641,8 @@ pullPC
 		lda $20	
 		bit #$0800
 		bne	goDown
+		rtl 	
 		
-		bra +
-			
 	goRight:		
 		lda #$0001		; incXSpeed
 		sta RAM_simonSlot_SpeedXpos
@@ -1103,56 +1669,58 @@ pullPC
 		sta RAM_simonSlot_SpeedYpos
 		lda #$8000
 		sta RAM_simonSlot_SpeedSubYpos
+		rtl	
+				
 
-	+	rtl				;end routine without dieing..
-		
+	flightBounderies:
+		clc 
+		LDA.W RAM_simonSlot_Ypos					; RAM_X_event_slot_yPos,X FIXME x has base $480 sometimes 					; gradiusYposBoundiungPlayer: 
+        CMP.W #$00d1                    
+        BCS setCoffineIntoBoundBottom     
+        
+		CMP.W #$000f                    
+        BCC setCoffineIntoBoundTop        
+        RTL                             
 
-	flyBoudriesControllsAndScrools:
-		sec 
-		lda #$dff
-		cmp $a0 
-		bcc +					; ++
-		
-		lda $3a 
-		bit #$0001				; run uneven frames 
-		beq +
-
-		inc $1c 
-		
-		lda $1c
-		sta $a0 
-
-	+	rtl 
-; ++	inc $86					; win screen condition 
-;		lda #$0006
-;		sta $70 
-		rtl 
-	
-
-
-;	db $03,$08,$0f 
-;		LDA.W #$8B66 
-;		sta $00,x 
-;		lda $3a 
-;		bit #$0010
-;		bne +
-;		LDA.W #$8B87
-;		sta $00,x 
-;		lda $3a
-;	+	bit #$0100
-;		bne +
-;		lda #$8BA8
-;		sta $00,x 
+;   curseInCoffineRoutine:
+;		lda $22,x 
+;		beq +
+;		sed 
+;		lda.l RAM_simon_DamageDeBuff
+;		clc
+;		adc #$0001
+;		sta.l RAM_simon_DamageDeBuff
+;		cld 
+;		jsl updateCurseHud
+;		
 ;	+	rtl 
+                                                                                                                     
+   setCoffineIntoBoundBottom: 
+		LDA.W #$00d0                    
+ ;       sta RAM_81_X_event_slot_yPos,x 
+		sta RAM_simonSlot_Ypos 
+		RTL                             
+                                        
+   setCoffineIntoBoundTop: 
+		LDA.W #$0010                    
+ ;       sta RAM_81_X_event_slot_yPos,x 
+		sta RAM_simonSlot_Ypos
+        RTL  	
 
 }
 
-{	; ------------------------ boss fixes -----------------------------------------	
+{	; ------------------------ boss fixes ------------------------------	
 	
 	bossCountdown:
 		JSL.L $8085E3  			; hijack fix will mute music with Value $F4 in Accumulator 
 		lda #$0001				; this can glitch out boss GFX loading if not disabled 
 		sta !noWhipSwitch
+
+		lda $86					; cam fix dancer 
+		cmp #$0022
+		bne disslunchSimonFromRing
+		stz.w $a4	
+		stz.w $a6		
 	
 	disslunchSimonFromRing:
 		lda $552				; check simons to dislunch from rings 
@@ -1175,7 +1743,7 @@ pullPC
 
 }
 
-{ ; -------------------------- New Level Type B BG Scroll -----------------------------------------	
+{ ; -------------------------- New Level Type B BG Scroll -------------	
 	
 	newBGScrolling:
 		lda $12c2
@@ -1204,7 +1772,7 @@ pullPC
 		rtl 
 }
 
-{ ; ---------------------------- allSmallPatches ---------------------
+{ ; ---------------------------- allSmallPatches ----------------------
 	newTrippleShotPickup:
 		lda #$0002
 		ora RAM_simon_multiShot
@@ -1339,6 +1907,7 @@ pullPC
 	giveSimonHeart4CrossCatch:	
 		sed
 		lda $13f2
+		clc 
 		adc #$0001
 		cmp #$0100
 		beq +
@@ -1413,7 +1982,7 @@ pullPC
 }
 
 
-{ ; ---------------------------- new event 4b camera ----------------------------
+{ ; ---------------------------- new event 4b camera ------------------
 	newEventID4b:				
 		LDA.B $14,X                                                                    
 		PHX                                 
@@ -1426,6 +1995,7 @@ pullPC
 	newEventJumpTable: 
 		dw cameraLockDown00,cameraLockDown01,cameraLockDown02,leverBGScroll3,leverBGScroll4,levelBGWrap5,realCurse6
 		dw eventSpawnBossAtXpos,puwexOrb08,lvl9HurbSecret09,stage6Elevator0a,stage7Liberary0b,stage1Pipe0c,zapfBatCam_0d
+		dw wirllWind_0e,screenMover_0f,wizzardBoss_10,simonNoTopBorderClip_11
 
 	eventKeepUpWithSimon:
 		lda $54e			; keep up with simon
@@ -2566,12 +3136,336 @@ pushPC
 		db $00, $00, $00, $00, $AC, $41, $21, $00, $20, $00, $20, $00, $00, $00, $00, $00	
 pullPC 
 		
+	wirllWind_0e:
+		lda $20,x 
+		beq ++
+		dec.b $20,x 
+		lda $3a
+		bit #$0004
+		beq +
+		stz.w RAM_simonSlot_spriteAttributeFlipMirror
+		bra ++
+	+	lda #$4000
+		sta RAM_simonSlot_spriteAttributeFlipMirror
 		
+	++	jsl carrySetOnSimonEventCollusion
+		bcc +
+		lda RAM_buttonPress
+		bit #$0400
+		beq +
+		lda #$fff5		; f3ff
+		sta RAM_simonSlot_SpeedYpos
+		lda #$0020
+		sta $20,x 
+		lda RAM_simonSlot_Ypos
+		sec
+		sbc #$0008
+		sta RAM_simonSlot_Ypos
+	+	rtl 
 	
+	screenMover_0f:
+
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x 
+		phb
+		sep #$30
+		lda #$a0
+		pha
+		plb
+		rep #$30 
+		jsl loadPalettePracticeRing
+		plb
+				; 7e8000 block map WRAM $80 bytes are one screen
+		rtl 	; move screen 7 3
+		
+	wizzardBoss_10:		
+		LDA.B RAM_X_event_slot_state,X     ; new state   
+		PHX                                  
+        ASL A                                
+        TAX                                  
+        LDA.L wizzarBossTable,X        
+        PLX                                  
+        STA.B $00  
+        JMP.W ($00) 
+
+	wizzarBossTable:
+		dw wizzardTransform00,wizzardTransform01,wizzardTransform02,wizzardTransform03,wizzardTransform04,wizzardTransform05
+	
+	wizzardTransform00:	
+		lda $3a
+		and #$0004
+		beq +
+		lda #oldManFr2
+	+	sta $00,x 
+		jsl faceSimon
+		
+		inc $20,x 
+		lda $20,x 
+		cmp #$0030
+		bne +
+		inc.b $12,x 
+		stz.b $20,x 	
+		
+	+	rtl 
+
+	wizzardTransform01:		
+		stz.b RAM_X_event_slot_SpriteAdr,x 
+		dec.b RAM_X_event_slot_yPos,x 		
+		lda #$004c
+		cmp RAM_X_event_slot_yPos,x 
+		bcc +
+		sta RAM_X_event_slot_yPos,x 
+		inc.b $12,x 
+		jsr paletteLoadDragon
+	+	dec.b RAM_X_event_slot_xPos,x
+		lda #$0014
+		cmp RAM_X_event_slot_xPos,x		
+		bcc +
+		sta RAM_X_event_slot_xPos,x
+	+	jmp orbSpriteAnim
+
+	wizzardTransform02:		; orb moves into hole hdma would be cool 
+		stz.b $00,x 
+		
+		lda $20,x 
+		bne ++
+
+	++	lda RAM_simonSlot_Xpos
+		cmp #$0120
+		bcc +
+		
+		lda #$00c8
+		sta RAM_X_event_slot_xPos,x 
+		lda #$000c
+		sta RAM_X_event_slot_yPos,x
+		inc.b $12,x 
+		
+	+	rtl 
+	wizzardTransform03:				; orb moves over bridge 		
+		jsr bridgDragonHealthHudRoutine
+		
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+		
+		inc.b RAM_X_event_slot_xPos,x 
+		inc.b RAM_X_event_slot_xPos,x 
+;		lda #$0580
+		lda #$3d0
+		cmp RAM_X_event_slot_xPos,x 
+		bcs orbSpriteAnimWithMovment
+	
+		jsr orbSpawnRing
+		bcs orbSpriteAnimWithMovment	
+		
+		stz.b $00,x 
+		
+		lda RAM_simonSlot_Xpos
+		cmp #$0490
+		bcc +
+		
+		inc.b $12,x 
+;		stz.b $20,x 			; clear pointer for next ring spawn make it a permanent event 
+		
+	+	jml $86C5DD			; bat movment routine move ment at boss screen 
+		
+	orbSpriteAnimWithMovment:
+		lda #$0040
+		sta RAM_X_event_slot_mask,X
+		jsl $86C5DD			; bat movment routine 
+	
+	orbSpriteAnim:
+		lda $3a
+		bit #$0004
+		beq +
+		lda #$819F
+		jmp ++
+	+	lda #$81a4 
+	++	sta $00,x 		
+		rtl 
+	
+	orbSpawnRing:
+		sta RAM_X_event_slot_xPos,x 
+		phx 
+		lda $20,x 					; get a other slot and put a ring witout sprite. Then make it move with the orb 
+		bne +
+	
+		jsl getEmptyEventSlot		
+		bcs ++
+		txa
+		
+		plx 						
+		sta $20,x 
+		tay 
+		
+		lda #$0003					; ring propertys 		
+		sta.w $10,y
+		lda #$0085
+		sta.w $14,y 
+		lda RAM_81_simonSlot_spritePriority
+		sta.w $04,y 
+		lda #$00e0		
+		sta.w RAM_X_event_slot_SpriteAdr,y 
+		lda #$0200			; palette fix 
+		sta.w $04,y  
+		
+		phx  
+
+	+	tay 
+		lda.B RAM_X_event_slot_yPos,X 			; update ring pos with orb pos 
+		sta.w RAM_X_event_slot_yPos,y
+		lda.B RAM_X_event_slot_xPos,X 
+		sta.w RAM_X_event_slot_xPos,y
+
+		plx 
+		clc 
+		rts 
+	
+	++	plx 									; in case the whole table is occopied 
+		sec
+		rts 
+	
+	wizzardTransform04:
+		jsr bridgDragonHealthHudRoutine
+;		lda #$05e0
+;		sta.b $a2 
+		inc.b RAM_X_event_slot_xPos,x 
+		inc.b RAM_X_event_slot_xPos,x 
+		lda #$0600
+		cmp RAM_X_event_slot_xPos,x 
+		bcs orbSpriteAnimWithMovment
+		
+	+	jsr orbSpawnRing
+		bcs orbSpriteAnimWithMovment
+		stz.b $00,x 
+		jml $86C5DD
+
+	wizzardTransform05:
+;		lda #$0700				; finall cam lock done with boss
+;		sta $a2 
+		
+		inc.b RAM_X_event_slot_xPos,x 
+		inc.b RAM_X_event_slot_xPos,x 
+		jmp orbSpriteAnimWithMovment
+	
+	bridgDragonHealthHudRoutine:
+		lda !bridgDragonHealthHud
+		beq +
+		and #$0fff
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr
+		lsr 
+		inc
+		sta RAM_boss_Health_HUD					; make it always show one health at last 
+		stz.w !bridgDragonHealthHud			; clear after update to calculate it new every frame 
+	+	rts 
+
+	paletteLoadDragon:
+		phx 
+		ldx #$001e
+	-	lda.l $86ffc0,x 
+		sta.l $7e23c0,x 
+		dex
+		dex
+		bpl -
+		plx 
+		rts
+
+	simonNoTopBorderClip_11:
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x  
+		lda RAM_simonSlot_Ypos
+		cmp #$0020
+		bcs +
+		lda #$0020			; make simon not wrap to bottom since cameral lock event.. 
+		sta RAM_simonSlot_Ypos
+	+	rtl 	
 }
 
 	
-{ ; ---------------------------- New Platform ----------------------------------------	
+{ ; ---------------------------- New Platform 40 ----------------------	
+
+	event_ID_40_unusedTurningPlatform: 
+		LDA.B RAM_X_event_slot_state,X       ;828A87|B512    |000012;  
+        PHX                                  
+        ASL A                                
+        TAX                                  
+        LDA.L unusedTurningPlatformStateTable,X 
+        PLX                                   
+        STA.B RAM_X_event_slot_sprite_assembly
+        JMP.W (RAM_X_event_slot_sprite_assembly)
+                                                    
+                                                    
+	unusedTurningPlatformStateTable: 
+		dw turningPlaformState00      
+		dw turningPlaformState01      
+		dw turningPlaformState02      
+		dw turningPlaformState03      
+
+	turningPlaformState00:	
+		lda #$001c
+		sta $2a,x
+		lda #$0010
+		sta $28,x 
+		
+		lda #$003b
+;		lda $10,x 
+		sta $1a 
+		phx 
+		jsl calculateSpriteSlotOffset_ID_atRam1a 		; get sprite slot uses x and y 		
+		plx 
+		jml $828ABF
+		
+	turningPlaformState01:
+		jsl checkSimonCollusionEvent
+		bcc ++
+		inc $22,x 
+		lda $22,x 
+		cmp #$0028
+		bne +
+		lda #$002b 
+		jsl lunchSFXfromAccum
+	+	cmp #$0040
+		bne +++
+		inc $12,x 
+	++	stz.b $22,x 		
+	+++	jml $828AEA
+    turningPlaformState02:
+		lda #$000c
+		cmp $24,x 
+		bne +
+		jsl throwSimonUp
+	+	jml $828B3B
+    turningPlaformState03:
+		lda $20,x 		; wirl animation 
+		beq ++
+		dec.b $20,x 
+		lda $3a
+		bit #$0004
+		beq +
+		stz.w RAM_simonSlot_spriteAttributeFlipMirror
+		stz.w $578
+		bra ++
+	+	lda #$4000
+		sta RAM_simonSlot_spriteAttributeFlipMirror
+		lda #$0002
+		sta $578 
+		
+	++	jml $828B64
+
+	throwSimonUp:
+		lda #$fff7		; f3ff
+		sta RAM_simonSlot_SpeedYpos
+		lda #$0010
+		sta $20,x 
+;		lda RAM_simonSlot_Ypos
+;		sec
+;		sbc #$0008
+;		sta RAM_simonSlot_Ypos
+		rtl 
+; ---------------------------- New 67 ??----------------------------------------		
 	eventNewPlatform:			
 		rtl 
 
@@ -2591,7 +3485,8 @@ pullPC
 		beq -
 		cmp #$0035
 		beq -
-		
+		cmp #$003d
+		beq -
 	++	lda $14,x
 		bit #$0080					; bit check for new platform behavier
 		bne newPlatformJumpTable
@@ -2612,7 +3507,7 @@ pullPC
 +		rtl 
 
 	newServBordType: 
-		dw standStill,raftBehavier,raftBehavierBounce,wrapingPlatform_03,risingWhenTouched_04,wrapingPlatform_05            		
+		dw standStill,raftBehavier,raftBehavierBounce,wrapingPlatform_03,risingWhenTouched_04,wrapingPlatform_05,risingWhenTouched_06,risingWhenTouched_07           		
 		
 ; ---------------------------- RAFT 1 -----------------------------------------		
 	standStill:
@@ -2726,13 +3621,21 @@ pullPC
 		sta RAM_X_event_slot_yPos,x 
 		rtl 			
 	
+	
+	
+	
+	risingWhenTouched_06:
+		lda #$0100
+		sta RAM_X_event_slot_SpriteAdr,x 	
+		lda #$a6d4
+		bra +
 	risingWhenTouched_04:					; does not work with multiple platforms since it does not know to to reset till it reached the bottom.. a really smart moving down state might be able to tell.. 
 		lda RAM_simonSlot_State
-		cmp #$000f
+		cmp #$000f							; skip shen simon is dead
 		beq risngPlatormMoveDown			; go down when simon is dead it looks better 
 		
 		LDA.W #$A6EF               			; #$A701, #$A6F8
-        STA.B $00,x                   		
+  +     STA.B $00,x                   		
 		lda $80
 		sta $22,x 							; check if behavier changed after platrom routine 
 		
@@ -2742,8 +3645,7 @@ pullPC
 		beq +
 		
 		lda $80
-		sta $12,x 							; use it as state 
-			
+		sta $12,x 							; use it as state 			
 
 	+	lda $80
 		beq risngPlatormMoveDown			; there are a view things that make this stop so we always go down when not set on platform 
@@ -2763,18 +3665,66 @@ pullPC
 		rtl 
    
 	risngPlatormMoveUp:
-		dec.w RAM_X_event_slot_yPos,x 		; first state 
+		dec.w RAM_X_event_slot_yPos,x 
 		inc.w $20,x 						; keep track of distance traveled 
 		lda $20,x 
 		cmp #$00e0							; max 
 		bcc + 
 		dec.w $20,x 
-		inc.w RAM_X_event_slot_yPos,x 
+		inc.w RAM_X_event_slot_yPos,x 		
+	+	rtl 
+
+
+
+
+	risingWhenTouched_07:					; ----------------------------------
+		lda #$0100
+		sta RAM_X_event_slot_SpriteAdr,x 
+		lda RAM_simonSlot_State
+		cmp #$000f
+		beq LowerPlatformMoveDown			; go down when simon is dead it looks better 
 		
+		LDA.W #$A6d4               			; #$A701, #$A6F8
+        STA.B $00,x                   		
+		lda $80
+		sta $22,x 							; check if behavier changed after platrom routine 
+		
+		jsl $82C312 						; Platform So you can stand on it
+		lda $22,x 
+		cmp $80
+		beq +
+		
+		lda $80
+		sta $12,x 							; use it as state 
+			
+
+	+	lda $80
+		beq LowerPlatformMoveDown			; there are a view things that make this stop so we always go down when not set on platform 
+		lda RAM_X_event_slot_state,x 
+		bne LowerPlatformMoveBack
+   
+   	LowerPlatformMoveDown:	
+		lda $20,x
+		beq ++
+		lda $3a
+		and #$0001
+		beq +
+		dec.b $20,x 						; travel to starting pos
+		dec.b RAM_X_event_slot_yPos,x 
+	+	rtl 
+	++	stz.b RAM_X_event_slot_state,x 		; trashold to go down
+		rtl  
+
+	LowerPlatformMoveBack:
+		inc.w RAM_X_event_slot_yPos,x 
+		inc.w $20,x 						; keep track of distance traveled 
+		lda $20,x 
+		cmp #$0038							; max 
+		bcc + 
+		dec.w $20,x 
+		dec.w RAM_X_event_slot_yPos,x 		
 		rtl 
-
-
-
+	
 	
 
 	newTreasurOpenBehavier:				  ; treasue routine 
@@ -3129,7 +4079,7 @@ pullPC
 		sta RAM_X_event_slot_HitboxYpos,x 
 		
 		stx $fc 			; RAM_XregSlotCurrent
-		jsl $80d7cc 		; get sprite slot uses x and y 		
+		jsl calculateSpriteSlotOffset_ID_atRam1a 		; get sprite slot uses x and y 		
 		plx 
 		stx $fc 
 	+	rtl 
@@ -3141,6 +4091,51 @@ pullPC
 		
 }
 
+
+{ ; --------------------------- highFiveSkellyFireball 36 -------------
+	newHighFiveSkellyFireBall:
+        LDA.W #$C033 
+		sta $00
+		JSL.L spriteAnimationRoutine00       ;82B9EE|2269B082|82B069;  hijack Fix 
+		
+		lda $30,x 
+		bne +
+		
+		phx 
+		jsl getEmptyEventSlot 
+		txa
+		plx
+		sta $30,x 
+		
+		tay 
+		lda #$0036
+		sta.w $10,y 
+		lda #$0006
+		sta.w $12,y 
+		
+		lda RAM_X_event_slot_xPos,x 
+		sta.w RAM_X_event_slot_xPos,y		
+		lda RAM_X_event_slot_yPos,x 
+		sta.w RAM_X_event_slot_yPos,y
+		
+		
+	+	rtl 
+	
+	skellyHighFiveFireBall:
+		lda #$9AB0
+		sta $00,x 
+		dec.b RAM_X_event_slot_yPos,x 
+		rtl 
+	
+	
+	movedSkellyHighFiveTable00:
+		INC.B RAM_X_event_slot_state,X      
+        LDA.W #$0003                       
+        STA.B RAM_X_event_slot_Movement2c,X 
+        STZ.B RAM_X_event_slot_HitboxID,X   
+        RTL                                  
+
+}
 
 {; ---------------------------- different teaks (old job.asm)
 
@@ -3388,6 +4383,32 @@ pullPC
 		dec.w $444 
 	+	rtl 		
 	
+	autoScroolRoutine:
+		lda !autoScroll
+		beq +
+		cmp #$0002
+		beq ++
+		
+		lda $3a 
+		bit #$0001				; run uneven frames 
+		beq +
+
+		inc $1c 
+		
+		lda $1c
+		sta $a0 
+				
+	+	rtl 
+	++	lda $3a 
+		bit #$0001				; run uneven frames 
+		beq +
+
+		dec $1c 
+		
+		lda $1c
+		sta $a2 	
+		rtl
+	
 	annoyingDogRoutine:
 		lda RAM_simon_multiShot			; elevator card check 
 		and #$0001
@@ -3462,6 +4483,7 @@ endif
 		lda $66							; dont run while pause
 		bne +
 		
+		jsl autoScroolRoutine
 		jsl annoyingDogRoutine 
 		
 		lda !layer2ScrollBehavier
@@ -3990,6 +5012,11 @@ org $84FE7F						; $84FFB5 free Space Orginal
 		db $00,$00,$2a,$6E
 		db $f0,$00,$2c,$6E
 		db $e0,$00,$2e,$6E
+
+	simonInCoffine:
+		db $02
+		db $F0,$EC,$00,$20
+		db $00,$EC,$02,$20
 	
 org $848246					; more free space for sprite assembly 
 	luigiSpriteAssembly:
@@ -4046,7 +5073,7 @@ org $848246					; more free space for sprite assembly
         dd $2202E8FD
 		dd $2200E8ED               ;848F3F|        |      ;  
 
-headlessKnightNPC: 
+	headlessKnightNPC: 
 		db $07                              
 		dd $2C62E4E0     
         dd $2C64E4F0         
@@ -4054,12 +5081,61 @@ headlessKnightNPC:
         dd $2C68f4F0   
 		dd $2C6a04E0     
         dd $2C6c04F0 
-		dd $2C600880 	
+		dd $2C600880 
+
+	chillSkellyAss:
+		db $0d
+		db $00,$b0,$4e,$6e
+		db $00,$c0,$4e,$ee		
+		db $f8,$d0,$4e,$6e
+		db $08,$c8,$4e,$2e
+		db $f8,$e0,$60,$6e
+		db $08,$d8,$60,$2e						 
+		db $f8,$e8,$62,$ae
+		db $08,$e8,$64,$ae
+		db $f8,$d0,$27,$6e
+		db $08,$d0,$25,$6e		
+		db $00,$e0,$02,$6e
+		db $fc,$f0,$06,$6e
+		db $0c,$f0,$04,$6e		
+	ddSprite00:
+		db $04
+		db $f0,$00,$0c,$28
+		db $00,$00,$0e,$28
+		db $f0,$08,$1c,$28
+		db $00,$08,$1e,$28
+	ddSprite01:	
+		db $04
+		db $f0,$00,$3c,$28
+		db $00,$00,$3e,$28
+		db $f0,$08,$4c,$28
+		db $00,$08,$4e,$28
+	fishSprite:
+		db $02
+		db $00,$fc,$4a,$24
+		db $f0,$fc,$48,$24
+	smallFish:
+		db $02
+		db $fc,$fc,$4a,$24
+		db $f4,$fc,$48,$24
+	
+	
+	snowFlake:
+		db $01
+		db $FC,$01,$04,$02
+	
+	dragonNeckLong:
+		db #$02
+		dd $2B68F900
+		dd $2B68F9f0
+;		dd $2B68F9E9	
 warnPC $84896E	
 
 }
 		
-; -------------------------- MAKEing SPACE IN THE ROM to expand tables.. ------------------------------	
+
+
+{ ; -------------------------- MAKEing SPACE IN THE ROM to expand tables.. ------------------ 
 org $86C3A4							; after death fight 
 		JSL.L CODE_84FEE9                    ;86C3A4|22E9FE84|84FEE9;  
 
@@ -4596,7 +5672,7 @@ simonSpriteDMAPointerToo1b00:
 	Idle02:                                           ;
 		dw $d0c0,$d100,$d140,$d880,$dc80,$c580,$0000,$0000  ;$76 			
 		
-
+}
 
 ; ------------------------- hijack simonStates  ---------------------
 ;org $80A95D
@@ -4937,3 +6013,51 @@ simonSpriteDMAPointerToo1b00:
 ;		dey
 ;		bpl -
 ;	++	rtl 
+
+
+; old wizzard routine.. 
+;		ldy #$0009			; wired effect with different window mode.. 
+;		lda $3a
+;		bit #$000f
+;		beq +
+;		dec.w $1e80
+;		ldy #$0006
+;	+	sty.w $1e84
+;				
+;	++	inc.b $22,x 		; counter for next state 
+;		lda $22,x 
+;		cmp #$0080
+;		bne +
+;		inc.b $12,x
+;		lda #$0009
+;		sta $1e84
+;		lda #$000f
+;		sta $1e80
+;		stz.b $22,x 
+;	+	rtl
+
+;;		stz.b $00,x 
+;;		
+;;		lda $20,x 
+;;		bne ++
+;		
+;		lda $3a
+;		bit #$000f
+;		beq +
+;		dec.w $1e80
+;		lda $1e80
+;		bne +
+;		inc.b $20,x 
+;		
+;	+	rtl 
+;	++	cmp #$0002
+;		beq ++
+;		lda $3a
+;		bit #$000f
+;		beq +
+;		inc.w $1e80
+;		lda $1e80
+;		cmp #$000f
+;		bne +
+;		inc.b $20,x 	
+;	+	rtl

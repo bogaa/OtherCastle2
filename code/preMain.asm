@@ -185,7 +185,7 @@ BGTranperantSetting:		; stored to $44
 	dw $000a        ;lvl 27 0000 
 	dw $0060        ;lvl 28 0000
 	dw $0000        ;lvl 29
-	dw $0000        ;lvl 2a 0001
+	dw $0001        ;lvl 2a 0001
 	dw $0001        ;lvl 2b
 	dw $0000        ;lvl 2c
 	dw $0001        ;lvl 2d
@@ -1066,8 +1066,8 @@ org $81ac00		; enemyHealth Table
 	db $03   	; ID $79 ?? SMALL MUD MAN MASK? CRACK SOUND WHEN DUCKI
 	db $00   	; ID $7a CarpetMonster Block event (used in every stag
 	db $03   	; ID $7b Coffin Circle
-	db $03   	; ID $7c Gear Big SUB 0, Gear Little SUB 2, Gear Force
-	db $06   	; ID $7d Gear Spike SUB 20, Sub 0 Bridge final stage, 
+	db $04   	; ID $7c Gear Big SUB 0, Gear Little SUB 2, Gear Force
+	db $03   	; ID $7d Gear Spike SUB 20, Sub 0 Bridge final stage, 
 	db $03   	; ID $7e Headless Knight
 	db $03   	; ID $7f Rockman
 	

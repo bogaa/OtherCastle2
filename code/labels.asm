@@ -169,7 +169,8 @@
                        RAM_freeSpaceTill_1e7f_exeptOptionsMenu = $001E18;      |        |      ;  
                        RAM_freeSpaceTill_1e7f = $001E2E     ;      |        |      ;  
                        RAM_blackFade = $001E80              ;      |        |      ;  
-                       RAM_PPU_Mode = $001E84               ;      |        |      ;  
+;                      RAM_autoMove = $001e82 82 auto move right 81 standart ?? 
+					   RAM_PPU_Mode = $001E84               ;      |        |      ;  
                        RAM_sprite_size_mode = $001E86       ;      |        |      ;  
                        RAM_mosaicEffect_Value_BG = $001E8A  ;      |        |      ;  
                        RAM_scoreLow = $001F40               ;      |        |      ;  

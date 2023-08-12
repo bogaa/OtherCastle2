@@ -549,8 +549,13 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 				
 		rts 
 		
-	goNextTextSetBGMode2:
-		stz.w $46 
+;	goNextTextSetBGMode2:	
+;		stz.w $46 
+;		jsl goNextText
+;		jsr textStateUpdater
+;		JMP ($00F2)		
+	goNextTextSet30:
+		inc $30,x 
 	goNextText:
 		inc $34,X
 		inc $34,X
@@ -567,24 +572,25 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw oldMan3Fr1,jungLadyFr1,oldManFr1,jungLadyFr1					; 00$8f15
 		dw oldManFr1,oldMan3Fr1,jungLadyFr1,jungLadyFr1					; 04
 		dw jungLadyFr1,oldMan3Fr1,$89f0,jungLadyFr1						; 08
-		dw $89f0,jungLadyFr1,oldManBrawnPents00,oldMan3Fr1				; 0c
-		dw doorSpriteAssembly,oldManFr1,AssGuy,oldManFr1				; 10
-		dw oldMan3Fr1,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 14
-		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly		; 18
-		dw AssAramus00,$8af4,oldManBrawnPents00,headlessKnightNPC								; 1c 
-		
+		dw $89f0,jungLadyFr1,oldManBrawnPents00,oldMan3Fr1					; 0c
+		dw doorSpriteAssembly,oldManFr1,AssGuy,oldManFr1					; 10
+		dw oldMan3Fr1,oldManFr1,AssPaul,doorSpriteAssembly					; 14
+		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,jungLadyFr1					; 18
+		dw doorSpriteAssembly,AssAramus00,$8af4,oldManBrawnPents00			; 1c 
+		dw headlessKnightNPC,chillSkellyAss,ddSprite00,fishSprite		; 20
+		dw oldManFr1
 	
 	npcSpriteIDlist2:	
 		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1					; 00 zombie Walk $96a0,$968b 
 		dw oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1					; 04
 		dw jungLadyFr1,oldMan3Fr2,$968b,jungLadyFr1						; 08 $8f2e	
-		dw $968b,jungLadyFr1,oldManBrawnPents01,oldMan3Fr2						; 0c 
+		dw $968b,jungLadyFr1,oldManBrawnPents01,oldMan3Fr2					; 0c 
 		dw doorSpriteAssembly,oldManFr2,AssGuy,oldManFr1					; 10
-		dw oldMan3Fr2,oldManFr1,AssPaul,doorSpriteAssembly,jungLadyFr1	; 14
-		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,doorSpriteAssembly		; 18	
-		dw AssAramus01,$8af4,oldManBrawnPents01,headlessKnightNPC													; 1c 
-	
-	
+		dw oldMan3Fr2,oldManFr1,AssPaul,doorSpriteAssembly					; 14
+		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,jungLadyFr1					; 18	
+		dw doorSpriteAssembly,AssAramus01,$8af4,oldManBrawnPents01													; 1c 
+		dw headlessKnightNPC,chillSkellyAss,ddSprite01,fishSprite
+		dw oldManFr2
 
 	mainNPCStateTable: 
 		dw NPCState00			; 00 init			
@@ -622,6 +628,10 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw skellyHurb			; 1e
 		dw NPCbossQuestGiver	; 1f	
 		dw headlessNPC			; 20
+		dw ChillSkelly			; 21
+		dw DDnu					; 22
+		dw Fish					; 23
+		dw evilRedguy			; 24
 		
 	actionListMainNPC:
 		dw actionSeller,actionListGivingLady 	; 01
@@ -656,7 +666,11 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw actionListSkellyHurb					; 1e 
 		dw actionListNPCbossQuestGiver			; 1f 
 		dw actionListHeadlessNPC				; 20
-		
+		dw actionListChillSkelly				; 21		
+		dw actionListDDnu
+		dw $0000
+		dw actionListevilRedguy
+
 	actionSeller:
 ;		dw text00,goNextText
 ;		dw text01,goNextText
@@ -1319,7 +1333,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "FROM THE CAVE..",$00	
 	liftCurseText02:		
 		db "I DID HERE      "
-		db "ROWDIN MARGE THE"
+		db "ROWDIN MARCH THE"
 		db "LAND AND GOT A  "
 		db "GOOD IDEA OF",$00
 	liftCurseText03:		
@@ -1615,7 +1629,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "FURRY COMPANION.",00		
 	
 	actionListHeadlessNPC:
-		dw headlessText00,goNextTextSetBGMode2	
+		dw headlessText00,goNextText						; goNextTextSetBGMode2	
 		dw headlessText01,goNextText
 		dw headlessText02,goNextText
 		dw headlessText03,goNextText
@@ -1624,7 +1638,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	
 	
 	headlessText00:	
-		db "BUTT!!",00		; noone will see you say butt butt we did 
+		db "BUTT!! GRANDPAA "
+		db "IS IT YOU?",00		
 	headlessText01:
 		db "DO NOT STEP ON  "
 		db "MY HEAD! IT IS  "		
@@ -1648,8 +1663,155 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "HIS LEFT SIDE   "
 		db "SWING IS A LOT  "
 		db "WEAKER THOUGH..",00	
+
+	actionListChillSkelly:
+		dw chillText00,goNextText
+		dw chillText01,goNextText
+		dw chillText02,goNextText
+		dw chillText03,goNextText
+		dw chillText04,endText
+		dw chillText05,goNextText
+		dw chillText06,endText
 	
+	chillText00:
+		db "EVEN A HUMAN CAN"
+		db "GO THROUGH A    "
+		db "SOLID WALL!",00
+	chillText01:	
+		db "ONCE YOU ARE IN "
+		db "IT LOOK AT THE  "
+		db "OPPOSIT SIDE..",00
+	chillText02:
+		db "AND ZIIP SEE YOU"
+		db "ON THE OTHER    "
+		db "SIDE! HAH HA HA!",00	
+	chillText03:
+		db "SOME ALSO SAY   "
+		db "IF YOU DUCK IN  "
+		db "THE GRASS YOU   "
+		db "FLY LIKE MY ASS.",00
+	chillText04:
+		db "JOKES ASIDE.. IF"
+		db "YOU PRESS DOWN  "
+		db "AND JUMP YOU CAN"
+		db "LAND A COFFINE!",00		
+	chillText05:
+		db "GET THAT DOG    "
+		db "AWAY FROM ME!!",00
+	chillText06:
+		db "OK NOW LETS     "
+		db "ESCAPE BEFORE HE"
+		db "GETS BACK!!",00
+
+	actionListDDnu:
+		dw ddText00,goNextText	
+		dw ddText01,goNextText	
+		dw ddText02,goNextText	
+		dw ddText03,endText	
+		dw ddText04,goNextText
+		dw ddText05,endText
+		dw ddText06,goNextText
+		dw ddText07,goNextText
+		dw ddText08,goNextText
+		dw ddText09,goNextText
+		dw ddText0A,endText
+		
+	ddText00:
+		db "THE DRACONIC GOD"
+		db "FOOLED ME!      "
+		db "I TRY TO GET A  "
+		db "SECRET PIZZA",00
+	ddText01:	
+		db "RECEPIE BUT HE  "
+		db "STARTED TO EAT  "
+		db "SNOWFLAKES..", 00		
+	ddText02:	
+		db "HELP ME TO GET  "
+		db "HIS ATTATION!!",00
+	ddText03:
+		db "YOUR LEATHER    "
+		db "WHIP LOOKS LIKE "
+		db "A BIG WORM!     "
+		db "HMMM...",00
+
+	ddText04:
+		db "OHH SHIT!! YOU  "
+		db "MADE HIM ANGRY  "
+		db "GO I TRY TO CALM"
+		db "HIM DOWN.",00		
+	ddText05:
+		db "I SHARE THE     "
+		db "SECRET WITH YOU "
+		db "WHEN YOU COMPLET"
+		db "THE PARKOURE!",00			
+
+	ddText06:
+		db "TO SPICY UP THE "
+		db "DOUGH USE BBQ   "
+		db "SOUCE.",00
+	ddText07:
+		db "SMOKIN STAMPEDE "
+		db "BEER 8 CHIPOTLE "
+		db "IS DRACONIANS   "
+		db "FAVORITE!",00
+	ddText08:
+		db "THAT MIGHT SPICY"
+		db "UP YOUR WHIP    "
+		db "TOO.. BUT!",00
+	ddText09:
+		db "YOU ARE A VIEW  "
+		db "CENTERIES TO",00
+	ddText0A:
+		db "JUNG FOR THIS   "
+		db "KIND OF MAGIC.",00
 	
+	actionListevilRedguy:
+		dw evilText00,goNextText	
+		dw evilText01,goNextText
+		dw evilText02,goNextText
+		dw evilText03,goNextText
+		dw evilText04,goNextText		
+		dw evilText05,endText	
+		dw evilText06,goNextText
+		dw evilText07,endText
+	evilText00:
+		db "IT IS ABOUT TIME"
+		db "TO MAKE IT HERE."
+		db "DAWN AWAITS IN  "
+		db "A VIEW HOURS.",00
+	evilText01:
+		db "WE DO NOT WANT  "
+		db "DRACULA TO      "
+		db "ESCAPE AS HIS   "
+		db "FORCES WEAKEN!",00
+	evilText02:
+		db "DID YOU GET SOME"
+		db "ORB? VERY GOOD  "
+		db "GIVE THEM TO ME "
+		db "SO I CAN",00	
+	evilText03:
+		db "PREPARE YOU FOR "
+		db "THE LAST BATTLE!"
+		db "...",00
+	evilText04:
+		db "MUAHH HAHA HAR!!"
+		db "THANKS BELMONT.."		
+		db "NOW THERE IS",00	
+	evilText05:
+		db "NOTHING IN THE  "
+		db "WAY TO STOP ME! "				
+		db "JUST GO DIE MY  "
+		db "FOOL!!",00	
+
+	evilText06:	
+		db "WHAT A STRANGE  "
+		db "ORB. THE INGRAVE"				
+		db "DOES IS A MAGIC "
+		db "SPELL!",00	
+	evilText07:	
+		db "BUT WHAT IS IT  "
+		db "FOR?",00				
+
 }
 	
 	
@@ -2225,7 +2387,62 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		sta $00,x 
 	+	rts 
 
-
+	floatInAir:	
+		lda RAM_X_event_slot_Movement2c,x 
+		bne +
+		lda #$0003							; initiate movement and set parameters 
+		sta RAM_X_event_slot_Movement2c,x 
+		lda $0a,x
+		clc
+		adc #$0007
+		sta $20,x 
+		lda $0e,x 
+		clc
+		adc #$0003
+		sta $22,x 
+		
+	+	lda $0a,x
+		cmp $20,x 
+		bpl +
+	
+		lda RAM_81_X_event_slot_xSpdSub,x	; xPos acceleration
+		clc 
+		adc #$0400
+		sta RAM_81_X_event_slot_xSpdSub,x	
+		lda #$0000
+		adc RAM_81_X_event_slot_xSpd,x	
+		sta RAM_81_X_event_slot_xSpd,x	
+		bra ++ 
+		
+	+	lda RAM_81_X_event_slot_xSpdSub,x
+		sec  
+		sbc #$0400
+		sta RAM_81_X_event_slot_xSpdSub,x	
+		lda RAM_81_X_event_slot_xSpd,x
+		sbc #$0000
+		sta RAM_81_X_event_slot_xSpd,x
+		
+	++	lda $0e,x							; yPos acceleratio
+		cmp $22,x 
+		bpl +
+		
+		lda RAM_81_X_event_slot_ySpdSub,x
+		clc 
+		adc #$0400
+		sta RAM_81_X_event_slot_ySpdSub,x	
+		lda #$0000
+		adc RAM_81_X_event_slot_ySpd,x	
+		sta RAM_81_X_event_slot_ySpd,x	
+		bra ++
+	
+	+	lda RAM_81_X_event_slot_ySpdSub,x
+		sec  
+		sbc #$0400
+		sta RAM_81_X_event_slot_ySpdSub,x	
+		lda RAM_81_X_event_slot_ySpd,x
+		sbc #$0000
+		sta RAM_81_X_event_slot_ySpd,x
+	++	rts 
 
 ; -------------------------- NPC LOGIC MAIN -------------------------------------------
 		
@@ -2253,24 +2470,26 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	NPCRedguy:
 	NPCStateOldMan03:
 	NPCStateOldMan02:
+	BarManDoinaKeySeller:
 	NPCbossQuestGiver:	
 	RedguysBrother:
 		jsr NPCwalkAnimation		
 		jsr walkBackAndForward
 		jml NPCTextTrigger		
 	BarKeeper00:
+	BuilderManDoina:
 		jsr walkOnSpot
 		jsr NPCwalkAnimation		
 		jml NPCTextTrigger	
 	TutorialLeady00:
 		jsl faceSimon
-		jsr loadPalettePracticeRing		
+		jsl loadPalettePracticeRing		
 		jml NPCTextTrigger	
 
 	aramus:
 		jsr NPCwalkAnimation
 		jsr walkBackAndForward
-		bra +
+		jml NPCTextTrigger	
 
 	hooker:
 	Tinnue:
@@ -2278,14 +2497,375 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		lda $04,x 
 		ora #$0e00
 		sta $04,x 
-		bra +
+		jml NPCTextTrigger	
+	
+	Fish:
+		jsl makeItSnowing
+		
+		LDA.B $24,X                      ; jumpTable 
+        PHX                               
+        ASL A                             
+        TAX                               
+        LDA.L fishStateTable,X            
+        PLX                               
+        STA.B $00 
+		jmp.w ($00)
+
+	fishStateTable:
+		dw fishSwim,fishGetCatched,fishLunched,fishInHole,fishHit
+
+	fishSwim:		
+		lda !fishCatchedFlag
+		beq +
+		lda #$0004						; in case you leave the screen lets not loose progress 
+		sta $24,x 
+		jmp fishHit 	
+		
+	+	lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+		
+		jsl fishConfinment
+		
+		lda RAM_simon_whipType
+		bne +++
+		lda $212
+		cmp #$0005
+		bne +++
+		
+		lda RAM_X_event_slot_xSpd,x 	; make movment slow 
+		bmi +
+		lda #$0000
+		jmp ++
+	
+	+   lda #$ffff
+	++	sta RAM_X_event_slot_xSpd,x
+		
+		lda $34a				; make fish circle around the whip
+		sta $34,x 
+		inc $36,x 
+		lda $36,x 
+		cmp #$00c0
+		bcc +
+		
+		lda $34a			   ; fish needs to be near whip 
+		cmp RAM_X_event_slot_xPos,x 
+		bne +
+		inc $24,x 
+		
+	+	rtl 
+	
+	
+	+++	lda #$0040				; make fish circle around the pound 
+		sta $34,x 		
+		stz.w $36,x 
+		rtl 
+	
+
+
+	fishGetCatched:
+		stz.w $2c,x 
+	
+		lda $212
+		cmp #$0005
+		beq +
+		inc $24,x 
+		
+	+	lda $34e			; make fish follow whip tip
+		sta $0e,x 
+		lda $34a
+		sta $0a,x 
+	
+		lda $35e			; copy speed from whip 
+		sta $1e,x 
+		lda $35a
+		sta $1a,x  
+		rtl 
+	fishLunched:
+		lda #$0003
+		sta $2c,x 			; make fish fly 
+	
+		stz.w $36,x 		; reset timer to get catched again 	
+	
+		jsl gravetyFallCalculation2000
+	
+		lda RAM_X_event_slot_yPos,x  
+		cmp #$0010
+		bcs +
+		inc.w $24,x 
+		
+	+	cmp #$00c4 
+	fishFalling2Water:
+		bcc + 
+		
+		stz.w $24,x 		; reset when landing on ground/water 
+		stz.w $12,x 
+		stz.w RAM_X_event_slot_xPos,x 
+		lda #$00f0
+		sta RAM_X_event_slot_yPos,x 
+		
+	+	rtl 
+
+	fishInHole:		
+		lda #smallFish
+		sta $00,x 
+		lda #$0002
+		sta $2c,x 
+		
+		lda RAM_X_event_slot_yPos,x 
+		and #$fff0
+		cmp #$0060
+		bne +
+		lda RAM_X_event_slot_xPos,x 
+		cmp #$0040
+		bcc +
+		cmp #$0060
+		bcs +
+		
+		inc.w $24,x 
+		
+	+	stz.w RAM_X_event_slot_xSpdSub,x 
+		stz.w RAM_X_event_slot_xSpd,x 
+		stz.w RAM_X_event_slot_ySpdSub,x
+		lda #$0001
+		sta RAM_X_event_slot_ySpd,x 	
+		
+		jsl gravetyFallCalculation2000
+		lda RAM_X_event_slot_yPos,x  
+		cmp #$00a8					; it might look like it lands and land 
+		jmp fishFalling2Water 
+
+	fishHit:
+		lda RAM_simonSlot_Xpos
+		cmp #$0200
+		bcs +++
+		
+		lda $00,x 
+		beq +
+		stz.w $00,x 
+		stz.W $2c,x 
+		lda #$001f
+		jsl lunchSFXfromAccum
+		
+		lda #$0001
+		sta !fishCatchedFlag
+
+	+	phx
+		phy 
+		
+		lda $3a
+		and #$0008
+		beq +
+		lda #$0031
+		jmp ++
+		
+	+	lda #$0030
+	++	ldy #$4928
+		jsl $83D1E7
+		
+		lda #$0038
+		ldy #$49a8
+		jsl $83D1E7
+		
+		ply
+		plx 
+
+	+++	lda RAM_simonSlot_Xpos
+		cmp #$05c0
+		bcc +
+		lda #$0002
+		cmp !fishCatchedFlag
+		beq +
+		sta !fishCatchedFlag
+		lda #$008a
+		jsl lunchSFXfromAccum
+	+	rtl 
+
+	fishConfinment:
+		lda #$00d8						; move like a bat ypos
+		sta $30,x 
+		
+		jsl $86C5DD
+
+		lda RAM_X_event_slot_xSpd,x 
+		bmi +
+		lda #$4000
+		sta $04,x 
+		jmp ++
+	+	stz $04,x 
+		
+	++	LDA.B RAM_X_event_slot_xPos,x    ; copy for xpos     		
+        CMP $34,x 
+        BCS ++
+
+        CLC                                  		
+		LDA.B RAM_X_event_slot_xSpdSub,X     
+        ADC.W #$1000                         
+        STA.B RAM_X_event_slot_xSpdSub,X     
+        LDA.B RAM_X_event_slot_xSpd,X        
+        ADC.W #$0000                         
+        cmp #$0004						; speed limit 
+		beq +
+		STA.B RAM_X_event_slot_xSpd,X        
+	+	jmp restroctMovment2Pound
+		
+++		SEC                                  
+		LDA.B RAM_X_event_slot_xSpdSub,X     
+		SBC.W #$1000                         
+		STA.B RAM_X_event_slot_xSpdSub,X     
+		LDA.B RAM_X_event_slot_xSpd,X        
+		SBC.W #$0000                         
+		cmp #$fffc						; speed limit 
+		beq restroctMovment2Pound
+		STA.B RAM_X_event_slot_xSpd,X         	
+		
+	restroctMovment2Pound:	 			; restrict momvenet to pound 
+		lda RAM_X_event_slot_xPos,x 
+		cmp #$0080					
+		bcc +
+	
+		lda #$0080
+		sta RAM_X_event_slot_xPos,x
+		
+	+	lda #$0004
+		cmp RAM_X_event_slot_xPos,x  
+		bcc +
+		lda #$0004
+		sta RAM_X_event_slot_xPos,x
+	
+	+	lda RAM_X_event_slot_yPos,x  
+		cmp #$00c4 
+		bcs +		
+
+		lda #$00c4
+		sta RAM_X_event_slot_yPos,x  	
+	+	rtl 
+
+
+	makeItSnowing:
+		lda #$0080
+		sta.w RAM_X_event_slot_HitboxID,x
+		
+		inc $32,x 
+		lda $32,x 
+		cmp #$0020
+		bne +				; make a snowflake appear every 0x20 frames 
+		
+		stz.w $32,x 	
+		ldy #$0000
+		jsl heartRainEveryFrame	
+
+		cpy #$0000			; check if event has spawned and make it a snow fleak 
+		beq +
+
+		lda #$0000
+		sta.w RAM_X_event_slot_HitboxID,y			
+		lda RAM_X_event_slot_SpriteAdr,x
+		sta.w RAM_X_event_slot_SpriteAdr,y
+		lda.w #snowFlake
+		sta.w $00,y
+		lda #$0001			; set flag for no heart sprite updates.. 
+		sta.w $20,y 
+	+	rtl 
+	
+		
+	DDnu:		
+		jsr NPCwalkAnimation
+		jsl NPCTextTrigger	
+		
+		lda !fishCatchedFlag
+		beq +++
+		cmp #$0002
+		bne +
+		lda #$000c			; final answare
+		bra ++
+	+	lda #$0008			; secret 
+	++	sta $34,x 
+;		lda $30,x  
+;		bne +		
+;		jsr makeFishAppear
+	+++	rtl 
 	ArmorSeller:
 	TutorialLeady01:
 	TutorialLeady02:
 	TutorialLadyControls:
 		jsl faceSimon
-+		jml NPCTextTrigger	
+		jml NPCTextTrigger	
 	
+	ChillSkelly:
+		lda $38,x 
+		bne skellyElevatorMode
+		
+		lda #$0120				; slot offst 
+		sta $26,x 
+		jsr floatInAir
+		jsl NPCTextTrigger	
+		lda $12,x 				; stop movement in text state 
+		cmp #$0001
+		bne +
+		
+		stz.b RAM_X_event_slot_Movement2c,x  
+		jsl elevatorCardPassCheckNoInput
+		bcs +
+		lda #$000a				; advanced text to function as elevetar when u have the dog 
+		sta $34,x 	
+		jsr loadTextPointer
+		lda #$0001				; set elevator mode 
+		sta $38,x 
+		
+	+	rtl 
+
+	skellyElevatorMode:
+		cmp #$0002
+		beq skellyZombieModus
+		
+		lda #$0012
+		sta RAM_simonSlot_State
+		
+		lda #$9c25
+		sta RAM_simonSlot
+		lda #$0065 
+		sta RAM_simonSlot_AnimationCounter
+		
+		lda #$0010
+		sta RAM_simon_invulnerable_counter
+		
+		lda #$0700				; set camera look 
+		sta $a4 
+		
+		lda RAM_X_event_slot_yPos,x 
+		cmp #$0800
+		bcc +++
+		sta RAM_simonSlot_Ypos
+		
+		lda RAM_X_event_slot_xPos,x 
+		adc #$0010
+		sta RAM_simonSlot_Xpos		
+
+		
+		lda $3a
+		bit #$0010
+		beq +
+		ldy #$8000
+		jmp ++
+	+	ldy #$c000
+	++	sty.w RAM_simonSlot_spriteAttributeFlipMirror
+	
+		lda #$fffd
+		sta RAM_X_event_slot_ySpd,x 	
+	-	jsr floatInAir
+
+		rtl 
+	+++ lda #$0004
+		sta RAM_simonSlot_State
+		stz.w $212			; fix whip if you hit ring 
+		lda #$0002
+		sta $38,x 
+	skellyZombieModus:
+		stz.w $a4 
+		jmp -
+
+ 
+
 	skellyHurb:
 		ldy #$0400
 		lda $3a 
@@ -2317,7 +2897,12 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		lda #$0044
 		jsl lunchSFXfromAccum
 		
-	+	jml NPCTextTrigger
+	+	jsl NPCTextTrigger
+		lda $12,x 
+		cmp #$0001
+		bne +
+		stz.w $46 
+	+	rtl 
 
 	BarKeeper02Doina:
 		jsl faceSimon
@@ -2351,7 +2936,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	ZombieManDoinaWife:
 		jsl faceSimon
 		jsr NPCwalkAnimation		
-		jml NPCTextTrigger
+		jml NPCTextTrigger		
 		
 	ZombieManDoinaHunter:
 		lda !dogLeash			; story continues in the Castle the leash does unlock future content in the castle so we are don here
@@ -2404,12 +2989,6 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 ;		sta $36,x 
 
 	+	rtl 
-	
-	BarManDoinaKeySeller:		
-		jml NPCStateOldMan02
-	
-	BuilderManDoina:
-		jml BarKeeper00
 		
 	door:
 		jsr pushSimonOut
@@ -2502,10 +3081,13 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	
 	TipLeady01:
 		jsl makePaletteDark
+		lda $20,x 
+		cmp #$0080			; only talk when dark.. 
+		bne +
 		jsl faceSimon
 		jsl NPCTextTrigger
 		jsl	resetBG3Scroll
-		rtl 
+	+	rtl 
 	Paul:			
 		jsr paulRoutine
 		jml NPCTextTrigger
@@ -2596,7 +3178,117 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		and #$4444		
 		sta.l $7e2338
 		rts
+	
+;	makeFishAppear:
+;		jsl makeNewEventAtEventPossition
+;		lda #$0023
+;		sta.w $14,y 
+;		lda #$000d
+;		sta.w $10,y 
+;		stz.w RAM_X_event_slot_xPos,y
+;		stz.w RAM_X_event_slot_yPos,y 
+;		stz $30,x 					; remove spawn flag 
+;		
+;		lda #$0080
+;		sta.w RAM_X_event_slot_HitboxID,y
+;		
+;		rts 
  
+	heartRain:
+		lda $3a 
+		bit #$000f
+		bne +
+	heartRainEveryFrame:	
+		jsl makeNewEventAtEventPossition
+		lda #$0018
+		sta.w $10,y
+		lda #$0000
+		sta.w RAM_X_event_slot_SpriteAdr,y
+		sta.w RAM_X_event_slot_yPos,y
+		lda RAM_RNG_2
+		and #$00ff
+		adc RAM_BG1_ScrollingSlot
+		sta.w RAM_X_event_slot_xPos,y
+		lda #$0008
+		sta.w RAM_X_event_slot_HitboxYpos,y
+		sta.w RAM_X_event_slot_HitboxXpos,y		
+		lda #$0009
+		sta.w RAM_X_event_slot_HitboxID,y 
+
+	+	rtl 
+
+	makeNewEventAtEventPossition:
+		phx 
+		jsl getEmptyEventSlot
+		txy 
+		plx 				
+		lda RAM_X_event_slot_SpriteAdr,x 
+		sta.w RAM_X_event_slot_SpriteAdr,y
+		lda RAM_X_event_slot_xPos,x 
+		sta.w RAM_X_event_slot_xPos,y
+		lda RAM_X_event_slot_yPos,x 
+		sta.w RAM_X_event_slot_yPos,y
+		lda RAM_simonSlot_spritePriority
+		sta.w $02,y 
+		
+		rtl 
+
+	evilRedguy:
+		lda $3c,x 
+		bne +++
+		jsr NPCwalkAnimation		
+		jsr walkBackAndForward
+		jsl NPCTextTrigger
+		lda $12,x 			; check if text state 
+		cmp #$0001
+		bne ++
+;		lda #$05e0			; right camera border till dragon boss 
+		lda #$0380 		; set camera to first dragon boss dest
+		sta $a2
+		lda #$0001
+		sta $3c,x 
+;		ldx #$e267			; viper whole sprite load 
+;		jml $8280E8
+			
+	+	lda RAM_simon_multiShot			; good ending trigger
+		and #$0001
+		beq ++
+		lda #$000a
+		sta $34,x 
+	++	rtl 
+	+++	phx					; set event to not spawn anymore 
+		lda RAM_X_event_slot_mask,x 
+		tax 
+		sep #$10			; write to 8 bit type 1 table 
+		lda #$0001			
+		sta $1500,x 
+		rep #$10
+		plx 
+		
+		lda RAM_X_event_slot_SpriteAdr,x 
+		pha 
+		lda RAM_X_event_slot_xPos,x 
+		pha
+		lda RAM_X_event_slot_yPos,x 
+		pha
+		jsl clearSelectedEventSlotAll		; we switch event for boss 
+		lda #$004b
+		sta $10,x 
+		lda #$0010
+		sta $14,x 
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x 
+		
+		pla 
+		sta RAM_X_event_slot_yPos,x
+		pla 
+		sta RAM_X_event_slot_xPos,x 
+		pla 
+		sta RAM_X_event_slot_SpriteAdr,x 
+		
+		lda #$008a 
+		jsl lunchSFXfromAccum 
+		rtl 				; boss face 
 }   
 
 
@@ -2698,9 +3390,10 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		stz $f8
 		inc $24,x 
 	endPaletteBatBa:
-		rts
+		rtl
 	PalettePracticeRing:	 		; batbaFrames 37e84 palette and here too
-		db $00,$00,$B4,$72,$2F,$5E,$8A,$45,$E6,$34,$23,$11,$83,$08,$62,$04,$9A,$7F,$C4,$14,$00,$00,$7D,$57,$BD,$2E,$34,$09,$B0,$00,$48,$00
+;		db $00,$00,$B4,$72,$2F,$5E,$8A,$45,$E6,$34,$23,$11,$83,$08,$62,$04,$9A,$7F,$C4,$14,$00,$00,$7D,$57,$BD,$2E,$34,$09,$B0,$00,$48,$00
+		db $C9,$20,$BE,$6F,$95,$42,$B0,$31,$4A,$21,$07,$11,$A2,$14,$62,$04,$36,$01,$CF,$00,$00,$00,$7D,$57,$BD,$2E,$34,$09,$B0,$00,$48,$00
 
 
 pushPC

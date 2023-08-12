@@ -30,6 +30,9 @@ org $82D647
 	getPixleOffsetXposAwayFromSimon:		;86C56F|2247D682|82D647;  		
 org $80CF86
 	readCollusionTable7e4000:       ;8289E5|2286CF80|80CF86;  
+org $80D7CC
+	calculateSpriteSlotOffset_ID_atRam1a:
+
 
 org $81f93a					; palette animation chandelire BG dest 
 	dw $2200
@@ -2445,10 +2448,14 @@ pullPC
         LDY.W #$0680                 
         JSL.L $85D903                   
       
-		LDA.B RAM_X_event_slot_xPos,X                                   
-        sbc #$0020                     
-        STA.W RAM_81_X_event_slot_xPos,Y 
-        LDY.W #$06c0                 
+;		LDA.B RAM_X_event_slot_xPos,X                                   
+;        sbc #$0020                     
+;        STA.W RAM_81_X_event_slot_xPos,Y 
+        LDA.B RAM_X_event_slot_yPos,X                                 
+        sbc #$0040                     
+        STA.W RAM_81_X_event_slot_yPos,Y 
+		
+		LDY.W #$06c0                 
         JSL.L $85D903          
 
 		LDA.B RAM_X_event_slot_yPos,X                                 
@@ -2683,6 +2690,105 @@ pullPC
 
 }
 
+
+
+{	; boss mummy		
+
+	newMummyBossRoutine:		; scroll fix 12d8 stop scroll minus 
+		lda #$0010
+		sta $a4 
+		stz.w $12d8 
+				
+;		jsl $82B099			; hijack fix 
+;		lda #$0010
+;		sta $1298 
+		
+		LDA.W $0EF0                          ;82B099|ADF00E  |810EF0; screenshake routine 
+		BEQ +             
+		dec $0ef0
+		lda $3a 
+		bit #$0001
+		beq ++
+		dec $1298
+		
+	+ 	RTL                         
+	++ 	inc #$1298
+		rtl 
+
+	appearBandagesRoutine:
+		lda #$fffc 
+		sta RAM_X_event_slot_ySpd,x 
+		JSL.L $82B069	; spriteAnimationRoutine00       ;83B478|2269B082|82B069;  
+		rtl 
+
+	newBandagesMummy:		
+		lda RAM_simonSlot_Ypos
+		cmp RAM_X_event_slot_yPos,x 		
+        bcs CODE_83B4ED                      
+ 
+		LDA.W RAM_81_X_event_slot_ySpdSub,X 
+        SEC                                  
+        SBC.W #$1800                       
+        STA.W RAM_81_X_event_slot_ySpdSub,X 
+        LDA.W RAM_81_X_event_slot_ySpd,X    
+        SBC.W #$0000                       
+		cmp #$fffd						; cap speed 
+		beq +
+        STA.W RAM_81_X_event_slot_ySpd,X    
+		
+	+	bra mummyBandageHomeXpos
+		
+	CODE_83B4ED: 
+		LDA.W RAM_81_X_event_slot_ySpdSub,X 
+        CLC                                  
+        ADC.W #$1800                       
+        STA.W RAM_81_X_event_slot_ySpdSub,X 
+        LDA.W RAM_81_X_event_slot_ySpd,X    
+        ADC.W #$0000                       
+        cmp #$0003						; cap speed 
+		beq mummyBandageHomeXpos
+		STA.W RAM_81_X_event_slot_ySpd,X    
+
+	mummyBandageHomeXpos: 	
+		lda RAM_simonSlot_Xpos
+		cmp RAM_X_event_slot_xPos,x 		
+        bcs bandageHomeOtherSide                      
+ 
+		LDA.W RAM_81_X_event_slot_xSpdSub,X 
+        SEC                                  
+        SBC.W #$1800                        
+        STA.W RAM_81_X_event_slot_xSpdSub,X 
+        LDA.W RAM_81_X_event_slot_xSpd,X    
+        SBC.W #$0000                        
+        cmp #$fffd					; cap speed 
+		beq +
+		STA.W RAM_81_X_event_slot_xSpd,X    
+		
+	+	rtl 
+		
+	bandageHomeOtherSide: 
+		LDA.W RAM_81_X_event_slot_xSpdSub,X 
+        CLC                                  
+        ADC.W #$1800                        
+        STA.W RAM_81_X_event_slot_xSpdSub,X 
+        LDA.W RAM_81_X_event_slot_xSpd,X    
+        ADC.W #$0000                        
+        cmp #$0003					; cap speed 
+		beq +
+		STA.W RAM_81_X_event_slot_xSpd,X    
+	
+	+	rtl 
+
+	newShootingSwitchMummy:
+			lda $14,x 
+			eor #$0001
+			sta $14,x 
+			STA.B RAM_X_event_slot_3a,X          ;83B160|953A    |00003A;  
+            RTL                                  ;83B162|6B      |      ;  	
+
+}
+
+
 ; --------------------------------------------------------------------------
 
 pushPC		
@@ -2690,6 +2796,235 @@ pushPC
 ; --------------------------------------------------------------------------
 ; -------------------------------- hijacks and OG disASM -------------------
 ; --------------------------------------------------------------------------
+
+{	; boss mummy			
+org $83B022
+	    ; JSL.L bossRoutineLastEventSlotScreenShakeRoutine;83B022|2299B082|82B099;
+		jsl newMummyBossRoutine
+		
+org $83B036
+      mummyStateTable: 
+		dw mummyState00                      ;83B036|        |83B040;  
+        dw mummyState01_appearing            ;83B038|        |83B092;  
+        dw mummyState02_attacking            ;83B03A|        |83B163;  
+        dw mummyState03_dessaper             ;83B03C|        |83B2ED;  
+        dw mummyState04_death                ;83B03E|        |83B3BC;  
+
+org $83B040
+		mummyState00:
+	org $83B069	
+		LDA.W #$1000                         ;83B069|A90008  |      ;  health
+		
+org $83B092
+		mummyState01_appearing:
+	org $83B0AC
+			CMP.W #$0018                         ;83B0AC|C98000  |      ;  	
+	org $83B0C3		
+			CMP.W #$0025                         ;83B0C3|C9D500  |      ; 
+		
+org $83B163
+		mummyState02_attacking:
+	
+		org $83B250	
+	        SBC.W #$0001                         ;83B250|E90300  |      ;  	
+		
+            STA.W RAM_81_X_event_slot_ySpd,Y     ;83B253|991E00  |81001E;  
+            LDA.B RAM_X_event_slot_flip_mirror_attribute,X;83B256|B504    |000004;  
+            BEQ CODE_83B273                      ;83B258|F019    |83B273;  
+            LDA.W #$0003                         ;83B25A|A90200  |      ;  
+            STA.W RAM_81_X_event_slot_xSpd,Y     ;83B25D|991A00  |81001A;  
+			lda RAM_81_RNG_2
+            STA.W RAM_81_X_event_slot_xSpdSub,Y  ;83B263|991800  |810018;  
+            LDA.W #$0006                         ;83B266|A90600  |      ;  
+            STA.W RAM_81_X_event_slot_ID,Y       ;83B269|991000  |810010;  
+            LDA.W #$4000                         ;83B26C|A90040  |      ;  
+            STA.W RAM_81_X_event_slot_flip_mirror_attribute,Y;83B26F|990400  |810004;  
+            RTL                                  ;83B272|6B      |      ;  
+                                                            ;      |        |      ;  
+          CODE_83B273: 
+			LDA.W #$FFFc                         ;83B273|A9FDFF  |      ;  
+            STA.W RAM_81_X_event_slot_xSpd,Y     ;83B276|991A00  |81001A;  
+;            LDA.W #$8000                         ;83B279|A90080  |      ;  
+			lda RAM_81_RNG_2
+            STA.W RAM_81_X_event_slot_xSpdSub,Y  ;83B27C|991800  |810018;  
+            LDA.W #$0007                         ;83B27F|A90700  |      ;  
+            STA.W RAM_81_X_event_slot_ID,Y       ;83B282|991000  |810010;  
+;            stz.w RAM_81_X_event_slot_flip_mirror_attribute,Y;83B288|990400  |810004;  
+            RTL                                  ;83B28B|6B      |      ;  		
+warnPC $83B28C			
+
+org $83B15A		
+;			LDA.B RAM_RNG_2                      ;83B15A|A5E8    |0000E8;  
+;            XBA                                  ;83B15C|EB      |      ;  
+;            AND.W #$0001                         ;83B15D|290100  |      ;  
+		jsl newShootingSwitchMummy
+		rtl 
+		
+		
+		
+org $83B2ED
+		mummyState03_dessaper:
+		
+org $83B3BC
+		mummyState04_death:
+
+org $83B478
+		jsl appearBandagesRoutine
+
+org $83B4B2
+		jsl newBandagesMummy 
+		jml $83B432
+org $83B56C
+			jsl bossPlus1LSRHealthHudCalc
+
+org $81D829
+;SpriteAnimationTable91: 
+	dw sprAssID_1025_bossMummyBandage01  ;81D829|        |84DEC4;  
+    dw $0003                             ;81D82B|        |      ;  
+    dw sprAssID_1024_bossMummyAppear00   ;81D82D|        |84DEB7;  
+    dw $0003                             ;81D82F|        |      ;  
+    dw sprAssID_1023                     ;81D831|        |84DEAA;  
+    dw $0003                             ;81D833|        |      ;  
+    dw sprAssID_1022                     ;81D835|        |84DE9D;  
+    dw $0003                             ;81D837|        |      ;  
+    dw sprAssID_1021                     ;81D839|        |84DE90;  
+    dw $0003                             ;81D83B|        |      ;  
+    dw sprAssID_1020                     ;81D83D|        |84DE83;  
+    dw $0003                             ;81D83F|        |      ;  
+    dw sprAssID_1019                     ;81D841|        |84DE76;  
+    dw $0003                             ;81D843|        |      ;  
+    dw sprAssID_1018                     ;81D845|        |84DE69;  
+    dw $0003                             ;81D847|        |      ;  
+    dw sprAssID_1017                     ;81D849|        |84DE5C;  
+    dw $0003                             ;81D84B|        |      ;  
+    dw sprAssID_1016                     ;81D84D|        |84DE4B;  
+    dw $0003                             ;81D84F|        |      ;  
+    dw sprAssID_1015                     ;81D851|        |84DE3A;  
+    dw $0003                             ;81D853|        |      ;  
+    dw sprAssID_1014                     ;81D855|        |84DE29;  
+    dw $0003                             ;81D857|        |      ;  
+    dw sprAssID_1013                     ;81D859|        |84DE18;  
+    dw $0003                             ;81D85B|        |      ;  
+    dw sprAssID_1012                     ;81D85D|        |84DE07;  
+    dw $0003                             ;81D85F|        |      ;  
+    dw sprAssID_1011                     ;81D861|        |84DDF6;  
+    dw $0003                             ;81D863|        |      ;  
+    dw sprAssID_1010                     ;81D865|        |84DDE5;  
+    dw $0003                             ;81D867|        |      ;  
+    dw sprAssID_1009                     ;81D869|        |84DDCC;  
+    dw $0003                             ;81D86B|        |      ;  
+    dw sprAssID_1008                     ;81D86D|        |84DDAF;  
+    dw $0003                             ;81D86F|        |      ;  
+    dw sprAssID_1006                     ;81D871|        |84DD75;  
+    dw $0003                             ;81D873|        |      ;  
+    dw sprAssID_1005                     ;81D875|        |84DD58;  
+    dw $0003                             ;81D877|        |      ;  
+    dw sprAssID_1004                     ;81D879|        |84DD3B;  
+    dw $0003                             ;81D87B|        |      ;  
+    dw sprAssID_1003                     ;81D87D|        |84DD1E;  
+    dw $0003                             ;81D87F|        |      ;  
+    dw sprAssID_1003                     ;81D881|        |84DD1E;  
+    dw $0003,$FFFF                       ;81D883|        |      ;  
+
+;org $81D887
+;SpriteAnimationTable92: 
+	dw sprAssID_1003                     ;81D887|        |84DD1E;  
+    dw $0003                             ;81D889|        |      ;  
+    dw sprAssID_1004                     ;81D88B|        |84DD3B;  
+    dw $0003                            ;81D88D|        |      ;  
+    dw sprAssID_1005                     ;81D88F|        |84DD58;  
+    dw $0003                            ;81D891|        |      ;  
+    dw sprAssID_1006                     ;81D893|        |84DD75;  
+    dw $0003                             ;81D895|        |      ;  
+    dw sprAssID_1008                     ;81D897|        |84DDAF;  
+    dw $0003                             ;81D899|        |      ;  
+    dw sprAssID_1009                     ;81D89B|        |84DDCC;  
+    dw $0003                             ;81D89D|        |      ;  
+    dw sprAssID_1010                     ;81D89F|        |84DDE5;  
+    dw $0003                             ;81D8A1|        |      ;  
+    dw sprAssID_1011                     ;81D8A3|        |84DDF6;  
+    dw $0003                             ;81D8A5|        |      ;  
+    dw sprAssID_1012                     ;81D8A7|        |84DE07;  
+    dw $0003                             ;81D8A9|        |      ;  
+    dw sprAssID_1013                     ;81D8AB|        |84DE18;  
+    dw $0003                             ;81D8AD|        |      ;  
+    dw sprAssID_1014                     ;81D8AF|        |84DE29;  
+    dw $0003                             ;81D8B1|        |      ;  
+    dw sprAssID_1015                     ;81D8B3|        |84DE3A;  
+    dw $0002                             ;81D8B5|        |      ;  
+    dw sprAssID_1016                     ;81D8B7|        |84DE4B;  
+    dw $0002                             ;81D8B9|        |      ;  
+    dw sprAssID_1017                     ;81D8BB|        |84DE5C;  
+    dw $0002                             ;81D8BD|        |      ;  
+    dw sprAssID_1018                     ;81D8BF|        |84DE69;  
+    dw $0002                             ;81D8C1|        |      ;  
+    dw sprAssID_1019                     ;81D8C3|        |84DE76;  
+    dw $0002                             ;81D8C5|        |      ;  
+    dw sprAssID_1020                     ;81D8C7|        |84DE83;  
+    dw $0002                             ;81D8C9|        |      ;  
+    dw sprAssID_1021                     ;81D8CB|        |84DE90;  
+    dw $0002                             ;81D8CD|        |      ;  
+    dw sprAssID_1022                     ;81D8CF|        |84DE9D;  
+    dw $0002                             ;81D8D1|        |      ;  
+    dw sprAssID_1023                     ;81D8D3|        |84DEAA;  
+    dw $0002                             ;81D8D5|        |      ;  
+    dw sprAssID_1024_bossMummyAppear00   ;81D8D7|        |84DEB7;  
+    dw $0002                             ;81D8D9|        |      ;  
+    dw sprAssID_1025_bossMummyBandage01  ;81D8DB|        |84DEC4;  
+    dw $0002                             ;81D8DD|        |      ;  
+    dw sprAssID_1025_bossMummyBandage01  ;81D8DF|        |84DEC4;  
+    dw $0002,$FFFF                       ;81D8E1|        |      ;  
+
+
+
+org $84DD1E;  
+	sprAssID_1003:
+org $84DD3B;
+	sprAssID_1004:
+org $84DD58;  
+	sprAssID_1005:
+org $84DD75;  
+	sprAssID_1006:
+org $84DDAF;  
+	sprAssID_1008:
+org $84DDCC;  
+	sprAssID_1009:
+org $84DDE5;  
+	sprAssID_1010:
+org $84DDF6;  
+	sprAssID_1011:
+org $84DE07;  
+	sprAssID_1012:
+org $84DE18; 
+	sprAssID_1013:
+org $84DE29;  
+	sprAssID_1014:
+org $84DE3A;   
+	sprAssID_1015:
+org $84DE4B;   
+	sprAssID_1016:
+org $84DE5C;   
+	sprAssID_1017:
+org $84DE69;    
+	sprAssID_1018:
+org $84DE76;  
+	sprAssID_1019:
+org $84DE83;  
+	sprAssID_1020:
+org $84DE90;  
+	sprAssID_1021:
+org $84DE9D;   
+	sprAssID_1022:
+org $84DEAA;  
+	sprAssID_1023:
+org $84DEB7;  
+	sprAssID_1024_bossMummyAppear00:
+org $84DEC4;  
+	sprAssID_1025_bossMummyBandage01:
+
+
+}
+
 
 {	; bossZapf
 

@@ -1,4 +1,63 @@
-                       RAM_X_event_slot_sprite_assembly = $000000
+                       ; ---------------------------- general Labels for common routines -----------------------------
+org $808189
+	RNGgetMix00:
+org $808C59
+	clearSelectedEventSlotAll:	
+org $82B3F4
+	clearCurrentEventSlot:
+org $8090E9	
+	bossGetPaletteY2X:
+org $82B069
+	spriteAnimationRoutine00:
+org $81A49A
+	dl NewBossMain			; boss fixes for event 2f are in tutorialHackTweaks as well
+org $829327
+	BossMain:	
+org $8085E3
+	sfxLunch:
+	lunchSFXfromAccum:	
+org $8280DD
+	musicLunch:
+org $80859E
+	musicLunchFix:			; wish I would know better what it does and could find a better name 
+org $80D7F1
+	getEmptyEventSlot:      
+org $82B407
+	gravetyFallCalculation2000:     
+org $82B459
+	gravetyFallCalculation4000:      
+org $82D647
+	getPixleOffsetXposAwayFromSimon:			
+org $80CF86
+	readCollusionTable7e4000:       
+org $80D7CC
+	calculateSpriteSlotOffset_ID_atRam1a:
+org $80859E
+	musicFixFlagCheck:
+org $808584
+	muteMusic:                 		   
+org $82B0EE
+	resetRAM22And24:              
+org $82B0E0
+	clearSpeedValuesAll:           			   
+org $82B0E9
+	clearSpeedValuesX:
+org $82B0E4
+	clearSpeedValuesY:             
+org $82AFEE
+	deathDivingYspeed:              
+org $82FFC0
+	SC4ed_LvL_transitHandler:
+org $80CDEE
+    skellyGravity: 
+org $82939F
+	clearEventTableBeforBoss:
+org $8280E8
+	miscGFXloadRoutineXPlus81Bank:  
+org $80E096 	
+	collideWithSimonCheck:					   
+					   RAM_X_event_slot_sprite_assembly = $000000
+					   RAM_X_event_slot_attribute = $000002
 					   RAM_X_event_slot_flip_mirror_attribute = $000004
 					   RAM_X_event_slot_event_slot_health = $000006;      |        |      ;  
                        RAM_X_event_slot_xPosSub = $000008   ;      |        |      ;  
@@ -69,10 +128,10 @@
                        RAM_BG1_XposScrollSpeed = $0000A8    ;      |        |      ;  
                        RAM_BG1_YposScrollSpeed = $0000AA    ;      |        |      ;  
                        RAM_IndexSpecialLevelBehavier = $0000AE;      |        |      ;  
-;						RAM_WhipCancleTimer = $0000ac                      
-;						RAM_SubweaponCancleTimer = $0000ba       
+						RAM_WhipCancleTimer = $0000ac                      
+						RAM_SubweaponCancleTimer = $0000ba       
 					   RAM_FlagAllowOutOfBounce = $0000B6   ;      |        |      ;  
-                       ; RAM_FlagBossFight = $0000B8 
+                        RAM_FlagBossFight = $0000B8 
 					   RAM_simon_invulnerable_counter = $0000BC;      |        |      ;  
                        RAM_buttonMapJump = $0000BE          ;      |        |      ;  
                        RAM_buttonMapWhip = $0000C0          ;      |        |      ;  
@@ -90,9 +149,10 @@
                        RAM_whipSlot00 = $000200             ;      |        |      ;  
                        RAM_whipSlot01 = $000240             ;      |        |      ;  
                        RAM_whipSlot02 = $000280             ;      |        |      ;  
-                       RAM_whipSlot03 = $0002C0             ;      |        |      ;  
+                        RAM_SubWep_useTimer = $0002bc 
+					   RAM_whipSlot03 = $0002C0             ;      |        |      ;  
                        RAM_whipSlot04 = $000300             ;      |        |      ;  
-;						RAM_whipLangthOnRing = $00033c
+						RAM_whipLangthOnRing = $00033c
 
                        RAM_whipSlot05 = $000340             ;      |        |      ;  
                        RAM_whipSlot06 = $000380             ;      |        |      ;  
@@ -169,12 +229,13 @@
                        RAM_freeSpaceTill_1e7f_exeptOptionsMenu = $001E18;      |        |      ;  
                        RAM_freeSpaceTill_1e7f = $001E2E     ;      |        |      ;  
                        RAM_blackFade = $001E80              ;      |        |      ;  
-;                      RAM_autoMove = $001e82 82 auto move right 81 standart ?? 
+						RAM_autoMove = $001e82 ;82 auto move right 81 standart ?? 
 					   RAM_PPU_Mode = $001E84               ;      |        |      ;  
                        RAM_sprite_size_mode = $001E86       ;      |        |      ;  
                        RAM_mosaicEffect_Value_BG = $001E8A  ;      |        |      ;  
                        RAM_scoreLow = $001F40               ;      |        |      ;  
-                       RAM_scoreHigh = $001F42              ;      |        |      ;  
+                       RAM_scoreHigh = $001F42  
+						RAM_81_simon_Mud_State = $001f88					   ;      |        |      ;  
                        RAM_simonStat_direction = $001F8A    ;      |        |      ;  
                        RAM_simonStat_Stuck = $001FA2        ;      |        |      ;  
                        SNES_INIDISP = $002100               ;      |        |      ;  
@@ -532,396 +593,3 @@
                        RAM_81_scoreHigh = $811F42           ;      |        |      ;  
                        RAM_81_simonStat_direction = $811F8A ;      |        |      ;  
                        RAM_81_simonStat_Stuck = $811FA2     ;      |        |      ;  
-                       SNES_81_INIDISP = $812100            ;      |        |      ;  
-                       SNES_81_OBJSEL = $812101             ;      |        |      ;  
-                       SNES_81_OAMADDL = $812102            ;      |        |      ;  
-                       SNES_81_OAMADDH = $812103            ;      |        |      ;  
-                       SNES_81_OAMDATA = $812104            ;      |        |      ;  
-                       SNES_81_BGMODE = $812105             ;      |        |      ;  
-                       SNES_81_MOSAIC = $812106             ;      |        |      ;  
-                       SNES_81_BG1SC = $812107              ;      |        |      ;  
-                       SNES_81_BG2SC = $812108              ;      |        |      ;  
-                       SNES_81_BG3SC = $812109              ;      |        |      ;  
-                       SNES_81_BG4SC = $81210A              ;      |        |      ;  
-                       SNES_81_BG12NBA = $81210B            ;      |        |      ;  
-                       SNES_81_BG34NBA = $81210C            ;      |        |      ;  
-                       SNES_81_BG1HOFS = $81210D            ;      |        |      ;  
-                       SNES_81_BG1VOFS = $81210E            ;      |        |      ;  
-                       SNES_81_BG2HOFS = $81210F            ;      |        |      ;  
-                       SNES_81_BG2VOFS = $812110            ;      |        |      ;  
-                       SNES_81_BG3HOFS = $812111            ;      |        |      ;  
-                       SNES_81_BG3VOFS = $812112            ;      |        |      ;  
-                       SNES_81_BG4HOFS = $812113            ;      |        |      ;  
-                       SNES_81_BG4VOFS = $812114            ;      |        |      ;  
-                       SNES_81_VMAINC = $812115             ;      |        |      ;  
-                       SNES_81_VMADDL = $812116             ;      |        |      ;  
-                       SNES_81_VMADDH = $812117             ;      |        |      ;  
-                       SNES_81_VMDATAL = $812118            ;      |        |      ;  
-                       SNES_81_VMDATAH = $812119            ;      |        |      ;  
-                       SNES_81_M7SEL = $81211A              ;      |        |      ;  
-                       SNES_81_M7A = $81211B                ;      |        |      ;  
-                       SNES_81_M7B = $81211C                ;      |        |      ;  
-                       SNES_81_M7C = $81211D                ;      |        |      ;  
-                       SNES_81_M7D = $81211E                ;      |        |      ;  
-                       SNES_81_M7X = $81211F                ;      |        |      ;  
-                       SNES_81_M7Y = $812120                ;      |        |      ;  
-                       SNES_81_CGADD = $812121              ;      |        |      ;  
-                       SNES_81_CGDATA = $812122             ;      |        |      ;  
-                       SNES_81_W12SEL = $812123             ;      |        |      ;  
-                       SNES_81_W34SEL = $812124             ;      |        |      ;  
-                       SNES_81_WOBJSEL = $812125            ;      |        |      ;  
-                       SNES_81_WH0 = $812126                ;      |        |      ;  
-                       SNES_81_WH1 = $812127                ;      |        |      ;  
-                       SNES_81_WH2 = $812128                ;      |        |      ;  
-                       SNES_81_WH3 = $812129                ;      |        |      ;  
-                       SNES_81_WBGLOG = $81212A             ;      |        |      ;  
-                       SNES_81_WOBJLOG = $81212B            ;      |        |      ;  
-                       SNES_81_TM = $81212C                 ;      |        |      ;  
-                       SNES_81_TS = $81212D                 ;      |        |      ;  
-                       SNES_81_TMW = $81212E                ;      |        |      ;  
-                       SNES_81_TSW = $81212F                ;      |        |      ;  
-                       SNES_81_CGSWSEL = $812130            ;      |        |      ;  
-                       SNES_81_CGADSUB = $812131            ;      |        |      ;  
-                       SNES_81_COLDATA = $812132            ;      |        |      ;  
-                       SNES_81_SETINI = $812133             ;      |        |      ;  
-                       SNES_81_MPYL = $812134               ;      |        |      ;  
-                       SNES_81_MPYM = $812135               ;      |        |      ;  
-                       SNES_81_MPYH = $812136               ;      |        |      ;  
-                       SNES_81_SLHV = $812137               ;      |        |      ;  
-                       SNES_81_ROAMDATA = $812138           ;      |        |      ;  
-                       SNES_81_RVMDATAL = $812139           ;      |        |      ;  
-                       SNES_81_RVMDATAH = $81213A           ;      |        |      ;  
-                       SNES_81_RCGDATA = $81213B            ;      |        |      ;  
-                       SNES_81_OPHCT = $81213C              ;      |        |      ;  
-                       SNES_81_OPVCT = $81213D              ;      |        |      ;  
-                       SNES_81_STAT77 = $81213E             ;      |        |      ;  
-                       SNES_81_STAT78 = $81213F             ;      |        |      ;  
-                       SNES_81_APUIO0 = $812140             ;      |        |      ;  
-                       SNES_81_APUIO1 = $812141             ;      |        |      ;  
-                       SNES_81_APUIO2 = $812142             ;      |        |      ;  
-                       SNES_81_APUIO3 = $812143             ;      |        |      ;  
-                       SNES_81_WMDATA = $812180             ;      |        |      ;  
-                       SNES_81_WMADDL = $812181             ;      |        |      ;  
-                       SNES_81_WMADDM = $812182             ;      |        |      ;  
-                       SNES_81_WMADDH = $812183             ;      |        |      ;  
-                       SNES_81_JOY1 = $814016               ;      |        |      ;  
-                       SNES_81_JOY2 = $814017               ;      |        |      ;  
-                       SNES_81_NMITIMEN = $814200           ;      |        |      ;  
-                       SNES_81_WRIO = $814201               ;      |        |      ;  
-                       SNES_81_WRMPYA = $814202             ;      |        |      ;  
-                       SNES_81_WRMPYB = $814203             ;      |        |      ;  
-                       SNES_81_WRDIVL = $814204             ;      |        |      ;  
-                       SNES_81_WRDIVH = $814205             ;      |        |      ;  
-                       SNES_81_WRDIVB = $814206             ;      |        |      ;  
-                       SNES_81_HTIMEL = $814207             ;      |        |      ;  
-                       SNES_81_HTIMEH = $814208             ;      |        |      ;  
-                       SNES_81_VTIMEL = $814209             ;      |        |      ;  
-                       SNES_81_VTIMEH = $81420A             ;      |        |      ;  
-                       SNES_81_MDMAEN = $81420B             ;      |        |      ;  
-                       SNES_81_HDMAEN = $81420C             ;      |        |      ;  
-                       SNES_81_MEMSEL = $81420D             ;      |        |      ;  
-                       SNES_81_RDNMI = $814210              ;      |        |      ;  
-                       SNES_81_TIMEUP = $814211             ;      |        |      ;  
-                       SNES_81_HVBJOY = $814212             ;      |        |      ;  
-                       SNES_81_RDIO = $814213               ;      |        |      ;  
-                       SNES_81_RDDIVL = $814214             ;      |        |      ;  
-                       SNES_81_RDDIVH = $814215             ;      |        |      ;  
-                       SNES_81_RDMPYL = $814216             ;      |        |      ;  
-                       SNES_81_RDMPYH = $814217             ;      |        |      ;  
-                       SNES_81_CNTRL1L = $814218            ;      |        |      ;  
-                       SNES_81_CNTRL1H = $814219            ;      |        |      ;  
-                       SNES_81_CNTRL2L = $81421A            ;      |        |      ;  
-                       SNES_81_CNTRL2H = $81421B            ;      |        |      ;  
-                       SNES_81_CNTRL3L = $81421C            ;      |        |      ;  
-                       SNES_81_CNTRL3H = $81421D            ;      |        |      ;  
-                       SNES_81_CNTRL4L = $81421E            ;      |        |      ;  
-                       SNES_81_CNTRL4H = $81421F            ;      |        |      ;  
-                       SNES_81_DMA0PARAM = $814300          ;      |        |      ;  
-                       SNES_81_DMA0REG = $814301            ;      |        |      ;  
-                       SNES_81_DMA0ADDRL = $814302          ;      |        |      ;  
-                       SNES_81_DMA0ADDRM = $814303          ;      |        |      ;  
-                       SNES_81_DMA0ADDRH = $814304          ;      |        |      ;  
-                       SNES_81_DMA0CNTL = $814305           ;      |        |      ;  
-                       SNES_81_DMA0CNTH = $814306           ;      |        |      ;  
-                       SNES_81_HDMA0BANK = $814307          ;      |        |      ;  
-                       SNES_81_DMA0IDXL = $814308           ;      |        |      ;  
-                       SNES_81_DMA0IDXH = $814309           ;      |        |      ;  
-                       SNES_81_HDMA0LINES = $81430A         ;      |        |      ;  
-                       SNES_81_DMA1PARAM = $814310          ;      |        |      ;  
-                       SNES_81_DMA1REG = $814311            ;      |        |      ;  
-                       SNES_81_DMA1ADDRL = $814312          ;      |        |      ;  
-                       SNES_81_DMA1ADDRM = $814313          ;      |        |      ;  
-                       SNES_81_DMA1ADDRH = $814314          ;      |        |      ;  
-                       SNES_81_DMA1CNTL = $814315           ;      |        |      ;  
-                       SNES_81_DMA1CNTH = $814316           ;      |        |      ;  
-                       SNES_81_HDMA1BANK = $814317          ;      |        |      ;  
-                       SNES_81_DMA1IDXL = $814318           ;      |        |      ;  
-                       SNES_81_DMA1IDXH = $814319           ;      |        |      ;  
-                       SNES_81_HDMA1LINES = $81431A         ;      |        |      ;  
-                       SNES_81_DMA2PARAM = $814320          ;      |        |      ;  
-                       SNES_81_DMA2REG = $814321            ;      |        |      ;  
-                       SNES_81_DMA2ADDRL = $814322          ;      |        |      ;  
-                       SNES_81_DMA2ADDRM = $814323          ;      |        |      ;  
-                       SNES_81_DMA2ADDRH = $814324          ;      |        |      ;  
-                       SNES_81_DMA2CNTL = $814325           ;      |        |      ;  
-                       SNES_81_DMA2CNTH = $814326           ;      |        |      ;  
-                       SNES_81_HDMA2BANK = $814327          ;      |        |      ;  
-                       SNES_81_DMA2IDXL = $814328           ;      |        |      ;  
-                       SNES_81_DMA2IDXH = $814329           ;      |        |      ;  
-                       SNES_81_HDMA2LINES = $81432A         ;      |        |      ;  
-                       SNES_81_DMA3PARAM = $814330          ;      |        |      ;  
-                       SNES_81_DMA3REG = $814331            ;      |        |      ;  
-                       SNES_81_DMA3ADDRL = $814332          ;      |        |      ;  
-                       SNES_81_DMA3ADDRM = $814333          ;      |        |      ;  
-                       SNES_81_DMA3ADDRH = $814334          ;      |        |      ;  
-                       SNES_81_DMA3CNTL = $814335           ;      |        |      ;  
-                       SNES_81_DMA3CNTH = $814336           ;      |        |      ;  
-                       SNES_81_HDMA3BANK = $814337          ;      |        |      ;  
-                       SNES_81_DMA3IDXL = $814338           ;      |        |      ;  
-                       SNES_81_DMA3IDXH = $814339           ;      |        |      ;  
-                       SNES_81_HDMA3LINES = $81433A         ;      |        |      ;  
-                       SNES_81_DMA4PARAM = $814340          ;      |        |      ;  
-                       SNES_81_DMA4REG = $814341            ;      |        |      ;  
-                       SNES_81_DMA4ADDRL = $814342          ;      |        |      ;  
-                       SNES_81_DMA4ADDRM = $814343          ;      |        |      ;  
-                       SNES_81_DMA4ADDRH = $814344          ;      |        |      ;  
-                       SNES_81_DMA4CNTL = $814345           ;      |        |      ;  
-                       SNES_81_DMA4CNTH = $814346           ;      |        |      ;  
-                       SNES_81_HDMA4BANK = $814347          ;      |        |      ;  
-                       SNES_81_DMA4IDXL = $814348           ;      |        |      ;  
-                       SNES_81_DMA4IDXH = $814349           ;      |        |      ;  
-                       SNES_81_HDMA4LINES = $81434A         ;      |        |      ;  
-                       SNES_81_DMA5PARAM = $814350          ;      |        |      ;  
-                       SNES_81_DMA5REG = $814351            ;      |        |      ;  
-                       SNES_81_DMA5ADDRL = $814352          ;      |        |      ;  
-                       SNES_81_DMA5ADDRM = $814353          ;      |        |      ;  
-                       SNES_81_DMA5ADDRH = $814354          ;      |        |      ;  
-                       SNES_81_DMA5CNTL = $814355           ;      |        |      ;  
-                       SNES_81_DMA5CNTH = $814356           ;      |        |      ;  
-                       SNES_81_HDMA5BANK = $814357          ;      |        |      ;  
-                       SNES_81_DMA5IDXL = $814358           ;      |        |      ;  
-                       SNES_81_DMA5IDXH = $814359           ;      |        |      ;  
-                       SNES_81_HDMA5LINES = $81435A         ;      |        |      ;  
-                       SNES_81_DMA6PARAM = $814360          ;      |        |      ;  
-                       SNES_81_DMA6REG = $814361            ;      |        |      ;  
-                       SNES_81_DMA6ADDRL = $814362          ;      |        |      ;  
-                       SNES_81_DMA6ADDRM = $814363          ;      |        |      ;  
-                       SNES_81_DMA6ADDRH = $814364          ;      |        |      ;  
-                       SNES_81_DMA6CNTL = $814365           ;      |        |      ;  
-                       SNES_81_DMA6CNTH = $814366           ;      |        |      ;  
-                       SNES_81_HDMA6BANK = $814367          ;      |        |      ;  
-                       SNES_81_DMA6IDXL = $814368           ;      |        |      ;  
-                       SNES_81_DMA6IDXH = $814369           ;      |        |      ;  
-                       SNES_81_HDMA6LINES = $81436A         ;      |        |      ;  
-                       SNES_81_DMA7PARAM = $814370          ;      |        |      ;  
-                       SNES_81_DMA7REG = $814371            ;      |        |      ;  
-                       SNES_81_DMA7ADDRL = $814372          ;      |        |      ;  
-                       SNES_81_DMA7ADDRM = $814373          ;      |        |      ;  
-                       SNES_81_DMA7ADDRH = $814374          ;      |        |      ;  
-                       SNES_81_DMA7CNTL = $814375           ;      |        |      ;  
-                       SNES_81_DMA7CNTH = $814376           ;      |        |      ;  
-                       SNES_81_HDMA7BANK = $814377          ;      |        |      ;  
-                       SNES_81_DMA7IDXL = $814378           ;      |        |      ;  
-                       SNES_81_DMA7IDXH = $814379           ;      |        |      ;  
-                       SNES_81_HDMA7LINES = $81437A         ;      |        |      ;  
-                       WRAM_DMA_Table = $7E2C00             ;      |        |      ;  
-                       WRAM_DMA_PPU_DATA = $7E3000          ;      |        |      ;  
-                       WRAM_Collusion_Table = $7E3C00       ;      |        |      ;  
-                       WRAM_GFX_SimonsSpriteSheet = $7F0000 ;      |        |      ;  
-                       Native_COP = $0082BE                 ;      |        |      ;  
-                       Native_NMI = $00FFB0                 ;      |        |      ;  
-                       Native_RESET = $008000               ;      |        |      ;  
-                       NewSC4edCamaraLockSubIDRoutine = $81B783;      |        |      ;  
-                       fallSpeedStonesStage3 = $81B98F      ;      |        |      ;  
-                       paletteNoAnimationEmpty = $8186F5    ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       miscData01 = $81B1A3                 ;      |        |      ;  
-                       miscData02 = $81B1A7                 ;      |        |      ;  
-                       miscData03 = $81B1AF                 ;      |        |      ;  
-                       miscData05 = $81B1BD                 ;      |        |      ;  
-                       miscData09 = $81B1D3                 ;      |        |      ;  
-                       miscData0b = $81B1E1                 ;      |        |      ;  
-                       miscData0c = $81B1EB                 ;      |        |      ;  
-                       ;      |        |      ;  
-                       deathStageDataTable = $81B395        ;      |        |      ;  
-                       ;      |        |      ;  
-                       miscData0d = $81B1F3                 ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       ;      |        |      ;  
-                       GFX_7DFFFB = $7DFFFB                 ;      |        |      ;  
-                       GFX_7DFFFE = $7DFFFE                 ;      |        |      ;  
-                       PTR24_81A41E = $81A41E               ;      |        |      ;  
-                       PTR24_81A59E = $81A59E               ;      |        |      ;  
-                       DATA16_81AB01 = $81AB01              ;      |        |      ;  
-                       DATA16_81AA80 = $81AA80              ;      |        |      ;  
-                       DATA16_81A900 = $81A900              ;      |        |      ;  
-                       DATA16_819534 = $819534              ;      |        |      ;  
-                       DATA16_81B201 = $81B201              ;      |        |      ;  
-                       DATA16_81B211 = $81B211              ;      |        |      ;  
-                       DATA16_81B227 = $81B227              ;      |        |      ;  
-                       DATA16_81B247 = $81B247              ;      |        |      ;  
-                       DATA16_81B285 = $81B285              ;      |        |      ;  
-                       DATA16_81B287 = $81B287              ;      |        |      ;  
-                       DATA16_81B2E9 = $81B2E9              ;      |        |      ;  
-                       DATA16_81B2F1 = $81B2F1              ;      |        |      ;  
-                       DATA16_81B2F5 = $81B2F5              ;      |        |      ;  
-                       DATA16_81B2F9 = $81B2F9              ;      |        |      ;  
-                       DATA16_81B2FD = $81B2FD              ;      |        |      ;  
-                       DATA16_81B347 = $81B347              ;      |        |      ;  
-                       DATA16_81B355 = $81B355              ;      |        |      ;  
-                       CODE_00D7F1 = $00D7F1                ;      |        |      ;  
-                       CODE_00D805 = $00D805                ;      |        |      ;  
-                       CODE_80FF40 = $80FF40                ;      |        |      ;  
-                       PTR16_00FFFF = $00FFFF               ;      |        |      ;  
-                       GFX_1DAD35 = $1DAD35                 ;      |        |      ;  
-                       DATA16_81DEA5 = $81DEA5              ;      |        |      ;  
-                       PTR16_A68001 = $A68001               ;      |        |      ;  
-                       DATA8_22E00C = $22E00C               ;      |        |      ;  
-                       DATA16_81B753 = $81B753              ;      |        |      ;  
-                       DATA16_81B763 = $81B763              ;      |        |      ;  
-                       DATA16_81B903 = $81B903              ;      |        |      ;  
-                       DATA16_81B92D = $81B92D              ;      |        |      ;  
-                       DATA16_81B935 = $81B935              ;      |        |      ;  
-                       DATA16_81B93D = $81B93D              ;      |        |      ;  
-                       DATA16_81B967 = $81B967              ;      |        |      ;  
-                       DATA16_81B969 = $81B969              ;      |        |      ;  
-                       DATA16_81B987 = $81B987              ;      |        |      ;  
-                       DATA16_81B9B3 = $81B9B3              ;      |        |      ;  
-                       DATA16_81B9A1 = $81B9A1              ;      |        |      ;  
-                       PTR16_81B9BD = $81B9BD               ;      |        |      ;  
-                       LOOSE_OP_81C07E = $81C07E            ;      |        |      ;  
-                       CODE_00C42F = $00C42F                ;      |        |      ;  
-                       CODE_00C499 = $00C499                ;      |        |      ;  
-                       LOOSE_OP_00C484 = $00C484            ;      |        |      ;  
-                       LOOSE_OP_00C4DB = $00C4DB            ;      |        |      ;  
-                       CODE_00C549 = $00C549                ;      |        |      ;  
-                       LOOSE_OP_00C595 = $00C595            ;      |        |      ;  
-                       LOOSE_OP_00C47A = $00C47A            ;      |        |      ;  
-                       CODE_00C51C = $00C51C                ;      |        |      ;  
-                       LOOSE_OP_00C5B7 = $00C5B7            ;      |        |      ;  
-                       CODE_00C5F4 = $00C5F4                ;      |        |      ;  
-                       CODE_00C61B = $00C61B                ;      |        |      ;  
-                       LOOSE_OP_00C5B2 = $00C5B2            ;      |        |      ;  
-                       UNREACH_00C333 = $00C333             ;      |        |      ;  
-                       UNREACH_00C323 = $00C323             ;      |        |      ;  
-                       UNREACH_00C351 = $00C351             ;      |        |      ;  
-                       UNREACH_00C359 = $00C359             ;      |        |      ;  
-                       LOOSE_OP_828C59 = $828C59            ;      |        |      ;  
-                       DATA16_81D114 = $81D114              ;      |        |      ;  
-                       DATA16_81D116 = $81D116              ;      |        |      ;  
-                       DATA16_81D09E = $81D09E              ;      |        |      ;  
-                       DATA16_81DFCC = $81DFCC              ;      |        |      ;  
-                       DATA16_81E000 = $81E000              ;      |        |      ;  
-                       DATA16_81DFE0 = $81DFE0              ;      |        |      ;  
-                       DATA16_81DF96 = $81DF96              ;      |        |      ;  
-                       DATA16_81DF7A = $81DF7A              ;      |        |      ;  
-                       DATA16_81DF9C = $81DF9C              ;      |        |      ;  
-                       DATA16_81DF88 = $81DF88              ;      |        |      ;  
-                       DATA16_81DF72 = $81DF72              ;      |        |      ;  
-                       DATA16_81E02E = $81E02E              ;      |        |      ;  
-                       DATA16_81E05E = $81E05E              ;      |        |      ;  
-                       DATA16_81E0B4 = $81E0B4              ;      |        |      ;  
-                       DATA16_81E0DC = $81E0DC              ;      |        |      ;  
-                       DATA16_81E0B2 = $81E0B2              ;      |        |      ;  
-                       DATA16_81E0E4 = $81E0E4              ;      |        |      ;  
-                       DATA16_81E0EC = $81E0EC              ;      |        |      ;  
-                       DATA16_81E0F4 = $81E0F4              ;      |        |      ;  
-                       DATA16_81E2CC = $81E2CC              ;      |        |      ;  
-                       DATA16_81E652 = $81E652              ;      |        |      ;  
-                       DATA16_81E882 = $81E882              ;      |        |      ;  
-                       DATA16_81E838 = $81E838              ;      |        |      ;  
-                       DATA16_81E7F6 = $81E7F6              ;      |        |      ;  
-                       DATA16_81E84C = $81E84C              ;      |        |      ;  
-                       DATA16_81E852 = $81E852              ;      |        |      ;  
-                       DATA16_81E858 = $81E858              ;      |        |      ;  
-                       DATA16_81E85E = $81E85E              ;      |        |      ;  
-                       DATA16_81E860 = $81E860              ;      |        |      ;  
-                       DATA16_81E888 = $81E888              ;      |        |      ;  
-                       DATA16_81E88C = $81E88C              ;      |        |      ;  
-                       DATA16_81EB5E = $81EB5E              ;      |        |      ;  
-                       DATA16_81E908 = $81E908              ;      |        |      ;  
-                       DATA16_81E8E2 = $81E8E2              ;      |        |      ;  
-                       DATA16_81EFCC = $81EFCC              ;      |        |      ;  
-                       DATA16_81F042 = $81F042              ;      |        |      ;  
-                       DATA16_81F33D = $81F33D              ;      |        |      ;  
-                       DATA16_81F323 = $81F323              ;      |        |      ;  
-                       DATA16_81F33B = $81F33B              ;      |        |      ;  
-                       DATA16_81F32B = $81F32B              ;      |        |      ;  
-                       DATA16_81F311 = $81F311              ;      |        |      ;  
-                       DATA16_81F341 = $81F341              ;      |        |      ;  
-                       DATA16_81F345 = $81F345              ;      |        |      ;  
-                       DATA16_81F35B = $81F35B              ;      |        |      ;  
-                       DATA16_81F625 = $81F625              ;      |        |      ;  
-                       DATA16_81F653 = $81F653              ;      |        |      ;  
-                       DATA16_81F673 = $81F673              ;      |        |      ;  
-                       DATA16_81F67B = $81F67B              ;      |        |      ;  
-                       DATA16_81F5A7 = $81F5A7              ;      |        |      ;  
-                       DATA16_8182E5 = $8182E5              ;      |        |      ;  
-                       DATA16_8183E5 = $8183E5              ;      |        |      ;  
-                       DATA16_81F683 = $81F683              ;      |        |      ;  
-                       CODE_00F9FA = $00F9FA                ;      |        |      ;  
-                       LOOSE_OP_00F9FC = $00F9FC            ;      |        |      ;  
-                       CODE_00F9E5 = $00F9E5                ;      |        |      ;  
-                       LOOSE_OP_00F9E7 = $00F9E7            ;      |        |      ;  
-                       DATA16_01FA15 = $01FA15              ;      |        |      ;  
-                       CODE_00BAA3 = $00BAA3                ;      |        |      ;  
-                       LOOSE_OP_00BB0E = $00BB0E            ;      |        |      ;  
-                       LOOSE_OP_00BBFD = $00BBFD            ;      |        |      ;  
-                       PTR16_00FA47 = $00FA47               ;      |        |      ;  
-                       LOOSE_OP_00FA4B = $00FA4B            ;      |        |      ;  
-                       CODE_00FA4F = $00FA4F                ;      |        |      ;  
-                       CODE_0082E5 = $0082E5                ;      |        |      ;  
-                       CODE_00BE2F = $00BE2F                ;      |        |      ;  
-                       CODE_00BE59 = $00BE59                ;      |        |      ;  
-                       CODE_00BE88 = $00BE88                ;      |        |      ;  
-                       LOOSE_OP_00FA2B = $00FA2B            ;      |        |      ;  
-                       LOOSE_OP_00FA31 = $00FA31            ;      |        |      ;  
-                       LOOSE_OP_00FA37 = $00FA37            ;      |        |      ;  
-                       PTR16_00FA3D = $00FA3D               ;      |        |      ;  
-                       PTR16_00FA43 = $00FA43               ;      |        |      ;  
-                       LOOSE_OP_00BEE1 = $00BEE1            ;      |        |      ;  
-                       LOOSE_OP_00BEE4 = $00BEE4            ;      |        |      ;  
-                       LOOSE_OP_00BF0D = $00BF0D            ;      |        |      ;  
-                       UNREACH_00FA53 = $00FA53             ;      |        |      ;  
-                       LOOSE_OP_00FA63 = $00FA63            ;      |        |      ;  
-                       LOOSE_OP_00FA73 = $00FA73            ;      |        |      ;  
-                       LOOSE_OP_00FABA = $00FABA            ;      |        |      ;  
-                       LOOSE_OP_00FA92 = $00FA92            ;      |        |      ;  
-                       CODE_00FA94 = $00FA94                ;      |        |      ;  
-                       LOOSE_OP_00FAE2 = $00FAE2            ;      |        |      ;  
-                       DATA16_81FB80 = $81FB80              ;      |        |      ;  
-                       DATA16_81FBF8 = $81FBF8              ;      |        |      ;  
-                       DATA16_81FBF0 = $81FBF0              ;      |        |      ;  
-                       DATA16_81FC00 = $81FC00              ;      |        |      ;  
-                       DATA16_81FC08 = $81FC08              ;      |        |      ;  
-                       DATA16_81FCA0 = $81FCA0              ;      |        |      ;  
-                       DATA16_81FCBE = $81FCBE              ;      |        |      ;  
-                       DATA16_81FCC0 = $81FCC0              ;      |        |      ;  

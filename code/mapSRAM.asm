@@ -112,7 +112,12 @@ pullPC 			; freeSpace
 		jsl writeMapTextUpdateTable
 		jsl buttonControllsMap
 
-		stz !flagSkipBoss		; load bosses on retrie 
+		stz !flagSkipBoss		; load bosses on re-enter
+		
+		lda RAM_setSecondQuest
+		beq endMapLevelSelect
+		
+		jsl makeWobbleMap
 
 	endMapLevelSelect:
 		rtl 			
@@ -122,7 +127,17 @@ pullPC 			; freeSpace
         INC.W $1C00                          ;809D7D|EE001C  |811C00;  
 	+	rtl 
 
-
+	makeWobbleMap:
+		inc $202
+		lda $202 
+		and #$0080
+		beq +
+		inc.w $1ea0 
+		dec.w $1ea2
+		rtl
+	+	dec.w $1ea0 
+		inc.w $1ea2
+		rtl 
 	buttonControllsMap:
 		LDA.B $28    	; exit map with start or A 
         BIT.W #$1080                       
@@ -188,7 +203,16 @@ pullPC 			; freeSpace
 		lda $700000		; reset to highest level avalible 
 	++	sta $700002	 
     HoldButtonCheckMap:   
-		rtl 
+		lda $28			; switch Quest
+		bit #$2000
+		beq ++
+		lda RAM_setSecondQuest
+		bne +
+		lda #$0008
+		sta.b RAM_setSecondQuest
+		bra ++
+	+	stz.b RAM_setSecondQuest
+	++	rtl 
 		
 	
 	newMapExitBehavier:
@@ -233,7 +257,7 @@ pullPC 			; freeSpace
 		jsl SetDataBanktoA4
 		
 		lda #$0000					; clear table
-		ldx #$0038
+		ldx #$0036
 	-	sta.l $7fff88,x
 		dex
 		dex
@@ -338,6 +362,12 @@ pullPC 			; freeSpace
 		lda.l $700010
 		sta !dogLeash
 		
+		lda.l $700012
+		bne + 
+		lda #$0001 						; failsave to never load 00 since that will trigger game over 
+	+	sta RAM_simon_Lifes
+;		stz.w !townTravel
+		
 		jsl SetDataBankto81
 		
 		ply
@@ -358,7 +388,7 @@ pullPC 			; freeSpace
 		dw $010b        ;a
 		dw $010a        ;b
 		dw $0112        ;c
-		dw $0113        ;d
+		dw $2113        ;d
 		dw $0114        ;e
 		dw $0111        ;f
 		dw $1110        ;10
@@ -366,7 +396,8 @@ pullPC 			; freeSpace
 		dw $1101        ;12
 		dw $1207        ;13
 		dw $0319        ;14		;  $3205 I could go to the correct level but it breaks level finding.. 
-		dw $2319        ;15
+;		dw $2319        ;15		; breaks level saving
+		dw $0316
 		dw $041d        ;16		; castle start
 		dw $141c        ;17
 		dw $041f        ;18
@@ -386,33 +417,33 @@ pullPC 			; freeSpace
 		dw $052f        ;26
 		dw $0530        ;27
 		dw $0535        ;28		; zapfQuater
-		dw $0537        ;29		; CV shooter 
-		dw $0538        ;2a		; clock tower climb 1
-		dw $0539        ;2b		; clocktower right
-		dw $053a        ;2c		; clocktower climb 2	
-		dw $053b        ;2d		; CV shooter 2
-		dw $063c        ;2e		; decend draculas bridge
-		dw $063d        ;2f		; draculas bridge 
-		dw $063e        ;30		; finall level 
-		dw $063f        ;31		
-		dw $0640        ;32
-		dw $0741        ;33
+		dw $0637        ;29		; CV shooter 
+		dw $0638        ;2a		; clock tower climb 1
+		dw $0639        ;2b		; clocktower right
+		dw $063a        ;2c		; clocktower climb 2	
+		dw $063b        ;2d		; CV shooter 2
+		dw $073c        ;2e		; decend draculas bridge
+		dw $073d        ;2f		; draculas bridge 
+		dw $073e        ;30		; finall level 
+;		dw $063f        ;31		
+		dw $0741        ;32
+		dw $0740        ;33
 		dw $0742        ;34
-		dw $0742        ;35
-		dw $0742        ;36
-		dw $0742        ;37
-		dw $0742        ;38
-		dw $0742        ;39
-		dw $0842        ;3a
-		dw $0842        ;3b
-		dw $0842        ;3c
-		dw $0842        ;3d
-		dw $0842        ;3e
-		dw $0942        ;3f
-		dw $0a42        ;41
-		dw $0a42        ;42
-		dw $0a42        ;43
-		dw $0a42	    ;44
+;		dw $0742        ;35
+;		dw $0742        ;36
+;		dw $0742        ;37
+;		dw $0742        ;38
+;		dw $0742        ;39
+;		dw $0842        ;3a
+;		dw $0842        ;3b
+;		dw $0842        ;3c
+;		dw $0842        ;3d
+;		dw $0842        ;3e
+;		dw $0942        ;3f
+;		dw $0a42        ;41
+;		dw $0a42        ;42
+;		dw $0a42        ;43
+;		dw $0a42	    ;44
 		
 
 	removePWScreenWithMapScreen:
@@ -437,10 +468,10 @@ pullPC 			; freeSpace
 	+	JML.L $83821F		; CODE_83821F
 
 	levelSelectText00:
-		db "MAP SELECT   "
+		db "MAP SELECT   " ;,$00
 	
 	levelSelectText01:
-		db "UP DOWN START"	
+		db "UP DOWN START",00	
 	
 	textMapHowTo:
 		dw levelSelectText01
@@ -499,6 +530,21 @@ pullPC 			; freeSpace
 		LDA #$01fe   ; Set A to $00f0 bytes to be cleared
 		MVN $70,$70  ; 
 		
+		lda #$0000
+		sta.l !armorType
+		sta.l !whipLeanth
+		sta.l !whipDropCounter
+		sta.l !ownedWhipTypes
+		sta.l !allSubweapon
+		sta.l !currentHeartCountBackup
+		sta.l !layer2ScrollBehavier
+		sta.l !logicRingControlls
+		sta.l !killedHusband
+		sta.l !aramusBelmontCross
+		sta.l !costumMusicNumber
+		sta.l !dogLeash
+		sta.l !fishCatchedFlag
+
 		ply
 		plx
 		
@@ -518,10 +564,13 @@ pullPC 			; freeSpace
 	
 ;---------------------------------- old job asm 
 	saveProgress:
+		lda $32							; dont run in auto play mode 
+		cmp #$0004
+		bne endSaveProgress 
 		lda $13d4						; skip save on last entrance so we can use it for secrets 
-		cmp #$0007
-		beq endSaveProgress	
-
+		cmp #$0006
+		bcs endSaveProgress	
+		
 		lda $86							; skip save on first section since you could accidently overwrite score 	
 		cmp #$0005
 		beq endSaveProgress				
@@ -536,8 +585,10 @@ pullPC 			; freeSpace
 		sta.l $70000a
 		lda !dogLeash
 		sta.l $700010
+		lda RAM_simon_Lifes
+		sta.l $700012
  
-		ldx #$0086						; start max level 
+		ldx #$0066						; start max level 86 orginal 
 	-	lda.l levelTable,x				; find current level you are in 
 		and #$00ff 
 		dex
@@ -549,10 +600,19 @@ pullPC 			; freeSpace
 		lsr 							; make index to current level number 
 		inc 							; reverse index adjustment to get current level 
 		sec 
-		cmp.l $700000					; ech if we advanced more allready 
-		bcc endSaveProgress 
+		cmp.l $700000					; check if we advanced more allready 
+		bcc + 
 		sta.l $700000
-		sta.l $700002					; update progress too 
+		
+		pha 
+		cmp.l $700002
+		beq sameLevelNoSound
+		lda #$003c						; 8e 90 1a		
+		jsl lunchSFXfromAccum
+		sameLevelNoSound:
+		pla 
+		
+	+	sta.l $700002					; update progress too 
 	endSaveProgress:	
 		rtl 
 
@@ -566,6 +626,12 @@ pullPC 			; freeSpace
 		rtl 
 		
 	levelJobLoad:
+		lda !armorType
+		cmp #$0005
+		bne +
+		jsl endRecording					; fix unfinished recording !! fixme	
+	+	
+		
 ;		lda $0086
 ;		bne +
 ;		lda #$0002							; level 00 setup
@@ -736,7 +802,7 @@ pullPC 			; freeSpace
 		dw textTown,$0000,$0000,$0000   ;lvl 5
 		dw textTutorial,$0000,$0000,$0000         ;lvl 6
 	fixSecondTownText:	
-		dw textTown2,$0000,$0000,$0002	;lvl 7
+		dw textTown2,$0000,$0000,$0042	;lvl 7
 		dw textParkour,$0000,$0000,$0000     ;lvl 8	gravyard
 		dw textSwamp,$0000,$0000,$0000    ;lvl 9	swamp
 		dw textRifer,$0000,$0000,$0002         ;lvl a	waterslide
@@ -751,7 +817,7 @@ pullPC 			; freeSpace
 		dw textBodlyMansion,$0000,$0000,$0002	      ;lvl 13
 		dw textBodlyMansion,$0000,$0000,$0002	     ;lvl 14
 		dw emptyText,$0000,$0000,$0013	  ;lvl 15	rotating
-		dw emptyText,$0000,$0000,$0013	       ;lvl 16
+		dw textLoveTunnel,$0000,$0000,$0013	       ;lvl 16
 		dw textKoranotsLayer,$0000,$0000,$0003	      ;lvl 17
 		dw textPreCastle,$0000,$0000,$0000	  ;lvl 18 blue
 		dw textSecretTunnle,$0000,$0000,$0003	  ;lvl 19
@@ -778,10 +844,10 @@ pullPC 			; freeSpace
 		dw textTreasureRoom00,$0000,$0000,$0003	    ;lvl 2e gold
 		dw textTreasureRoom00,$0000,$0000,$0013	  ;lvl 2f
 		dw textTreasureRoom00,$0000,$0000,$0013	  ;lvl 30
-		dw textTreasureRoom01,$0000,$0000,$0013	  ;lvl 31 zapfQuater
-		dw textTreasureRoom01,$0000,$0000,$0013	    ;lvl 32
-		dw textTreasureRoom01,$0000,$0000,$0013	      ;lvl 33
-		dw textTreasureRoom01,$0000,$0000,$0013	  ;lvl 34
+		dw emptyText,$0000,$0000,$0013	  ;lvl 31 zapfQuater
+		dw textPayDay,$0000,$0000,$0013	    ;lvl 32
+		dw emptyText,$0000,$0000,$0013	      ;lvl 33
+		dw emptyText,$0000,$0000,$0013	  ;lvl 34
 		dw textTreasureRoom01,$0000,$0000,$0013	  ;lvl 35
 		dw emptyText,$0000,$0000,$0012	          ;lvl 36 secret 01
 		dw CVshooterText,$0000,$0000,$0013	      ;lvl 37 ClockTower
@@ -791,21 +857,22 @@ pullPC 			; freeSpace
 		dw CVshooterText,$0000,$0000,$0013	      ;lvl 3b MummyRoom
 		dw textBridge,$0000,$0000,$0013	  ;lvl 3c Bridge
 		dw textBridge,$0000,$0000,$0013	      ;lvl 3d
-		dw emptyText,$0000,$0000,$0013	  ;lvl 3e FinalTower
+		dw textFinalTower,$0000,$0000,$0013	  ;lvl 3e FinalTower
 		dw emptyText,$0000,$0000,$0013	      ;lvl 3f Slog
-		dw emptyText,$0000,$0000,$0013	   ;lvl 41	Gai
-		dw emptyText,$0000,$0000,$0013	      ;lvl 42  Death
-		dw emptyText,$0000,$0000,$0013	  ;lvl 43
-		dw emptyText,$0000,$0000,$0013	  ;lvl 44 Drac                                          
+		dw textFinalCoridor,$0000,$0000,$0013	   ;lvl 41	Gai
+		dw textDEATH,$0000,$0000,$0013	      ;lvl 42  Death
+		dw textCount,$0000,$0000,$0013	  ;lvl 43
+		dw textCount,$0000,$0000,$0013	  ;lvl 44 Drac                                          
 	
 
-	
+	textPayDay:
+		db "DRACULAS PIMP  ",$00
 	textTown:
 		db "ALBA INN       ",$00
 	textTown2:
 		db "DOINA INN      ",$00
 	textTutorial:
-		db "TUTORIAL       ",$00
+		db "HIDEOUT LAURA  ",$00
 	jobDeath:
 		db "CHOOP CHOOP    ",$00
 	jobDrac:
@@ -832,6 +899,8 @@ pullPC 			; freeSpace
 		db "WICKED DITCH   ",$00
 	emptyText:
 		db "               ",$00
+	textLoveTunnel:
+		db "WASH TOWER     ",$00
 	textSecretTunnle:
 		db "SECRET PATH    ",$00
 	textKoranotsLayer:
@@ -863,7 +932,15 @@ pullPC 			; freeSpace
 	textGear02:
 		db "TIME TO ZIP    ",$00	
 	textBridge:
-		db "DRACULAS BRIDGE",$00		
+		db "DRACULAS BRIDGE",$00
+	textFinalTower:
+		db "TOWER OF DOOM  ",$00
+	textDEATH:
+		db "DEATH          ",$00
+	textCount:
+		db "COUNT          ",$00	
+	textFinalCoridor:
+		db "DELUSIONS      ",$00
 
 		
 	secondTownPointerFix:

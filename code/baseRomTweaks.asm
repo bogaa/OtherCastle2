@@ -189,13 +189,6 @@ endif 	; -----------------------------------------------------------------------
 
 
 
-
-
-
-
-
-
-
 ; --------------------------------- small fixes Simon enviorment -----------------------------------
 org $86BBCA
 		jml removeRingWhipOnGearFix
@@ -220,7 +213,7 @@ org $80A758		; max fall speed
 		STA.W RAM_81_simonSlot_SpeedYpos     	;80A766|8D5E05  |81055E;  
 	+ 	RTL                              
 
-; ---------------------------------------------------------------------------------------------------
+; -------------------------------- reset button combo L + R + Start then Select -------------------------------------------------------------------
 org $8087C8
 		JMP.W buttonResetRoutine ; reset button combo			; CODE_808131                    ;8087C8|4C3181  |808131; 
 org $80FED6
@@ -234,11 +227,6 @@ org $80FED6
 		
 		jmp $8131 				
 warnPC $80FF30
-
-
-
-
-
 
 
 if !invertRingGlitchControll == 1 
@@ -259,18 +247,15 @@ pullPC
 	+	lda $0574	; hijackFix 
 		rtl 
 		
-	invertControllAboveRingFix:				; if is in if bat.. we need better hijack system!! FIXME	
+	invertControllAboveRingFix:		
 		lda !logicRingControlls
 		beq ++
 		
 		lda RAM_simonSlot_State 			; skip not in ring state since we like to detect the first frame we got a hit on the current ring 
 		cmp #$0008
-		beq +
+		bne ++
 
-		lda #$0001								; set it to a value so we can detect hits in ring state
-		sta RAM_X_event_slot_event_slot_health,x
-			
-	+	lda RAM_X_event_slot_event_slot_health,x	; once damage done we know we can to our check to invert controlls 
+		cpx $13DC
 		bne ++
 		
 		lda RAM_simonSlot_Ypos
@@ -300,7 +285,21 @@ org $80DB1B
 ;    BEQ CODE_80DB22                      ;80DB1B|F005    |80DB22;  
 ;    BMI CODE_80DB22                      ;80DB1D|3003    |80DB22;  
 ;    JMP.W CODE_80DC78                    ;80DB1F|4C78DC  |80DC78;  
+org $80DB8D
+	jml bossRingCheck 
+;	nop #$04 						; enable rings while bosses happen 
+	bossRingCheckReturn:
+
 pullPC
+	bossRingCheck:
+		lda $86 
+		cmp #$0032
+		beq +
+		LDA.B RAM_FlagBossFight
+		beq +
+		jml $80DBC7				; skip ring init 
+	+	jml bossRingCheckReturn
+	
 	whipCancleRingFix:
 		BEQ +                     
 		BMI +                     
@@ -389,7 +388,13 @@ org $80DE9D
 	jsl subWeaponDropPickupBeahvier
 	nop
 	nop
-	
+
+org $80D2BE			; new Fall behavier collectable items
+		jsl newFallBehavierCollectable
+org $80D2D5
+		jsl newItemGrounded
+org $82B8E3
+		jsl boneDragonDropFix 
 
 pullPC
 	subWeaponDropPickupBeahvier:
@@ -410,8 +415,13 @@ pullPC
 		sbc #$0018						; make it appear above Simon 
 		sta $0e,x 
 		
-		lda #$0009
-		sta RAM_X_event_slot_HitboxID,x 
+;		lda #$0009
+;		sta RAM_X_event_slot_HitboxID,x 
+		stz.b RAM_X_event_slot_HitboxID,x 	
+		
+		lda #$0028						; timer to not be collected again 
+		sta $32,x 
+		
 		lda #$0003
 		sta RAM_X_event_slot_Movement2c,x 
 		sta RAM_X_event_slot_HitboxXpos,x
@@ -437,6 +447,73 @@ pullPC
         SEC                                
         SBC.W #$0019                     
 		rtl 
+		
+	newFallBehavierCollectable:				; make a timer to disable a time from beeing collected
+		pha 
+		
+		lda $20,x							; skip for snowflakes, a flag used in a random costum event.. 
+		bne ++	
+		
+		phx 
+		lda RAM_X_event_slot_xPos,X				; move item up when in wall 
+		sta $00
+		LDA.B RAM_X_event_slot_yPos,X   
+        STA $02
+		JSL.L readCollusionTable7e4000
+		beq +
+		plx 
+		jsr outOfWallTowardSimon
+		phx 
+		
+	+	plx 
+		lda $32,x 
+;		and #$00ff								; dirty fix for boneDragon drop.. FIXME 
+		beq +
+		dec $32,x 
+		stz.b RAM_X_event_slot_HitboxID,x 	
+		stz.b $00,x 							; flicker
+		lda $3a
+		bit #$0001
+		beq ++	
+		lda $3e,x 
+		sta.b $00,x 
+		bra ++	
+		
+	+	lda #$0009
+		sta RAM_X_event_slot_HitboxID,x 	
+		
+	++	pla 
+		clc 			; hijack fix 
+		adc #$2800
+		rtl 
+	newItemGrounded:
+		jsl newFallBehavierCollectable
+		lda $3e,x
+		sta $00,x 
+		STZ.B RAM_X_event_slot_Movement2c,X  
+        DEC.B RAM_X_event_slot_24,X 
+		rtl 		
+		
+	outOfWallTowardSimon:
+		lda RAM_simonSlot_Xpos
+		cmp.b RAM_X_event_slot_xPos,X
+		bcs +
+		dec.b RAM_X_event_slot_xPos,X
+		bra ++
+	+	inc.b RAM_X_event_slot_xPos,X
+	++	lda RAM_simonSlot_Ypos
+		cmp.b RAM_X_event_slot_yPos,X
+		bcc +
+		inc.b RAM_X_event_slot_yPos,X
+		bra ++
+	+	dec.b RAM_X_event_slot_yPos,X 			
+	++	rts 
+	
+	boneDragonDropFix:
+		JSL.L $82B0E0                    ;82B8E3|22E0B082|82B0E0;  hijack fix  	
+		stz.b $32,x 					; clear so we can collect items 
+		stz.b $20,x 
+		rtl
 pushPC
 
 endif 	; ------------------------------------------------------------------------------------------
@@ -659,7 +736,7 @@ pullPC				; free space
         JMP.W ($00) 
 		
 	newRingEventSubID:
-		dw ringSubID80,ringSubID81,ringSubID82,ringSubID83,ringMedusaMovm84,ringPlaceHolder85
+		dw ringSubID80,ringSubID81,ringSubID82,ringSubID83,ringMedusaMovm84,ringPlaceHolder85,ringPlaceHold_86,ringPlaceHold_87,ringFuzzy88,ringFuzzy89
 	
 	ringSubID80:						; rising and wrapping rings 				
 		lda RAM_simonSlot_State 
@@ -898,6 +975,34 @@ pullPC				; free space
 		jsl $8CFF49		; simon follow Ring
 		rtl 
 				
+	ringPlaceHold_86:
+		rtl 	
+	ringPlaceHold_87:
+		lda #$00F1
+		jsl makeFuzzyRing
+		lda #$0087
+		sta $14,x 
+		rtl 
+	ringFuzzy89:
+		lda #$0041
+		bra makeFuzzyRing
+	ringFuzzy88:
+		lda #$0001
+	makeFuzzyRing:	
+		sta $14,x 
+		
+		lda $16,x 
+		sta $12,x 
+		jsl newFuzzyColussionBased
+		
+		lda $12,x 		
+		sta $16,x 
+		lda #$0088
+		sta $14,x 
+		
+		jsl $8CFF49						; make Simon FollowRing 
+		rtl 
+
 }
 		
 		
@@ -1064,7 +1169,9 @@ pullPC
 	
 PushPC 
 
-
+; ----------------- small heart disapear time -----------------
+org $80D2D0		
+		LDA.W #$00F0                         ;80D2D0|A9C000  |      ;  
 ; ----------------- whip upgrade -------------------------------
 org $80E014
 WhipUpgradDropCheck: 
@@ -1121,6 +1228,11 @@ org $80bb8a
 		lda #$0008				; default 0004 holywater hitbox 	
 ;org $80bc03                     
 ;		lda #$0010				; default 0008 holywater hitbox wide ypos
+
+
+org $80BBB5
+		jsl newHolyWaterMovm
+
 org $80BBFC
 		lda #$0050				; holy water timer
 		jsl newHolyWbehavier
@@ -1204,6 +1316,46 @@ pullPC
 		
 		plx 
 	+	rtl
+
+	newHolyWaterMovm:
+		CLC                                  ;80BB11|18      |      ;  
+        LDA.B RAM_X_event_slot_ySpdSub,X     ;80BB12|B51C    |00001C;  
+        ADC.W #$3000                         ;80BB14|690060  |      ;  		
+		jsl $80BB17
+			
+		lda #$0800
+		sta $00
+		
+		lda $20
+		bit.b RAM_buttonMapSubWep
+		beq slowHolyCheckLettingGo
+		
+		lda $30,x 
+		bne slowHolyWDownWenNotPressd 
+		
+		lda $20
+		bit #$0300
+		beq slowHolyWDownWenNotPressd
+		
+		lda #$01000
+		sta $00		
+		lda $20 
+
+		bit #$0100
+		beq holyWgoRight
+		jsl XspeedUp
+		lda RAM_X_event_slot_xSpd,x 
+		rtl 
+	holyWgoRight:	
+		jsl XspeedDown	
+		lda RAM_X_event_slot_xSpd,x 		
+		rtl 
+	slowHolyCheckLettingGo:
+		inc.b $30,x 
+	slowHolyWDownWenNotPressd:
+		jsl XSpeedDecceleratorSubAt00
+		rtl 
+
 
 	newHolyWbehavier:
 		STA.B RAM_X_event_slot_24,X          ;80BBFF|9524    |000024;  hijack fix

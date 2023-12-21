@@ -31,6 +31,10 @@ pullPC
 		BNE runTextEngine                      
         jsr.w mapScreenText
 		
+		lda $32					; only run game mode 
+		cmp #$0004
+		bne endTextEngine
+		
 		lda RAM_simonSlot_State	; gradius and elevator can glitch so we do not run when simon is in that state
 		sec 
 		sbc #$0011 
@@ -427,7 +431,6 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 ;		sta $06,x 
 		jsl checkMultiSpawn
 ;		jsl checkType2Multiples ; doesnt work for some reason.. 
-		
 		rtl
 		
 	NPCText01:	                                                                                
@@ -563,8 +566,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		jsr loadTextPointer			
 		jsl clearTextOnly
 		rtl				; actions also end the state..
-
-
+		
 }
 
 {	; NPC Text ------------------------------------------------------------------------
@@ -578,8 +580,9 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,jungLadyFr1					; 18
 		dw doorSpriteAssembly,AssAramus00,$8af4,oldManBrawnPents00			; 1c 
 		dw headlessKnightNPC,chillSkellyAss,ddSprite00,fishSprite		; 20
-		dw oldManFr1
-	
+		dw $0000,chillSkellyAss,oldManFr1,oldManFr1						; 24
+		dw $0000,oldManFr1,$9ac7,oldManBrawnPents00					; 28
+		dw $0000				; 2c 
 	npcSpriteIDlist2:	
 		dw oldMan3Fr2,jungLadyFr1,oldManFr2,jungLadyFr1					; 00 zombie Walk $96a0,$968b 
 		dw oldManFr2,oldMan3Fr2,jungLadyFr1,jungLadyFr1					; 04
@@ -590,8 +593,10 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw jungLadyFr1,jungLadyFr1,jungLadyFr1,jungLadyFr1					; 18	
 		dw doorSpriteAssembly,AssAramus01,$8af4,oldManBrawnPents01													; 1c 
 		dw headlessKnightNPC,chillSkellyAss,ddSprite01,fishSprite
-		dw oldManFr2
-
+		dw $0000,chillSkellyAss,oldManFr2,oldManFr2
+		dw $0000,oldManFr2,$9ae5,oldManBrawnPents00	
+		dw $0000
+	
 	mainNPCStateTable: 
 		dw NPCState00			; 00 init			
 		dw NPCText01	   		; 00 mainText
@@ -632,6 +637,14 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw DDnu					; 22
 		dw Fish					; 23
 		dw evilRedguy			; 24
+		dw skellyBeforeDrac		; 25
+		dw brotherBeforeDrac	; 26
+		dw panikGuy				; 27 also batBa/transformed if spawned in editor 
+		dw pipBat				; 28	
+		dw evilRedguyEnding		; 29
+		dw dungeonSkelly		; 2a
+		dw afterSlogRoom		; 2b 
+		dw finalBoss			; 2c 
 		
 	actionListMainNPC:
 		dw actionSeller,actionListGivingLady 	; 01
@@ -670,7 +683,17 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw actionListDDnu
 		dw $0000
 		dw actionListevilRedguy
-
+		dw actionListSkellyBeforeDrac
+		dw actionListbrotherBeforeDrac
+		dw actionListBatBa
+		dw $0000
+		dw $0000
+		dw dungeonSkellyActionScript
+		dw afterSlogRoomActionScript
+		dw finalBossActionScript
+pushPC
+org $a0c440
+		db "all the game text is mostly here."
 	actionSeller:
 ;		dw text00,goNextText
 ;		dw text01,goNextText
@@ -764,14 +787,13 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw redguyText11,goNextText
 		dw redguyText12,goNextText
 		dw redguyText13,goNextText
-		dw redguyText14,goNextText
-		dw redguyText15,endText
+		dw redguyText14,endText
 	
 	redguyText00:	
-		db "HELLO           "
+		db "HELLO WARRIOR   "
 		db "YES I AM        "
 		db "THE WIZARD      "		
-		db "OF THE TOWN.",$00	
+		db "OF THE TOWN.",00	
 	redguyText01:
 		db "I DID COME TO   "
 		db "FIND THE DRAGON."
@@ -779,12 +801,12 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	redguyText02:		
 		db "HOPFULLY NO ONE "
 		db "KILLS THAT OLD  "
-		db "BEAST..",$00
+		db "BEAST..",00
 	redguyText03:		
 		db ".. WHAT IS THAT "
 		db "SHINY ROCK?     "
 		db "OHH.. YOU DID   "
-		db "KILL IT!!",$00
+		db "KILL IT!!",00
 	redguyText04:	
 		db "I HAD LIKE TO   "
 		db "REVIEVE THE     "
@@ -794,14 +816,14 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "DEAMON ORB! IF  "
 		db "YOU GIVE ME     "
 		db "THE ORB. AS A   "
-		db "EXCHANGE",$00 
+		db "EXCHANGE",00 
 	redguyText06:		
 		db "I GIVE YOU A    "
 		db "MAGIC WHIP.     "
 		db "THE WHIP IS.    "
 		db "EMPOWERED.",00
 	redguyText07:
-		db "IT ALSO LOSES   "
+		db "THE WHIP LOSES  "
 		db "POWER WHEN YOU  "
 		db "DIE.",00
 	redguyText08:
@@ -812,33 +834,31 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	redguyText09:
 		db "PRESSING SELECT "
 		db "WILL LET YOU    "
-		db "SWITCH THE WHIP.",$00
+		db "SWITCH YOUR     "
+		db "WHIPS.",$00
 	redguyText10:
-		db "I TOKE THE GUY  "
-		db "FROM THE TOWN TO"
-		db "HELP ME HERE..",00	
+		db "WHAT I HAVE IN  "
+		db "MIND WITH THE   "
+		db "DRAGON?",00		
 	redguyText11:	
-		db "HE MANAGED TO   "
-		db "SCARE THE DRAGON"
-		db "OUT OF THE CAVE.",00		
+		db "I RATHER HAVE   "
+		db "IT IN MY CONTROL"
+		db "THEN DRACULA    "
+		db "USING IT..",00
 	redguyText12:
-		db "I SEND HIM TO   "
-		db "THE TOWN NORTH  "
-		db "FROM HERE TO    "
-		db "WARN THEM.",00	
+		db "QUICK GO NORTH. "
+		db "I SEND MY ALLY  "
+		db "FOR SUPLIES.",00
 	redguyText13:
-		db "I DO HAVE A BAD "
-		db "FEELING..       "
-		db "NO WORRY ABOUT  "
-		db "ME.",00	
+		db "THE TOWN IS     "
+		db "CURSED. EVIL    "
+		db "GETS STRONGER   "
+		db "EVERY MINUTE..",00	
 	redguyText14:
-		db "I HAD IN MIND TO"
-		db "FIGHT DRACULA   "
-		db "WITH THE DRAGON",00
-	redguyText15:	
-		db "THIS WILL NOT   "
-		db "BE POSSIBLE ANY "
-		db "TIME SOON..",00		
+		db "I HAVE A BAD    "
+		db "FEELING.",00
+;	redguyText15:	
+	
 	
 ;	redguyText08:	
 ;		db "MY ALLY HEADED  "
@@ -894,7 +914,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	RedguysBrotherText00:
 		db "OUR WIZARD LEFT "
 		db "TOWN TO GO TO   "
-		db "THE CAVE.",00
+		db "THE CAVES.",00
 	RedguysBrotherText01:
 		db "THINGS GETTING  "
 		db "WORSE WITHOUT   "
@@ -914,101 +934,144 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 
 	actionListBarKeeper00:
 		dw BarKeeperText00,goNextText
-		dw BarKeeperText01,goNextTextWithSound
-		dw BarKeeperText02,goNextText
+		dw BarKeeperText01,goNextText
+		dw BarKeeperText02,goNextTextWithSound
 		dw BarKeeperText03,goNextText
-		dw BarKeeperText04,endText
+		dw BarKeeperText04,goNextText
+		dw BarKeeperText05,goNextText
+		dw BarKeeperText06,goNextText
+		dw BarKeeperText07,goNextText
+		dw BarKeeperText08,goNextText
+		dw BarKeeperText09,endText
 		
 	BarKeeperText00:
 		db "I HAVE NEVER    "
 		db "SEEN SOMEONE GO "
 		db "OVER MY BAR LIKE"
-		db "THIS!",$00
+		db "THIS!",00
 	BarKeeperText01:	
 		db "ARE YOU THAT    "
-		db "THIRSTY? HEHE   "
-		db "ONE IS ON THE   "
-		db "HOUSE.",$00
-	BarKeeperText02:
-		db "UP STAIRS WILL  "
-		db "BE TRAINING FOR "
-		db "BELMONTS WHO    "
-		db "NEED PREPERATION",$00
+		db "THIRSTY? HE HE",00
+	BarKeeperText02:	
+		db "THIS ONE IS ON  "
+		db "THE HOUSE.",00
 	BarKeeperText03:
+		db "UP STAIRS IS A  "
+		db "HIDOUT.",00
+	BarKeeperText04:	
+		db "MY DAUGHTER     "
+		db "LIKES TO SHOW   "
+		db "YOU A VIEW      "
+		db "TRICKS.",00 
+	BarKeeperText05:
+		db "YOU CAN GET BACK"
+		db "HERE ANY TIME.  "
+		db "JUST HOLD SELECT"
+		db "WHILE PAUSE.",00		
+	BarKeeperText06:
+		db "ALSO ONCE LEVELS"
+		db "ARE UNLOCKED.   "
+		db "PRESS SELECT IN "
+		db "THE MAP TO",00
+	BarKeeperText07:	
+		db "TOGGLE BETWEEN  "
+		db "HARD OR NORMAL  "
+		db "VERSIONS.",00
+	BarKeeperText08:
 		db "THE BACKDOOR    "
 		db "WILL LEED YOU TO"
-		db "THE GRAVYARD.",$00
-	BarKeeperText04:
+		db "THE GRAVYARD.",00
+	BarKeeperText09:
 		db "HOPFULLY YOU    "
 		db "MANAGE TO LIFT  "
 		db "THE CURSES      "
-		db "AROUND HERE.",$00
+		db "AROUND HERE.",00
 
 	actionListTutorialLeady00:
-		dw TutorialLeadyText00,goNextText
-		dw TutorialLeadyText01,endText
-
+		dw TutorialLeadyText00,initCurser
+		dw TutorialLeadyText01,setTutorialChoice
+		
 	
 	TutorialLeadyText00:	
-		db "WHEN YOU LET GO "
-		db "AT THE PEAK OF  "
-		db "A SWING. YOU CAN"
-		db "WHIP THE RING",$00
+		db "DO A FULL SWING "
+		db "ON A RING TO LET"
+		db "GO AND HIT THE  "
+		db "RING ABOVE.",$00
 	TutorialLeadyText01:	
-		db "ABOVE WHEN YOU  "
-		db "DIAGONAL WHIP   "
-		db "RIGHT AFTER.",$00
+		db "   LET ME TRY!  "
+		db "   SHOW ME HOW! "
+		db "   REC          "
+		db "   PLAY",$00	
 	
 	actionListTutorialLeady01:
 		dw TutorialLeadyText02,goNextText
 		dw TutorialLeadyText03,goNextText
-		dw TutorialLeadyText04,endText
+		dw TutorialLeadyText04,goNextText
+		DW TutorialLeadyTextff,initCurser
+		dw TutorialLeadyText01,setTutorialChoice
 
-	TutorialLeadyText02:	
-		db "WHEN YOU WHIP   "
-		db "DOWN OR LIMP    "
-		db "WHIP AT THE     "
-		db "CENTER ABOVE",$00
-	TutorialLeadyText03:	
-		db "THE RING. YOU   "
-		db "CAN FLOAT STILL "
-		db "IF YOU DO NOT   "
-		db "USE THE DPAD.",$00
-	TutorialLeadyText04:	
-		db "THEN TAPING THE "
-		db "OPPOSIT SIDE ON "
-		db "THE DPAD YOU    "
-		db "LIKE TO MOVE.",$00	
+;	TutorialLeadyText02:	
+;		db "WHEN YOU WHIP   "
+;		db "DOWN OR LIMP    "
+;		db "WHIP AT THE     "
+;		db "CENTER ABOVE",$00
+;	TutorialLeadyText03:	
+;		db "THE RING. YOU   "
+;		db "CAN FLOAT STILL "
+;		db "IF YOU DO NOT   "
+;		db "USE THE DPAD.",$00
+;	TutorialLeadyText04:	
+;		db "THEN TAPING THE "
+;		db "OPPOSIT SIDE ON "
+;		db "THE DPAD YOU    "
+;		db "LIKE TO MOVE.",$00	
+	TutorialLeadyText02:
+		db "WHIP DOWN ON A  "
+		db "RING. TO FLOAT  "
+		db "ABOVE IT!",$00
+	TutorialLeadyText03:
+		db "A SECRET TRICK  "
+		db "IS AS LONG YOU  "
+		db "DO NOT USE",$00		
+	TutorialLeadyText04:
+		db "THE D PAD. YOU  "
+		db "FLOAT STILL.",$00
+	TutorialLeadyTextff:
+		db "THEN TAB THE    "
+		db "OPPOSITE SIDE   "
+		db "YOU LIKE TO GO.",00
+
 
 	actionListTutorialLeady02:	
 		dw TutorialLeadyText05,goNextText
 		dw TutorialLeadyText06,goNextText
 		dw TutorialLeadyText07,goNextText
 		dw TutorialLeadyText08,goNextText
-		dw TutorialLeadyText09,spawnSmallHeartAndText
+		dw TutorialLeadyText09,initCurser
+		dw TutorialLeadyText01,setTutorialChoiceHeart
 ;		dw TutorialLeadyText10,spawnSmallHeartAndText
 ;		dw TutorialLeadyText11,endText
 	
 	TutorialLeadyText05:
 		db "YOU CAN RING    "
-		db "GLITCH WHEN ON A"
-		db "RING TOO. FOR   "
-		db "THIS PULL CLOSE",$00
+		db "GLITCH WHILE ON "
+		db "A RING TOO.",00
+
 	TutorialLeadyText06:	
-		db "TO THE RING. AT "
-		db "THE RIGHT SIDE  "
-		db "PEAK LET GO AND "
-		db "DO A DIAGONAL",$00
+		db "FOR THIS PULL   "
+		db "CLOSE. AT THE   "
+		db "PEAK OF THE     "
+		db "SWING. LET GO.",00
+		
 	TutorialLeadyText07:	
-		db "DOWN WHIP.      "
-		db "FOLLOW UP WITH A"
-		db "DOWN WHIP AND   "
-		db "YOU SHOULD SIT",$00
+		db "DO A DIAGONAL   "
+		db "DOWN WHIP. INTO "
+		db "A DOWN WHIP.",00
+	
 	TutorialLeadyText08:	
+		db "YOU SHOULD SIT  "		
 		db "STILL ON THE    "
-		db "RING. TRY TO GO "
-		db "UP THIS LEDGE   "
-		db "AGAIN.",$00
+		db "RING.",00
 	TutorialLeadyText09:	
 		db "THIS SHOULD NOT "
 		db "BE REQUIERT BUT "
@@ -1253,27 +1316,48 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw BuilderManDoinaText00,goNextText
 		dw BuilderManDoinaText01,goNextText
 		dw BuilderManDoinaText02,goNextText
-		dw BuilderManDoinaText03,endText,$00
+		dw BuilderManDoinaText03,goNextText
+		dw BuilderManDoinaText04,endText,$00
 		
 	BuilderManDoinaText00:
 		db "I CLOSED UP SOME"
 		db "HOLES.. NOW THE "
 		db "MONSTERS COME   "
-		db "THROUGH SLOWER",$00
+		db "THROUGH SLOWER",$00		
 	BuilderManDoinaText01:
-		db "I DID USE A SPY "
-		db "GLASS TO LOOK AT"
-		db "THE CASTLE. I   "
-		db "WONDER HOW IT",$00
-	BuilderManDoinaText02:	
-		db "STAND AT ALL    "
-		db "THAT MANY HOLES "
-		db "IT HAS.",$00
+		db "THE OTHER DAY   "
+		db "I DID SEE A ROCK"
+		db "GOLEM NOT FAR   "
+		db "FROM HERE AS",$00	
+	BuilderManDoinaText02:
+		db "I WAS COLLECTING"
+		db "STONES..        "
+		db "I DID THROW A   "
+		db "ROCK..",$00
 	BuilderManDoinaText03:	
-		db "SOMETHING LIFING"
-		db "IN THE WALLS    "
-		db "UP THERE TO KEEP"
-		db "IT STANDING..",$00
+		db "IT SEEMED NOT   "
+		db "TO LIKE IT!!    "	
+		db "BUT A WHIP WOULD"
+		db "NOT EVEN MAKE",$00
+	BuilderManDoinaText04:
+		db "A SCRATCH!!     "
+		db "EVEN METAL IS   "
+		db "NOT AS HARD AS  "
+		db "HIS SKIN!!",$00
+;	BuilderManDoinaText01:
+;		db "I DID USE A SPY "
+;		db "GLASS TO LOOK AT"
+;		db "THE CASTLE. I   "
+;		db "WONDER HOW IT",$00
+;	BuilderManDoinaText02:	
+;		db "STAND AT ALL    "
+;		db "THAT MANY HOLES "
+;		db "IT HAS.",$00
+;	BuilderManDoinaText03:	
+;		db "SOMETHING LIFING"
+;		db "IN THE WALLS    "
+;		db "UP THERE TO KEEP"
+;		db "IT STANDING..",$00
 	
 	actionListTinnue:
 		dw textTinnue00,goNextText
@@ -1332,7 +1416,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "THERE IS A PATH "
 		db "FROM THE CAVE..",$00	
 	liftCurseText02:		
-		db "I DID HERE      "
+		db "I DID HEAR THAT "
 		db "ROWDIN MARCH THE"
 		db "LAND AND GOT A  "
 		db "GOOD IDEA OF",$00
@@ -1381,8 +1465,46 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "FRAMES WILL MAKE"
 		db "YOUR JUMP       "
 		db "SHORTER.",$00 
-		
+	
+	afterSlogRoomActionScript:
+		dw afSlogText00,goNextText
+		dw afSlogText01,goNextText
+		dw afSlogText02,goNextText
+		dw afSlogText03,goNextText
+		dw afSlogText04,goNextText
+		dw afSlogText05,goNextText
+		dw afSlogText06,endText
 
+	afSlogText00:
+		db "I CANT STOP TO  "
+		db "SPY AROUND THIS "
+		db "CASTLE!!",00
+	afSlogText01:
+		db "A BON VOYAGE    "
+		db "FOR YOU FROM    "
+		db "A GUY WHO       "
+		db "JOGGED BY HERE..",00
+	afSlogText02:
+		db "HE MAY LEAVE A  "
+		db "STRANGE GIFT    "
+		db "AT THE GATE AS  "
+		db "HE LEAFES.",00
+	afSlogText03:
+		db "TRUE EVIL IS NOT"
+		db "IN THIS CASTLE! "
+		db "BUT ORIGINATES  "
+		db "FROM TOWN!",00
+	afSlogText04:	
+		db "LAY FOGGY SIGHT "
+		db "AT SOME CRIME   "
+		db "SCENE IN TOWN   "
+		db "AND FOLLOW",$00
+	afSlogText05:	
+		db "THE LEAD..",00
+	afSlogText06:	
+		db "BE CAREFULL!!",00
+	
+	
 	actionListTipLeady01:
 		dw whipText00,goNextText
 		dw whipText01,goNextText
@@ -1399,28 +1521,26 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	whipText01:		
 		db "YOU GOT MY      "
 		db "BROTERS WHIP?   "
-		db "REMEMBER THE    "		
-		db "LEATHER WHIP",00 	
+		db "THE LEATHER     "		
+		db "WHIP IS",00 	
 	whipText02:	
-		db "IS BETTER SUITER"
-		db "FOR PLATFORMING."		
-		db "TRY SWITCHING   "
-		db "THE WHIPS FOR",00
+		db "BETTER SUITER   "
+		db "FOR PLATFORMING.",00		
+
 	whipText03:
-		db "DIFFERENT TASKS."
-		db "ON RINGS TRY TO "
-		db "FULLY EDTANDED  "
-		db "THE LATHER WHIP.",00
+		db "FULLY EXTANDED  "
+		db "THE LATHER WHIP "
+		db "ALLIGNES WELL",00
 	whipText04:
-		db "THEN IT SHOULD  "
-		db "BE EASY TO MOVE "
-		db "FROM ON RING TO "
-		db "THE NEXT ONE!",00
+		db "TO MOVE FROM ONE"
+		db "RING TO A OTHER.",00
 	whipText05:	
-		db "ALSO I NEVER    "		
-		db "SEEN A TREE THIS"
-		db "TALL!",00
+		db "ALSO LOOK UP    "		
+		db "THIS TREE. HAVE "
+		db "YOU EVER SEEN   " 
+		db "A TREE",00
 	whipText06:
+		db "THIS TALL!!?    "
 		db "I WONDER WHAT IS"
 		db "ON TOP OF IT?",00
 
@@ -1499,46 +1619,38 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	moon2Text02:
 		db "GARLIC PLANTAGE "
 		db "IN TRANSELFANIA."
-		db ".. VAMP VACCIN.."		
-		db "ABOUT THE GUY..",00		
-	moon2Text03:
-		db "AS MUCH I LIKE  "
-		db "TO SEE HIM GONE "
-		db "WHAT HAPPEN IS  "
-		db "SO BAD..",00
-	moon2Text04:
-		db "HE IS MARKED AND"
-		db "WILL TURNE INTO "
-		db "A VAMPIRE..",00
+		db "WE DO SELL",00
+	moon2Text03:	
+		db "VAMPIRE VACCIN  "		
+		db "OR DESIRE. WHAT "
+		db "EVER FITS YOUR  "
+		db "NEED.",00
+	moon2Text04:	
+		db "ABOUT THE GUY..",00			
 	moon2Text05:
+		db "HE IS MARKED AND"
+		db "HE WILL TURNE   "
+		db "INTO A VAMPIRE.",00
+	moon2Text06:
 		db "DO NOT TRY TO   "
 		db "SAVE HIM. IT IS "
-		db "A TRAP. THE GUY "
-		db "WITH THE KEY.",00
-	moon2Text06:
-		db "HE WAS SEND TO  "
-		db "DECIVE YOU. BE  "
-		db "WARNED. THERE IS"
-		db "ONLY DEATH YOU",00
+		db "A TRAP.",00 		
 	moon2Text07:
-		db "WILL FIND DOWN  "
-		db "THERE. JUST GO  "
-		db "AFTER THE COUNT "
-		db "AS LONG HE",00	
-	moon2Text08:
-		db "DOES NOT GROW   "
-		db "GROW TOO        "
-		db "POWERFULL..",00
-	moon2Text09:
-		db "YOU SEEM THE    "
-		db "ONLY ONE STRONG "
-		db "ENOUGH. DO SAVE "
-		db "THE LAND",00
+		db "THE ONLY THING  "
+		db "TO FIND DOWN    "
+		db "THERE..",00 
+	moon2Text08:	
+		db "IS YOUR DEATH!!",00
+	moon2Text09:	
+		db "JUST GO AFTER   "
+		db "THE COUNT AS    "
+		db "LONG HE DOES",00	
 	moon2Text0a:
-		db "PLEASE DO NOT   "
-		db "FALL FOR THIS   "
-		db "TRAP. YOU ARE   "
-		db "TOO IMPORTANT.",00		
+		db "NOT GROW TOO    "
+		db "POWERFULL..     "
+		db "WE NEED YOU     "
+		db "ALIVE!!",00
+	
 
 	actionListAramus:
 		dw crossText00,goNextText
@@ -1634,11 +1746,12 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw headlessText02,goNextText
 		dw headlessText03,goNextText
 		dw headlessText04,goNextText
-		dw headlessText05,endText
-	
+		dw headlessText05,goNextText
+		dw headlessText06,goNextText
+		dw headlessText07,endText
 	
 	headlessText00:	
-		db "BUTT!! GRANDPAA "
+		db "SHOOT!! GRANDPAA"
 		db "IS IT YOU?",00		
 	headlessText01:
 		db "DO NOT STEP ON  "
@@ -1653,8 +1766,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	headlessText03:
 		db "SWING AROUND A  "
 		db "RING AND THE    "
-		db "THE CLOSER HE IS"
-		db "TO THE PEAK",00
+		db "CLOSER HE IS TO "
+		db "THE PEAK",00
 	headlessText04:	
 		db "THE HIGHER HE   "
 		db "LUNCHES IN THE  "
@@ -1663,7 +1776,14 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "HIS LEFT SIDE   "
 		db "SWING IS A LOT  "
 		db "WEAKER THOUGH..",00	
-
+	headlessText06:	
+		db "BUT ON THE RIGHT"
+		db "HE SEEMS TO     "
+		db "SLING AROUND",00
+	headlessText07:		
+		db "PLATFORMS. LIKE "
+		db "A NINJA.",00	
+	
 	actionListChillSkelly:
 		dw chillText00,goNextText
 		dw chillText01,goNextText
@@ -1769,11 +1889,13 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		dw evilText00,goNextText	
 		dw evilText01,goNextText
 		dw evilText02,goNextText
-		dw evilText03,goNextText
+		dw evilText03,evilRedguyEndingCheck
 		dw evilText04,goNextText		
 		dw evilText05,endText	
-		dw evilText06,goNextText
-		dw evilText07,endText
+		dw evilGoodText00,engageWizzardAction
+		dw evilGoodText01,goNextText 	
+		dw evilGoodText02,changeSpritesBatBa	
+		dw evilGoodText03,endText
 	evilText00:
 		db "IT IS ABOUT TIME"
 		db "TO MAKE IT HERE."
@@ -1788,11 +1910,11 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "DID YOU GET SOME"
 		db "ORB? VERY GOOD  "
 		db "GIVE THEM TO ME "
-		db "SO I CAN",00	
+		db "SO I CAN..",00	
 	evilText03:
 		db "PREPARE YOU FOR "
 		db "THE LAST BATTLE!"
-		db "...",00
+		db "SNACK!!...",00
 	evilText04:
 		db "MUAHH HAHA HAR!!"
 		db "THANKS BELMONT.."		
@@ -1803,15 +1925,255 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		db "JUST GO DIE MY  "
 		db "FOOL!!",00	
 
-	evilText06:	
-		db "WHAT A STRANGE  "
-		db "ORB. THE INGRAVE"				
-		db "DOES IS A MAGIC "
-		db "SPELL!",00	
-	evilText07:	
-		db "BUT WHAT IS IT  "
-		db "FOR?",00				
+	evilGoodText00:
+		db "HUU? FLUFFY ORB!"
+		db "NO!! DOG!!!",00
+	evilGoodText01:	
+		db "GET AWAY WITH   "
+		db "THAT MONSTER IT "				
+		db "MESSES WITH MY  "
+		db "SPELLS!",00	
+	evilGoodText02:	
+		db "AAAAAHHH NOT!!  "
+		db "NOT THAT SPELL!!",$00				
+	evilGoodText03:
+		db "ZZZH!! WOOOSH!! " 
+		db "I HATE THE      "
+		db "SMELL OF EVIL   "
+		db "WIZZARDS!!",00
+	
+		
+	actionListSkellyBeforeDrac:
+		dw skellyBeforeDrac00,goNextText	
+		dw skellyBeforeDrac01,goNextText	
+		dw skellyBeforeDrac02,goNextText	
+		dw skellyBeforeDrac03,goNextText
+		dw skellyBeforeDrac04,endText			
+		
+	skellyBeforeDrac00:
+		db "HAR HAR HAR..   "
+		db "YOU WILL NEVER  "
+		db "FIND OUR MASTER.",00
+	skellyBeforeDrac01:
+		db "BUT YOU MIGHT   "
+		db "STUMBLE UP ON   "
+		db "HIM. WHEN YOU",00
+	skellyBeforeDrac02:	
+		db "YOU ARE NOT	    "
+		db "LOCKING?  HE HE "	
+		db "HAR HAR HAR..",00
+	skellyBeforeDrac03:
+		db "DO A MOONWALK   "
+		db "FOR ME. HOLD THE"
+		db "A BUTTON AND    "
+		db "DANCE! PLEASE?.",00
+	skellyBeforeDrac04:	
+		db "ELSE I MAKE YOU "
+		db "KNEEL BEFORE ME!"
+		db "HAR HAR HAR..",00
+	
+	actionListbrotherBeforeDrac:
+		dw brotherBeforeDrac00,goNextText
+		dw brotherBeforeDrac01,goNextText
+		dw brotherBeforeDrac02,goNextText
+		dw brotherBeforeDrac03,goNextText
+		dw brotherBeforeDrac04,endText
+		dw brotherBeforeDrac01,goNextText
+		dw brotherBeforeDrac05,goNextText
+		dw brotherBeforeDrac06,endText
 
+		
+	brotherBeforeDrac00:	
+		db "THAT SKELLY HAD "
+		db "TOO MUCH WINE.",00
+	
+	brotherBeforeDrac01:
+		db "I HAD NO IDEA   "
+		db "THAT MY BROTHER "
+		db "IS THAT EVIL!",00
+	
+	brotherBeforeDrac02:		; STORRY CHICES SETUP.. 
+		db "HE SEEMS TO BE  "
+		db "AFRAID OF DOGS. "	
+		db "MIGHT HAVE BEEN "
+		db "A HINT!",00
+	
+	brotherBeforeDrac03:
+		db "I THINK WHEN YOU"
+		db "LOOK DOWN THE   "
+		db "CORDIDOR WHILE  "
+		db "WALKING.",00
+	
+	brotherBeforeDrac04:
+		db "YOU WARP        "
+		db "BETWEEN A       "
+		db "OTHER CASTLE.",00			
+	
+	brotherBeforeDrac05:		; STORRY CHICES SETUP.. 
+		db "THANKS!",00		
+	brotherBeforeDrac06:
+		db "NOW THE ONLY    "
+		db "ORTHER EVIL     "
+		db "SEEMS DRACULA!",00 
+	actionListBatBa:
+		dw batBa00,goNextText
+		dw batBa01,spawnPipNextText
+		dw batBa02,goNextText
+		DW batBa02_HALF,goNextText
+		dw batBa03,goNextText
+		dw batBa04,goNextText
+		dw batBa05,goNextText
+		dw batBa06,goNextText
+		dw batBa07,goNextText
+		dw batBa08,goNextText
+		dw batBa09,endText 
+	batBa00:
+		db "THAT BASTARD OF "
+		db "A WIZZARD TURNED"
+		db "INTO A ORB AND  "
+		db "EXCAPED!",$00
+	batBa01:
+		db "I AM A BATBARIAN"
+		db "BAT.. WHY ARE   "
+		db "YOU SO BIG?",$00 
+	batBa02:	
+		db "WHERE IS PIP MY "
+		db "BAT? THERE SHE  "
+		db "IS!",00
+	batBa02_HALF:	
+		db "SHE SEEMS TO    "
+		db "LIKE YOU!",$00 
+	batBa03:	
+		db "I WOULD LIKE TO "
+		db "TELL YOU A STORY"
+		db "BUT THEN..",$00
+	batBa04:	
+		db "I DO NOT TRUST  "
+		db "A MAN WITH A    "
+		db "WHIP AND NO     "
+		db "PENTS!",00
+	batBa05:	
+		db "THAT TELEPORT   "
+		db "SPELL.. I NEED  "
+		db "THE ORB..",00
+	batBa06:	
+		db "THEN I MIGHT BE "
+		db "ABLE TO REVERSE "
+		db "IT AND INPRSION",00		
+	batBa07:	
+		db "THE WIZZARD IN  "
+		db "THIS RUNIC      "
+		db "DEAMON ORB!",00	
+	batBa08:	
+		db "THEN SEALE IT   "
+		db "AND HIS POWERS  "
+		db "AWAY.",00		
+	batBa09:
+		db "PIP WILL CARRY  "
+		db "THE ORB TO ME   "
+		db "IF YOU CATCH IT!",$00	
+	
+	dungeonSkellyActionScript:
+		dw dungeonSkelly00,goNextText
+		dw dungeonSkelly01,goNextText
+		dw dungeonSkelly02,goNextText
+		dw dungeonSkelly03,goNextText
+		dw dungeonSkelly04,goNextText
+		dw dungeonSkelly05,goNextText
+		dw dungeonSkelly06,goNextText
+		dw dungeonSkelly07,goNextText
+		dw dungeonSkelly08,endText
+	
+	dungeonSkelly00:
+		db "I AM DOOMED!!!  "
+		db "QUIET LITTERERLY"
+		db "HE STUFFED ME   "
+		db "IN HERE..",$00
+	dungeonSkelly01:
+		db "THEN HE ESCAPED "
+		db "HE TOLD ME I CAN"
+		db "USE HIS BRAIN!",00
+	dungeonSkelly02:
+		db "SINCE I LOST    "
+		db "MINE QUITE SOME "
+		db "TIME AGO.",$00
+	dungeonSkelly03:
+		db "THEN HE USED HIS"
+		db "FEET. GRABED A  "
+		db "BONE TO BURST   "
+		db "THE LOCK..",00
+	dungeonSkelly04:	
+		db "MAN I WISH I HAD"
+		db "HIS LEGS TOO..",00
+	dungeonSkelly05:
+		db "SOOO FAST!!!",00	
+	dungeonSkelly06:	
+		db "YEHA I LOST THEM"
+		db "TOO.. STOLEN!!! "
+		db "THAT BASTARD IN "
+		db "THE SWAMP AREA..",00
+	dungeonSkelly07:
+		db "TO FIND HIM GET "
+		db "A LIFT FROM A   "
+		db "BAT IN THE WET  "
+		db "FEET TOUR.",00
+	dungeonSkelly08:	
+		db "IN THE TOP LEFT "
+		db "IS A SECRET PATH"
+		db "TO HIS HIDEOUT!!",00
+		
+	finalBossActionScript:	
+		dw finalBossText00,goNextText
+		dw finalBossText01,goNextText
+		dw finalBossText02,goNextText
+		dw finalBossText03,goNextText
+		dw finalBossText04,goNextText
+		dw finalBossText05,goNextText
+		dw finalBossText06,goNextText
+		dw finalBossText07,endTextMakeHitable
+		
+	finalBossText00:
+		db "MEGALOVANIA     "
+		db "MUSIC STARTS    "
+		db "PLAYING!",00
+	finalBossText01:
+		db "SIMON FORMS INTO"			; I AM NOT MOTIVATED ATT ALL TO FINISH THIS SO.. WHY NOT!!
+		db "A HEART AND     "
+		db "MOVES INTO THE  "			; THE IDEA IS TO MAKE A BOX AND TURN SIMON INTO A HEART TO DODGE THIGNS.. 
+		db "TEXT BOX!",00	
+	finalBossText02:
+		db "THEN SURVIVE..  "
+		db "FIND OUT THAT   "	
+		db "THIS LADY IS A  "
+		db "GREEDY BEAST!",00
+	finalBossText03:
+		db "EVEN MADE SOME  "
+		db "CONTRACT WITH   "
+		db "DRACULA..",00
+	finalBossText04:
+		db "THE TOWNS ARE   "
+		db "STILL DOOMED IF "	
+		db "WE CAN NOT PUT  "
+		db "A END TO IT!!",00		
+	finalBossText05:
+		db "SORRY FOR NOT   "
+		db "FLASHING THIS   "
+		db "GAME OUT..",00 	
+	finalBossText06:
+		db "BUT I DO NOT    "
+		db "LIKE WRITING    "
+		db "ASSEMBLY..      "
+		db "ALL WEEK AGAIN..",00 
+	finalBossText07:
+		db "WHY DO WE NOT   "
+		db "REPLAY          "
+		db "UNTDERTALE      "
+		db "INSTEAD?",00 
+
+
+		
+warnPC $a0ffc0	
+pullPC 		
 }
 	
 	
@@ -1821,15 +2183,15 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		lda $36,x 
 		and #$00ff
 		beq ++
-		 
+		
 		tay  			
-		lda #$0000		; clear old Curser
+		lda #$0000				; clear old Curser
 		sta $7fff00
 		sta $7fff20
 		sta $7fff40
 		sta $7fff60
 		
-		lda #$2c27 			; 2c2e set Curser
+		lda #$2c27 				; 2c2e set Curser
 		cpy #$0001
 		bne skipLine01
 		sta $7fff00
@@ -1869,7 +2231,9 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		lda #$0004			; set to pos 4
 	storeCurserPos02:
 		sta $36,x 
-	++  rts	
+		lda #$0001			; show score while shoping 
+	++  sta !ShowScore
+		rts	
 	
 	textStateUpdater:
 		lda $36,x 
@@ -1989,7 +2353,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 
 	shopRoutine:
 		lda $36,x 
-		stz $36,x 
+		stz $36,x 				; get rid of curser 
 		
 		tay 
 		cpy #$0001
@@ -2010,7 +2374,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		lda #$1500	 ; oneUP cost
 		jsr checkCash
 		bcs skipShopItem03
-		jsr getArmor
+		jsl getArmor
 		
 	skipShopItem03:
 		cpy #$0004
@@ -2020,7 +2384,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		bcs skipShopItem04		
 ;		lda #$0024	; itemID
 ;		jsr getItemFromShop
-		jsr removeCheats
+		jsl removeCheats
 		
 	skipShopItem04:		
 
@@ -2065,7 +2429,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		sec 				; setCarry for having no cash
 		rts 
 
-	
+	setTutorialChoiceHeart:
+		jsl setTutorialChoice
 	spawnSmallHeartAndText:
 		jsl endText	
 		
@@ -2089,7 +2454,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 
 		ply
 		rtl 
-
+	
+	
 	giftRoutine:
 		lda $36,x 
 		stz $36,x 
@@ -2112,7 +2478,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		cpy #$0003
 		bne skipGiftItem03	
 
-		jsr getArmor
+		jsl getArmor
 		lda $34,x		; skip two text pointer
 		clc 
 		adc #$0004
@@ -2122,7 +2488,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		cpy #$0004
 		bne endGiftItem04	
 	
-		jsr removeCheats
+		jsl removeCheats
 		
 	endGiftItem04:		
 		jsl goNextText
@@ -2130,6 +2496,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	giveLeash:
 		lda #$0001
 		sta !dogLeash
+		sta.l $700010		; also save 
 		lda #$000e			; play sound 
 		jsl lunchSFXfromAccum
 		jml goNextText
@@ -2173,7 +2540,9 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		rtl 
 	
 	getColorArmor:
-		sty !armorType		; set flag for blue armor 1e1a
+		tya 
+		sta !armorType		; set flag for blue armor 1e1a
+		sta.l $700008		; also save 
 		LDA.W #$0072      	; SoundID  ;80DFF2 give armore here
 		JSL.L $8085E3 								                  
 		rts 
@@ -2187,21 +2556,25 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		rts
 	
 	removeCheats:
-		lda #$0002
+		lda #$0001
 		sta !ownedWhipTypes
-		stz !armorType
-		stz !allSubweapon
-		stz $92 
+	removeCheatsOnlySubWArmor:	
+		lda #$0000
+		sta !armorType
+		sta.l $700008
+		sta !allSubweapon
+		sta.b RAM_simon_whipType
 		
-		lda #$77b8
-		sta $7e2310 
-		lda #$4e70
-		sta $7e2312
-		lda #$2528
-		sta $7e2314
-		lda #$0482
-		sta $7e2316
-		rts
+		
+;		lda #$77b8		; change armor color directly
+;		sta $7e2310 
+;		lda #$4e70
+;		sta $7e2312
+;		lda #$2528
+;		sta $7e2314
+;		lda #$0482
+;		sta $7e2316
+		rtl 
 	
 	getItemFromShop:	
 		phy
@@ -2232,8 +2605,9 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		JSL.L $8085E3 								                  
 		lda #$0001
 		sta !armorType		; set flag for blue armor 1e1a
+		sta.l $700008
 		sta !allSubweapon 
-		rts 
+		rtl 
 
 	giveKey:
 		LDA.W #$0072      	; SoundID  ;80DFF2 give armore here
@@ -2264,7 +2638,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 ;		lda #$0047
 ;		sta $2e,x 
 		rtl 
-	
+	endTutorial:
+		bra endText
 	transForm2Skelly:
 		lda #$0011
 		sta $10,x 
@@ -2281,6 +2656,52 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		sta RAM_simonSlot_State
 		lda #$0096
 		jsl lunchSFXfromAccum
+	
+	setTutorialChoice:
+		stz.w !ShowScore
+		lda $36,x 
+		stz $36,x
+		cmp #$0002
+		bcc endText	
+		
+		sta $4a 
+		
+		
+		lda RAM_X_event_slot_xPos,x 	; set starting pint for autoplay the same as event 
+		sta.w RAM_simonSlot_Xpos
+		lda RAM_X_event_slot_yPos,x 
+		sta.w RAM_simonSlot_Ypos
+		stz.w RAM_simonSlot_subXpos 
+		stz.w RAM_simonSlot_subYpos
+		
+		phx 
+		lda $14,x 
+		sec
+		sbc #$0006
+		asl 
+		tax 
+		lda.l gamPlayDataPointer,x 
+		plx 			
+;		sta $3e,x 
+		
+		sta $1c00			
+		lda $4a
+		cmp #$0003
+		bcc +
+		lda #$0100				; replay from SRAM 
+		sta $1c00
+
+	+	stz.w $1c02
+		stz.w $1c06
+		stz.b $38
+;		lda #$0010				; timer till record starts 
+;		sta $1c0e
+		
+		lda #$0009				; setTutorialShowcase
+		sta $70
+		lda #$000c
+		sta $72
+
 	endText:
 		stz $f0			; delete Pointers (section is used in transition and game over)
 		stz $f2 		
@@ -2289,12 +2710,21 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		
 		stz $34,x 
 		stz $32,x		; make sure we start to write at the beginning		
+
 		stz $12,x		; reset NPC
+;		lda $14,x 
+;		clc 
+;		adc #$0002
+;		sta $12,x 
+	
 		stz $1fa2		; make player move again 
 		lda #$0001		; terminate textUpdate 2 PPU
 		sta !textEngineState
 		rtl 
-	
+	endTextMakeHitable:
+		lda #$0046
+		sta $2e,x 
+		bra endText
 
 }
 
@@ -2335,6 +2765,15 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		lda $54a
 		cmp $0a,x
 		bmi +
+		lda #$4000
+		sta $04,x
+	+	rtl 
+
+	faceAwayOfSimon:
+		stz $04,x 
+		lda $54a
+		cmp $0a,x
+		bpl +
 		lda #$4000
 		sta $04,x
 	+	rtl 
@@ -2462,17 +2901,29 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 ;		jsr walkBackAndForward
 ;		jml NPCTextTrigger
 
+	
 	MoonLady:
 	moonLadyCastle:	
 		jsr NPCwalkAnimation		
 		jml NPCTextTrigger
 	
+	brotherBeforeDrac:
+		jsl RedguysBrother
+		lda $12,x 
+		cmp #$0001
+		bne +
+		lda.l !goodEndingProgress
+		beq +
+		lda #$0008 		; extra text back here?? When we give the wizzard the dog he will be taken by batbarions 
+		sta $34,x 
+	+	rtl 
 	NPCRedguy:
 	NPCStateOldMan03:
 	NPCStateOldMan02:
 	BarManDoinaKeySeller:
 	NPCbossQuestGiver:	
 	RedguysBrother:
+		
 		jsr NPCwalkAnimation		
 		jsr walkBackAndForward
 		jml NPCTextTrigger		
@@ -2480,11 +2931,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	BuilderManDoina:
 		jsr walkOnSpot
 		jsr NPCwalkAnimation		
-		jml NPCTextTrigger	
-	TutorialLeady00:
-		jsl faceSimon
-		jsl loadPalettePracticeRing		
-		jml NPCTextTrigger	
+		jml NPCTextTrigger		
 
 	aramus:
 		jsr NPCwalkAnimation
@@ -2763,6 +3210,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		sta.w RAM_X_event_slot_SpriteAdr,y
 		lda.w #snowFlake
 		sta.w $00,y
+		sta.w $3e,y 
 		lda #$0001			; set flag for no heart sprite updates.. 
 		sta.w $20,y 
 	+	rtl 
@@ -2784,10 +3232,47 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 ;		bne +		
 ;		jsr makeFishAppear
 	+++	rtl 
-	ArmorSeller:
+
+	finalBoss:
+		lda $22,x 
+		cmp #$0004
+		bcs goTextMode
+		lda $00,x 
+		beq +
+		inc $20,x 
+		lda $20,x
+		cmp #$000c
+		bcc +
+		inc $22,x 
+		stz $20,x 
+		stz $00,x 	
+		
+		lda #$008b
+		jsl lunchSFXfromAccum	
+			
+	+	lda RAM_simon_multiShot
+		bit #$0001
+		beq +
+		and #$0002
+		sta RAM_simon_multiShot 
+		lda #jungLadyFr1 
+		sta $00,x 
+		
+	+	rtl 
+	goTextMode:
+		lda #jungLadyFr1 
+		sta $00,x 
+		BRA afterSlogRoom
+	TutorialLeady00:
+		jsl loadPalettePracticeRing	
+	TipLeady00:		; IS DRESSED AS A MAN LOL dont fix it hehe 
+	afterSlogRoom:
 	TutorialLeady01:
 	TutorialLeady02:
+;		jsl tutorialAutoPlay
+	
 	TutorialLadyControls:
+	ArmorSeller:
 		jsl faceSimon
 		jml NPCTextTrigger	
 	
@@ -2841,6 +3326,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		adc #$0010
 		sta RAM_simonSlot_Xpos		
 
+		stz.b RAM_simon_ForceGroundBehavier				; prevent beeing stuck on platforms 
 		
 		lda $3a
 		bit #$0010
@@ -2880,6 +3366,9 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	headlessNPC:
 		lda #$0160
 		sta RAM_X_event_slot_SpriteAdr,x 
+		
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x 
 		
 		lda #$0013				; we need this for the level.. we set it 2 zero in the action list for the text to show 
 		sta $46
@@ -3020,8 +3509,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		lda $32,x 		; flag door is touched 
 		beq ++
 		lda RAM_simon_multiShot
-		cmp #$0002
-		bne ++
+		bit #$0002
+		beq ++
 	
 	+	lda $34,x 		; move door 64 pixle up also use it as flag to skip collusion 
 		inc 
@@ -3074,9 +3563,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 	RedguyLiftingCurse:
 		jsr NPCwalkAnimation		
 		jsr walkBackAndForward
-		jml NPCTextTrigger
-		
-	TipLeady00:		; IS DRESSED AS A MAN LOL dont fix it hehe 
+		jml NPCTextTrigger	
 		jml TutorialLeady01
 	
 	TipLeady01:
@@ -3200,6 +3687,7 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		bne +
 	heartRainEveryFrame:	
 		jsl makeNewEventAtEventPossition
+		bcs +
 		lda #$0018
 		sta.w $10,y
 		lda #$0000
@@ -3217,31 +3705,404 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 
 	+	rtl 
 
-	makeNewEventAtEventPossition:
-		phx 
-		jsl getEmptyEventSlot
-		txy 
-		plx 				
-		lda RAM_X_event_slot_SpriteAdr,x 
-		sta.w RAM_X_event_slot_SpriteAdr,y
-		lda RAM_X_event_slot_xPos,x 
-		sta.w RAM_X_event_slot_xPos,y
-		lda RAM_X_event_slot_yPos,x 
-		sta.w RAM_X_event_slot_yPos,y
-		lda RAM_simonSlot_spritePriority
-		sta.w $02,y 
-		
-		rtl 
 
-	evilRedguy:
-		lda $3c,x 
-		bne +++
-		jsr NPCwalkAnimation		
-		jsr walkBackAndForward
-		jsl NPCTextTrigger
-		lda $12,x 			; check if text state 
-		cmp #$0001
+		makeNewEventAtEventPossition:
+			phx 
+			jsl getEmptyEventSlot
+			txy 
+			plx
+			bcs +
+ 			
+			lda RAM_X_event_slot_SpriteAdr,x 
+			sta.w RAM_X_event_slot_SpriteAdr,y
+			lda RAM_X_event_slot_xPos,x 
+			sta.w RAM_X_event_slot_xPos,y
+			lda RAM_X_event_slot_yPos,x 
+			sta.w RAM_X_event_slot_yPos,y
+			lda RAM_simonSlot_spritePriority
+			sta $0002,y 
+
+		+	rtl 
+		
+		changeSpritesBatBa:			
+			jsr loadBatBaGFX
+			jmp goNextText
+		
+		spawnPipNextText:
+			jsl makeNewEventAtEventPossition
+			bcs +
+			lda #$000d
+			sta $0010,y 
+			lda #$0028
+			sta $0014,y 
+			lda #$004c
+			sta $000e,y 
+			lda #$0014
+			sta $000a,y 	
+			
+		+	
+			jmp goNextText	
+		engageWizzardAction:
+			jsr makeBatBaAppearGoodEnding
+			jmp goNextText	
+		
+		evilRedguyEndingCheck:
+			lda RAM_simon_multiShot			; good ending trigger
+			and #$0001
+			beq +
+			
+			lda #$819F
+			sta $3e,x 			; flag good ending to change sprite flicker while batba is in slot 
+			lda #$000a
+			sta $34,x 
+			jsl elevatorCardPassCheckNoInput
+		
+		+	jml goNextText
+
+		
+		makeBatBaAppearGoodEnding:
+			lda #$0001							; flag good ending 
+			sta.l !goodEndingProgress
+	;		ldy #$819F
+	;		lda $3a 
+	;		bit #$0001
+	;		beq +		
+	;		ldy #$81a4 
+	;	+	tya 
+	;		sta $00,x 
+			lda #$819F
+			sta $00,x 
+				
+			phx 
+			txy 
+			jsl getEmptyEventSlot		
+			bcs ++
+			lda $000a,y 
+			sta $0a,x
+			lda $000e,y 
+			sta $0e,x 
+			lda #$0027
+			sta $14,x 
+			lda #$000d
+			sta $10,x 
+			
+			lda $0026,y 
+			sta.w RAM_X_event_slot_SpriteAdr,x 
+			lda #$0000
+			sta $0026,y 
+			tya 											; store pointer for action controll  
+			sta $3e,x 
+		
+		++	plx 
+			rts 
+		loadBatBaGFX:
+			phx 
+			LDX.W #batBaGFX_dmaPointer           			; leather whip     		
+			JSL.L $8280e8
+			plx 
+			rts 
+	
+	evilRedguyEnding:
+		lda.l !goodEndingProgress
+		beq +
+		jml clearSelectedEventSlotAll	
+	+	jsr NPCwalkAnimation
+	pipBat:
+		lda #$0080
+		sta RAM_X_event_slot_HitboxID,x 
+		lda #$0003
+		sta RAM_X_event_slot_Movement2c,x 
+
+		lda RAM_simonSlot_spriteAttributeFlipMirror	; make pip lfy behind you 
+		beq +
+		lda RAM_X_event_slot_xPos,x
+		sbc #$0023
+		bra ++	
+		
+	+	lda RAM_X_event_slot_xPos,x
+		adc #$0034 
+	++	cmp RAM_simonSlot_Xpos
+		jsl followXPos
+		
+		lda RAM_X_event_slot_yPos,x
+		adc #$0050
+		bpl +
+		lda #$0000
+	+	cmp RAM_simonSlot_Ypos		
+		jsl followYPos
+
+		lda #$0002
+		sta $00
+		jsl speedLimiter00_X
+		jsl speedLimiter00_Y
+		
+		lda $14,x 			; skip if ending wizzard 
+		cmp #$0029
+		beq +
+		
+		jsl faceSimon 
+		jsr pipAnim
+		
+		lda $A2
+		cmp #$0700
+		beq pipGrabOrb
+	+	rtl 
+	pipGrabOrb:
+		lda $32,x 
+		bne bringOrbHome 
+		lda $24,x 
 		bne ++
+		lda #$004b
+		sta $00
+		lda #$0010
+		sta $02
+		jsl findEventID_00_02
+		bcs +
+		lda $00
+		sta $24,x 
+	++	tay 
+		lda RAM_X_event_slot_yPos,x 
+		and #$ffe0
+		sta $00
+		lda.w RAM_X_event_slot_yPos,y  
+		and #$ffe0
+		cmp $00
+		bne +
+		
+		lda RAM_X_event_slot_xPos,x 
+		clc 
+		sbc #$0010
+		and #$ffe0
+		sta $00
+		lda.w RAM_X_event_slot_xPos,y  
+		clc 
+		sbc #$0010
+		and #$ffe0
+		cmp $00
+		bne +
+		inc $32,x 		; set flag to bring orb home 
+		
+	+	rtl 
+	bringOrbHome:
+		ldy $0024,x 
+		lda $0e,x 
+		adc #$001c
+		sta $000e,y 
+		lda $0a,x 
+		sta $000a,y 
+		
+		inc $34,x 
+		lda $34,x 
+		cmp #$0080
+		bcc +
+		lda #$0002
+		sta $2c,x 
+		dec $0a,x 	
+		stz.b $04,x 
+		
+	+	rtl 
+	
+	
+	findEventID_00_02:
+		phx 
+		
+		ldx #$0540		
+	-	txa
+		clc 
+		adc #$0040
+		cmp #$0f00
+		beq eventIDnotFound
+		tax  
+		lda $10,x 				; check ID
+		cmp $00 
+		bne -
+		lda $14,x				; check subID
+		cmp $02
+		bne -
+		txa 					
+		sta $00
+	eventIDFound:	
+		clc 
+		plx 
+		rtl
+	eventIDnotFound:	
+		sec
+		plx 
+		rtl		
+	
+	panikGuy:		
+		phx 
+		
+		lda $3e,x 		; controll wizzard/orb  
+		tax 
+		
+		lda $34,x 
+		beq batbaWarpActionDisapear
+		cmp #$000c
+		bcc batBaNPC 
+		jmp batbaWarpAction
+			
+	batBaNPC:	
+		plx 
+		rtl 
+	teleportAndPaper:
+		lda $3a
+		bit #$001f
+		bne ++	
+		jsl makeNewEventAtEventPossition		
+		bcs ++
+		lda #$0002
+		sta $0010,y
+		sta $003c,y
+;		lda #letter00Assembly
+;		sta $0000,y 
+		lda RAM_RNG_2
+		and #$4000
+;		ora #$0e0c
+		sta $0004,y 
+		
+	
+	++	rts 
+	
+	batbaWarpActionDisapear:
+;		plx 
+;		lda $3c,x 
+;		bne +
+;		lda $00,x 
+;		sta $3c,x 
+;		
+;	+	lda $3a
+;		and #$0004
+;		beq +
+;		lda $3c,x 
+;	+	sta $00,x 	
+		plx 
+		lda #$0080
+		sta.b RAM_X_event_slot_HitboxID,x 
+		jsr batbaAnim
+		jsl faceAwayOfSimon
+		jml NPCTextTrigger
+	
+	batbaWarpAction:
+		sec
+		sbc #$000c
+		tax 
+		lda batbaActionRoutines,x 
+		sta $00
+		plx 
+		jmp ($0000)
+	batbaActionRoutines:
+		dw runAroundWizzard,runAroundWizzard,runTurnIntoWarp,forceOrb2Ground,TeleportApearing,TeleportApearing,TeleportApearing,TeleportApearing 	
+	
+	runAroundWizzard:		 
+		lda $3e,x 		; controll wizzard/orb  
+		tax 
+		lda $0e,x	; let orb sink to ground 
+		inc 
+		cmp #$00bc
+		bcs +
+		sta $0e,x 	
+		
+	+	ldx $fc  
+		jsr NPCwalkAnimation	; running and loosing stuff routine 	
+		jsr NPCwalkAnimation
+		jsr walkBackAndForward
+		jsr walkBackAndForward
+		
+		jsr teleportAndPaper
+		rtl 
+	
+	runTurnIntoWarp:
+		stz.b $04,x 
+		
+		ldx $fc 
+		ldy #oldManFr2
+		lda $3a
+		bit #$0002
+		beq +
+		
+		lda RAM_RNG_3
+		and #$e000
+		sta $04,x 
+		ldy #warpAssembly
+
+	+	tya 
+		sta $00,x 
+		
+	;	jsr floatInAir
+	;	jsr walkBackAndForward
+		rtl 
+	
+	forceOrb2Ground:
+		jsr loadBatBaPalette
+		jsl faceAwayOfSimon
+		jsr batbaAnim
+		ldy $3e,x 
+		lda #$00bc 			; force orb ground 
+		sta $000e,y 
+		rtl 
+	TeleportApearing:
+		rtl 
+	
+	loadBatBaPalette:
+		phx 
+		phb 
+	
+		sep #$20	
+		lda #$81
+		pha 
+		plb
+		rep #$20
+		
+		ldy #paletteBatba
+		ldx #$1260
+		jsl bossGetPaletteY2X
+		plb 
+		plx 
+		rts 
+	
+	batbaAnim:		
+		lda $3a
+		bit #$000f
+		bne ++
+		lda $22,x 
+		inc 
+		cmp #$0006
+		bne +
+		lda #$0000
+	+	sta $22,x 	
+	++	lda $22,x 
+		asl 
+		tax 
+		lda.l batBaFrameAnimTable,x 
+		ldx $fc 
+		sta $00,x 
+		rts 
+	batBaFrameAnimTable:
+		dw batBaAssemblyFrame01,batBaAssemblyFrame02,batBaAssemblyFrame03,batBaAssemblyFrame04,batBaAssemblyFrame03,batBaAssemblyFrame02
+	pipAnim:
+		inc $20,x 
+		lda $20,x 
+		cmp #$0007
+		bne ++
+		stz $20,x 
+		lda $22,x 
+		inc 
+		cmp #$0006
+		bne +
+		lda #$0000
+	+	sta $22,x 	
+	++	lda $22,x 
+		asl 
+		tax 
+		lda.l pipFrameAnimTable,x 
+		ldx $fc 
+		sta $00,x 
+		rts 
+	pipFrameAnimTable:
+		dw PipAssemblyFrame01,PipAssemblyFrame02,PipAssemblyFrame03,PipAssemblyFrame04,PipAssemblyFrame03,PipAssemblyFrame02
+
+	evilRedguyGetBossReady:
 ;		lda #$05e0			; right camera border till dragon boss 
 		lda #$0380 		; set camera to first dragon boss dest
 		sta $a2
@@ -3249,14 +4110,40 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		sta $3c,x 
 ;		ldx #$e267			; viper whole sprite load 
 ;		jml $8280E8
-			
-	+	lda RAM_simon_multiShot			; good ending trigger
-		and #$0001
-		beq ++
-		lda #$000a
-		sta $34,x 
-	++	rtl 
-	+++	phx					; set event to not spawn anymore 
+		rts 
+	
+	evilRedguyTransfromOrgTrans:
+		lda #$819F
+		sta $3e,x 			; flag good ending to change sprite flicker while batba is in slot 
+		jsr evilRedguyGetBossReady
+		jsr makeBatBaAppearGoodEnding
+		jsr loadBatBaGFX
+		jsr loadBatBaPalette
+		
+		bra evilRedguyTransfromOrg
+	evilRedguy:
+		lda.l !goodEndingProgress
+		bne evilRedguyTransfromOrgTrans
+		lda $3c,x 
+		bne evilRedguyTransfromOrg
+
+		lda #$0027			; dirty hack since we have one frame in state 00 that looks wired in this case while transfrom 
+		sta $14,x 
+		
+		jsr NPCwalkAnimation		
+		jsr walkBackAndForward
+		lda #$0024
+		sta $14,x 
+		
+		jsl NPCTextTrigger
+		lda $12,x 			; check if text state 
+		cmp #$0001
+		bne +
+		jsr evilRedguyGetBossReady
+	+	rtl 
+
+	evilRedguyTransfromOrg:
+		phx					; set event to not spawn anymore 
 		lda RAM_X_event_slot_mask,x 
 		tax 
 		sep #$10			; write to 8 bit type 1 table 
@@ -3265,6 +4152,8 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		rep #$10
 		plx 
 		
+		lda $3e,x 
+		pha 
 		lda RAM_X_event_slot_SpriteAdr,x 
 		pha 
 		lda RAM_X_event_slot_xPos,x 
@@ -3286,11 +4175,268 @@ dw $201D,$201E,$201F,$2020,$2021,$2022,$2023,$2024,$2025,$2026,$2027,$202e,$202f
 		pla 
 		sta RAM_X_event_slot_SpriteAdr,x 
 		
+		pla 
+		bne +
+		lda #oldManFr2						; animation frame 
+	+	sta $3e,x 
+		
 		lda #$008a 
 		jsl lunchSFXfromAccum 
 		rtl 				; boss face 
+
+	skellyBeforeDrac:
+		lda #$0160				; slot offst 
+		sta $26,x 
+				 
+		jsr floatInAir
+		
+		lda #$4200
+		sta $04,x 
+		stz $02,x 
+		
+		jsl NPCTextTrigger
+		
+		lda #$0003
+		sta.b RAM_X_event_slot_Movement2c,x  		
+		lda $12,x 				; stop movement in text state 
+		cmp #$0001
+		bne +
+		stz.b RAM_X_event_slot_Movement2c,x  
+	+	rtl 
+	
+	dungeonSkelly:
+		LDA #$8e00
+		STA $04,X 
+		LDA #$00E0 
+		STA $26,X 
+		
+		lda #$0001
+		sta RAM_deathEntrance
+		
+		
+		jsr NPCwalkAnimation
+;		jsr walkBackAndForward
+		
+;		LDA.W #$C033 
+;		sta $00
+;		JSL.L spriteAnimationRoutine00       ;82B9EE|2269B082|82B069;  hijack Fix 
+		
+		
+		jml NPCTextTrigger
+	
 }   
 
+{; tutorial AutoPlay stuff ----------------------------------------------
+		extraEndingFixes:
+			lda !logicRingControlls
+			stz.w !logicRingControlls
+			pha 			
+			jsl $80945B
+			pla 
+			sta !logicRingControlls
+			rtl 
+		
+		moveOrbState00:
+			LDA.W #$009C                         ;85FE61|A99C00  |      ;  
+            JSL.L lunchSFXfromAccum              ;85FE64|22E38580|8085E3; stop pounding sound
+            JSL.L musicFixFlagCheck              ;85FE68|229E8580|80859E;  
+            LDA.W #$0100                         ;85FE6C|A90001  |      ; timer
+            jml $85FE74      
+
+		tutorialAutoPlay:						; unsupported ring stuff and scroll is missing.. 			
+			lda #$0005
+			sta $70
+			LDA.B RAM_buttonMapJump              
+            PHA                                  
+            LDA.B RAM_buttonMapWhip              
+            PHA                                  
+            LDA.B RAM_buttonMapSubWep            
+            PHA                                  
+			lda !logicRingControlls
+			pha 
+			
+			stz.w !logicRingControlls
+			LDA.W #$8000                         
+            STA.B RAM_buttonMapJump              
+            LDA.W #$4000                         
+            STA.B RAM_buttonMapWhip              
+            LDA.W #$0010                         
+            STA.B RAM_buttonMapSubWep            
+            
+			lda $4a
+			cmp #$0002
+			bne +
+			JSL.L $809863              
+			bra ++	
+		+	cmp #$0003
+			bne +
+			jsl recordGameplay
+			bra ++
+		+	jsl playBackRecord		          
+			
+		++	lda #$0009
+			sta $70
+			
+;			jsl $86C4BA							; afterBossSimonMovStuff ; RTL 
+
+			jsl $80960b							; mainGameLoop 5 
+			
+			pla                                   
+			sta !logicRingControlls
+			pla 
+			STA.B RAM_buttonMapSubWep                      
+			PLA                                  
+            STA.B RAM_buttonMapWhip              
+            PLA                                  
+            STA.B RAM_buttonMapJump    
+			
+			lda $38								; autoplay finished flag 
+			beq +
+			lda #$0005							; end autolay 
+			sta $70
+			stz $72
+			stz $4a 
+		+	rtl 
+				
+ 
+	gamPlayDataPointer: 	
+			dw gameplayData00,gameplayData01,gameplayData02
+	
+
+		-	sta $1c0c			; starting setup 
+			lda #$0005			; play indicator !armorType??			
+			sta !armorType
+			jsl doBlueSkinL
+			lda $20
+			sta $1c08
+			rtl 
+	recordGameplay:			
+			lda !armorType			
+			cmp #$0005
+			bne -
+			
+;			lda $20,x 			; select to stop recording to prevent softlock 
+;			bit #$2000
+;			bne endRecording
+			
+			lda $1c06
+			cmp #$0080
+			bcc +
+					
+		endRecording:	
+			lda #$0000			; restore amror end recording 
+			ldx.w $1c00		
+			inx
+			inx
+			inc $38
+			lda $1c0c 			
+;			cmp #$0005			; fail save to get back normal armor in case you screw around 
+;			bne +
+;			lda #$0000			
+;		+
+			sta !armorType
+			lda.l $700100		; fix messed up first input 
+			and #$00ff
+			sta.l $700100		 
+			bra ++			
+			
+		+	lda $20
+			cmp $1c08			; detect different inputs 
+			beq endRecord
+			sta $1c08			
+			
+			ldx.w $1c00			; get table offset 
+			lda.l $700000,X 
+			ora $1c06			; store frames used for last input 
+			sta.l $700000,X 
+			inx
+			inx
+			
+;			dec $1c06			; fix frame counts since we have extra frame with no input
+;			lda $1c06
+;			bne +
+;			bpl +
+;			stz.w $1c06
+			
+;			lda #$0001			; make frames with no inputs in bettween and record new inputs based on holdinput
+;			sta.l $700000,X   
+;			inx
+;			inx 
+			
+			lda $20 			       
+			and #$cf00
+			sta $00
+			lda $20
+			and #$0010	
+			xba		
+			ora $00
+		++	sta.L $700000,X   
+;			inx
+;			inx 
+			stx $1c00
+			stz.w $1c06 
+		
+		endRecord:	
+			inc $1c06
+			rtl 	
+	playBackRecord:			
+;			STZ.B RAM_X_event_slot_HitboxXpos    
+;			LDA.B RAM_mainGameState              
+;			CMP.W #$0005                         
+;			BNE endRecord                     
+			lda $20,x 			; select to stop recording to prevent softlock 
+			bit #$2000
+			beq +
+			lda !armorType		; restore in case you come from recording 
+			cmp #$0005
+			bne ++
+			lda $1c0c
+			sta !armorType
+			bra ++				; end playback 		
+			
+		+	STZ.B RAM_X_event_slot_HitboxXpos  
+			LDA.W $1C06                          
+			BNE +                      
+			LDX.W $1c00         
+			LDA.L $700000,X                      
+			BEQ ++                      
+			TAY                                  
+			AND.W #$00FF                         
+			STA.W $1C06                          
+			INX                                  
+			INX                                  
+			STX.W $1c00         
+			TYA                                  
+			JSR.W decodeSequnetsBits             
+			STA.B RAM_X_event_slot_sprite_assembly
+			LDA.W $1C02                          
+			ORA.B RAM_X_event_slot_sprite_assembly
+			AND.B RAM_X_event_slot_sprite_assembly
+			STA.B RAM_X_event_slot_HitboxXpos    
+			LDA.B RAM_X_event_slot_sprite_assembly
+			STA.W $1C02                        
+  
+		+	LDA.W $1C02                          
+			STA.B RAM_X_event_slot_20            
+			LDA.W $1C06                          
+			DEC A                                
+			STA.W $1C06                          
+			RTL                                  
+  
+		++	LDA.W #$0001                         
+            STA.B RAM_X_event_slot_38            
+            RTL                                 
+  decodeSequnetsBits: 
+			AND.W #$FF00                         
+            TAY                                  
+            AND.W #$CF00                         
+            STA.B $00
+            TYA                                  
+            XBA                                  
+            AND.W #$0010                         
+            ORA.B $00
+            RTS                 
+			
 
 ;asciiLookUpTable02:			; this is wastefull but lets hope I do not more space after this.. 
 ;		dw $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
@@ -3409,3 +4555,407 @@ org $81A443
 		dl mainNPC					; dl CODE_83ECBE       ;81A443|        |83ECBE; 	ID $d OldMan with Dog		
 org $80DCDC
 		jsl whenGettingHit
+
+
+; -------------------------------- automove hijacks 
+org $85FE49							; orbRoutine Expansion 
+		dw orbState_playWindMusic_00
+org $85FE61
+		dw orbState0c
+warnPC $85FE71		
+
+org $85FFDE							; freeSpace
+		orbState0c:
+			jml tutorialAutoPlay
+		orbState_playWindMusic_00:
+			jml moveOrbState00
+
+; ---------------------- auto play ending ----------------------
+
+org $80944D				; $83FBB5
+		jsl extraEndingFixes
+
+org $81EB27
+pointerAutoPlaySequenceEnding: 					
+		dw autoPlaySequenceEnding_data00     ;81EB27|        |9FF10A; ending autoplay data pointer
+        dw autoPlaySequenceEnding_data01     ;81EB29|        |9FF11C;  
+        dw autoPlaySequenceEnding_data02     ;81EB2B|        |9FF134;  
+        dw autoPlaySequenceEnding_data03     ;81EB2D|        |9FF174;  
+        dw autoPlaySequenceEnding_data04     ;81EB2F|        |9FF198;  
+        dw autoPlaySequenceEnding_data05     ;81EB31|        |9FF1F8;  
+        dw autoPlaySequenceEnding_data06     ;81EB33|        |9FF210;  
+        dw autoPlaySequenceEnding_data07     ;81EB35|        |9FF230;  
+        dw autoPlaySequenceEnding_data08     ;81EB37|        |9FF250;  
+        dw autoPlaySequenceEnding_data09     ;81EB39|        |9FF272;  
+        dw autoPlaySequenceEnding_data0a     ;81EB3B|        |9FF28E;  
+        dw autoPlaySequenceEnding_data0b     ;81EB3D|        |9FF2AC;  
+        dw autoPlaySequenceEnding_data0c     ;81EB3F|        |9FF2C8;  
+        dw autoPlaySequenceEnding_data0d     ;81EB41|        |9FF2E8;  
+        dw autoPlaySequenceEnding_data0e     ;81EB43|        |9FF32C;  
+        dw autoPlaySequenceEnding_data0f     ;81EB45|        |9FF33C;  
+        dw autoPlaySequenceEnding_data10     ;81EB47|        |9FF366;  
+        dw autoPlaySequenceEnding_data11     ;81EB49|        |9FF37E;  
+
+; ---------------------- demo autoplay -------------------------
+org $818B31
+	titleScreenMenu_data00: 
+		dw demoAutoPlayData00                ;818B31|        |9FEF0E;  
+		dw demoAutoPlayData01                ;818B33|        |9FEF78;  
+		dw demoAutoPlayData02                ;818B35|        |9FF044;  
+		dw demoAutoPlayData03                ;818B37|        |9FF084; 
+	playDemosIntro_Level: 
+		dw $001c,$000b,$0013,$0039           ;818B39|        |      ; 4 levels that are played in the demo
+org $9FF10A	
+	autoPlaySequenceEnding_data00:
+		dw $0210,$8110,$44ff,$400e,$480a,$0810,$0050,$8120,$09cf,$0000
+	autoPlaySequenceEnding_data01:
+		dw $0168,$0810,$0020,$8080,$8080,$8080,$0000
+	autoPlaySequenceEnding_data02:
+		dw $0220,$8210,$4020,$0240,8210,$4040,$0008,$8210,$4220,$4650,$0208,$4420,$4118,$0220,$8230,$8230,$0260,$8001,$0010,$4260,$0000
+	autoPlaySequenceEnding_data03:
+		dw $0000
+	autoPlaySequenceEnding_data04:
+		dw $0110,$0440,$010c,$0201,$4010,$4120,$0000 
+	autoPlaySequenceEnding_data05:
+		dw $0000
+	autoPlaySequenceEnding_data06:
+		dw $0270,$8030,$4930,$0a10,$4140,$0440,$8930,$8240,$0810,$0020,$0000
+	autoPlaySequenceEnding_data07:
+		dw $4020,$0000
+	autoPlaySequenceEnding_data08:
+		dw $0190,$8114,$4420,$4220,$0008,$41f0,$0002,$4614,$0000
+	autoPlaySequenceEnding_data09:
+		dw $0120,$4030,$0110,$8130,$0120,$0040,$4020,$487c,$0104,$4430,$4050,$0000
+	autoPlaySequenceEnding_data0a:
+		dw $01f0,$0000
+	autoPlaySequenceEnding_data0b:
+		dw $0222,$0080,$0480,$00ff,$4010,$4120,$4010,$4120,$00ff,$0008,$0000 
+	autoPlaySequenceEnding_data0c:
+		dw $0530,$0040,$0110,$8230,$4a30,$0000
+	autoPlaySequenceEnding_data0d:
+		dw $0130,$8108,$4118,$4850,$0130,$4130,$4530,$0003,$4110,$0000
+	autoPlaySequenceEnding_data0e:
+		dw $0280,$0000
+	autoPlaySequenceEnding_data0f:
+		dw $0220,$8050,$4846,$4208,$0000
+	autoPlaySequenceEnding_data10:
+		dw $01a0,$0202,$00ff,$8110,$4a10,$0000
+	autoPlaySequenceEnding_data11:
+		dw $0208,$4820,$0018,$4840,$0208,$4080,$0240,$0140,$0000
+	
+org $9FEF0E
+	demoAutoPlayData00:
+;org $9FEF78
+;	demoAutoPlayData01:
+;org $9FF044
+;	demoAutoPlayData02:
+;org $9FF084
+	demoAutoPlayData03:
+		db $62,$02,$02,$08,$06,$01,$23,$00,$27,$01,$07,$05
+		db $12,$45,$0C,$05,$18,$45,$20,$01,$2A,$05,$11,$01,$02,$41,$57,$45
+		db $65,$41,$2D,$01,$08,$81,$06,$01,$01,$05,$01,$00,$03,$02,$01,$00
+		db $06,$40,$19,$00,$08,$80,$0A,$00,$09,$40,$1E,$00,$0C,$01,$20,$05
+		db $01,$04,$08,$00,$06,$80,$02,$00,$03,$01,$0E,$05,$0A,$45,$15,$05
+		db $19,$01,$12,$41,$0B,$01,$05,$81,$02,$85,$05,$05,$08,$45,$0A,$05
+		db $2F,$01,$05,$00,$13,$02,$0C,$00,$03,$01,$07,$81,$19,$01,$16,$00
+		db $07,$80,$0F,$00,$08,$40,$16,$00,$01,$01,$08,$81,$0B,$01,$01,$41
+		db $05,$40,$23,$02,$02,$82,$01,$80,$01,$08,$08,$01,$1F,$00,$07,$80
+		db $0D,$00,$08,$40,$11,$00,$07,$01,$16,$41,$37,$01,$00,$00,$06,$00
+		db $00,$00
+	
+warnPC $9ff10a 	
+		
+org $9FF3C4
+		gameplayData00:				;  ; AA BC    AA=frames | B=8_jump,4_whip, 1_subweapon | C=D_PAD 
+;			dw $0128,$c160,$4a50,$4041,
+			db $28					; frame 
+			db $01					; action 
+			
+			db $50					; first grab
+			db $c1 
+			
+			db $04
+			db $00 
+			
+			db $50					; next grab
+			db $4a 
+			
+			db $40
+			db $45
+			
+			db $18
+			db $01
+			
+			db $30					; break 
+			db $00
+			
+			db $18
+			db $02
+			
+			db $30
+			db $42
+
+			db $30
+			db $46
+
+			db $04
+			db $00
+
+			db $40					; next grab
+			db $49
+			
+			db $58
+			db $46
+			
+			db $20
+			db $02
+		
+			
+			dw $0000
+		gameplayData01:			
+			db $1F
+			db $00
+			db $16
+			db $00
+			db $43
+			db $02
+			db $08
+			db $82
+			db $09
+			db $02
+			db $1E
+			db $00
+			db $03
+			db $02
+			db $06
+			db $82
+			db $01
+			db $86
+			db $06
+			db $04
+			db $44
+			db $44
+			db $02
+			db $04
+			db $54
+			db $00
+			db $02
+			db $02
+			db $07
+			db $82
+			db $01
+			db $84
+			db $07
+			db $04
+			db $37
+			db $44
+			db $08
+			db $40
+			db $08
+			db $41
+			db $49
+			db $40
+			db $4D
+			db $00
+			db $2C
+			db $02
+			db $04
+			db $00
+			db $0E
+			db $01
+			db $26
+			db $00
+			db $01
+			db $01
+			db $06
+			db $81
+			db $01
+			db $01
+			db $01
+			db $05
+			db $04
+			db $04
+			db $37
+			db $44
+			db $05
+			db $40
+			db $07
+			db $42
+			db $5E
+			db $40
+			db $39
+			db $00
+			db $06
+			db $01
+			db $12
+			db $00
+			db $03
+			db $01
+			db $07
+			db $81
+			db $01
+			db $80
+			db $01
+			db $00
+			db $0A
+			db $04
+			db $3B
+			db $44
+			db $1D
+			db $40
+			db $13
+			db $42
+			db $28
+			db $40
+			db $1C
+			db $01
+			db $2D
+			db $00
+			db $1F
+			db $02
+			db $01
+			db $0A
+			db $01
+			db $08
+			db $04
+			db $01
+			db $00
+			db $00
+;			db $50			; hand made 
+;			db $02 
+;			
+;			db $18
+;			db $82
+;			
+;			db $20
+;			db $00
+;			
+;			db $10
+;			db $82
+;			
+;			db $60			; first glitch
+;			db $44
+;			
+;			db $30
+;			db $45
+;			
+;			db $10
+;			db $00
+;			
+;			db $10
+;			db $01
+;			
+;			db $0e
+;			db $81
+;			
+;			db $40			; second gitch 
+;			db $44
+;			
+;			db $30
+;			db $42			
+		gameplayData02:
+			db $1F
+			db $00
+			db $0B
+			db $00
+			db $19
+			db $01
+			db $07
+			db $81
+			db $11
+			db $01
+			db $03
+			db $00
+			db $18
+			db $40
+			db $3E
+			db $49
+			db $02
+			db $48
+			db $01
+			db $42
+			db $03
+			db $02
+			db $03
+			db $06
+			db $10
+			db $46
+			db $02
+			db $42
+			db $04
+			db $02
+			db $01
+			db $06
+			db $09
+			db $04
+			db $2F
+			db $44
+			db $04
+			db $40
+			db $0E
+			db $41
+			db $16
+			db $40
+			db $03
+			db $42
+			db $2E
+			db $02
+			db $3B
+			db $00
+			db $1C
+			db $01
+			db $07
+			db $81
+			db $01
+			db $01
+			db $03
+			db $00
+			db $0C
+			db $04
+			db $1D
+			db $44
+			db $05
+			db $40
+			db $17
+			db $42
+			db $20
+			db $40
+			db $01
+			db $42
+			db $10
+			db $46
+			db $2A
+			db $42
+			db $19
+			db $02
+
+
+			dw $0000
+		demoAutoPlayData02:			;9FF3C4
+			db $03,$00,$0A,$04,$0C,$44,$10,$04,$0E,$44,$0B,$04,$13,$44,$10,$04
+			db $16,$44,$03,$04,$0A,$02,$13,$42,$3D,$02,$05,$86,$11,$C6,$02,$46
+			db $03,$06,$12,$02,$28,$00,$03,$02,$0A,$82,$1F,$02,$05,$00,$0D,$80
+			db $20,$00,$04,$80,$0E,$82,$0B,$40,$11,$00,$09,$80,$01,$82,$04,$06
+			db $0C,$46,$05,$06,$01,$02,$0E,$00,$07,$80,$0D,$C0,$0C,$CA,$23,$42
+			db $0C,$46,$09,$42,$03,$02,$13,$00,$17,$01,$05,$81,$03,$80,$07,$C0
+			db $05,$C4,$22,$44,$01,$46,$08,$42,$18,$40,$04,$00,$19,$02,$01,$0A
+			db $04,$01,$01,$00,$15,$40,$07,$00,$1D,$40,$08,$00,$06,$02,$02,$0A
+			db $0A,$4A,$04,$42,$03,$40,$16,$00,$14,$02,$05,$00,$11,$01,$05,$81
+			db $30,$01
+			db $06,$01,$04,$09,$12,$49,$09,$09,$12,$49,$02,$42,$12,$02,$17,$42
+			db $0A,$02,$19,$42,$21,$02,$14,$45,$0F,$00,$10,$48,$10,$00,$10,$48
+			db $3C,$02,$10,$82,$0D,$02,$0E,$82,$01,$08,$02,$00,$0A,$01,$02,$00
+			db $12,$02,$09,$82,$0E,$02,$13,$00,$09,$80,$06,$00,$06,$40,$02,$42
+			db $01,$40,$17,$00,$04,$82,$06,$86,$0F,$C6,$03,$46,$01,$06,$32,$02
+			db $01,$08,$01,$00,$04,$01,$10,$00,$FF,$08,$00,$00
+		demoAutoPlayData01:	
+			db $30,$01,$0A,$81,$2D,$01,$33,$00,$1F,$40,$20,$00,$1B,$40,$08,$00
+			db $17,$40,$07,$00,$08,$04,$14,$44,$16,$04,$0A,$00,$3A,$48,$06,$40
+			db $13,$00,$0A,$02,$09,$00,$06,$01,$03,$00,$0E,$40,$0F,$48,$04,$08
+			db $18,$48,$01,$08,$13,$00,$04,$01,$40,$00,$0B,$40,$13,$48,$05,$40
+			db $1D,$00,$15,$40,$08,$00,$05,$04,$15,$44,$08,$04,$07,$00,$1C,$40
+			db $10,$44,$04,$40,$06,$00,$03,$01,$02,$81,$0A,$85,$10,$C5,$04,$45
+			db $01,$05,$59,$01,$08,$81,$01,$01,$1D,$41,$05,$01,$58,$00,$08,$40
+			db $2C,$48,$03,$40,$0B,$00,$0E,$40,$03,$48,$04,$4A,$03,$0A,$01,$08
+			db $00,$00
+	

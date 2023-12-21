@@ -80,11 +80,25 @@ org $83E3D0
         STA.L $7E4EA4                        ;83E3DB|8FA24E7E|7E4EA2;  
         STA.L $7E4EE6                   	 ;83E3DF|8FE04E7E|7E4EE0;  
 org $83E41D
-        LDA.W #$0000                         ;83E41D|A90100  |      ;  make it reappear  
+        LDA.W #$0000                         ;83E41D|A90100  |      ; make it reappear  
         STA.W $1602                          ;83E420|8D0216  |811602;  		
 		
 ; -------------------------------------------------------------
+; --------------------------- GFX assignment level -------------
 
+org $869411
+	dw $F750			; paletteTilesStagel04_washingmachine > 05	;869413|        |81F72D;  
+
+org $86802A                       
+	dw $816C			; blockMabSrcDestPointer0b > 0f         ;86802A|        |868138;  
+
+org $868348
+	dw $85E0			; sceneMabSrcDestPointer14  > 18        ;868342|        |868534;  
+
+org $8688C6
+	dw $89FB			; gfxLevel11  > gfxLevel15              ;8688C6|        |8689C3;  
+
+; -------------------------------------------------------------
 
 org $808fe1 
 	ldy #$07ff		; orginal $03ff	;clear whole bg3 tilemap in transit. 
@@ -235,8 +249,8 @@ ScrollSettingsBG:
 	dw $0000     ;lvl 12
 	dw $0000     ;lvl 13
 	dw $0000     ;lvl 14
-	dw $8008     ;lvl 15
-	dw $0007     ;lvl 16
+	dw $0000	 ; $8008     ;lvl 15
+	dw $0007	 ; $0007     ;lvl 16
 	dw $0006     ;lvl 17
 	dw $0013		;dw $0015     ;lvl 18
 	dw $0000     ;lvl 19
@@ -305,7 +319,7 @@ org $85ca82		;tileAnimation 1
 	dw $87BF    ;lvl 12
 	dw $87BF    ;lvl 13
 	dw $87BF    ;lvl 14
-	dw $87BF    ;lvl 15
+	dw $87EB			; $87BF    ;lvl 15
 	dw $87BF    ;lvl 16
 	dw $87BF    ;lvl 17
 	dw $87E7    ;lvl 18
@@ -512,7 +526,7 @@ org $81A81A
 	db $26		; danc
     db $26		; lib
 	db $25		; lib 23
-	db $26		; dungon                
+	db $1b		; dungon                
 
 org $81ab00		; HitBoxTable y x from Center
 	dw $0808    ;

@@ -2,7 +2,7 @@
 A Super Castlevania IV hack
 
 You can test the patches provided in the release folder. You need to patch the Super Castlevania (USA) ROM
-for feedback you can also use Discord https://discord.gg/PvFgxRg
+for feedback you can also use Discord https://imgur.com/d70lVMb 
 
 
 Credits:
